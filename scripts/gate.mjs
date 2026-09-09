@@ -19,6 +19,7 @@ const SHOTS = path.resolve(process.cwd(), 'screenshots');
 
 /** Lessons to gate. Add each new lesson here as it is built. */
 const LESSONS = [
+  { slug: 'lesson-01', chapter: 'lecture-06', name: 'Why a scheduler exists at all' },
   { slug: 'lesson-02', chapter: 'lecture-06', name: 'FCFS & the convoy' },
 ];
 
