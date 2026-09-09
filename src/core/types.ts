@@ -13,7 +13,14 @@ export interface PlaygroundCapable {
 // src/core/types.ts — §3.1 authoritative contract
 
 export type Domain = 'travel' | 'food' | 'friends';
-export type EngineId = 'gantt' | 'queue' | 'trace' | 'counter' | 'graph' | 'matrix' | 'diagram';
+/**
+ * Which shared engine a lesson claims. `standalone` means the lesson's
+ * engineClass extends AnimationEngine directly because no shared engine's
+ * state shape fits — a legitimate choice that must be declared, not the
+ * default. A test (tests/engine-taxonomy.test.ts) enforces that this
+ * field matches what engineClass actually extends.
+ */
+export type EngineId = 'gantt' | 'queue' | 'trace' | 'counter' | 'graph' | 'matrix' | 'diagram' | 'standalone';
 
 /** One frame of the animation. Produced by an engine, never hand-written. */
 export interface Step<S = unknown> {

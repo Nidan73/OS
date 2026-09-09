@@ -349,7 +349,7 @@ export const lesson11: Lesson<CSInput, CSStep> = {
   title: 'What a Correct Solution Must Promise',
   absorbsUnits: [38, 39, 40, 41, 42, 43],
   slides: 'slides 9–12',
-  engine: 'trace',
+  engine: 'standalone',
   engineClass: CriticalSectionEngine,
   lensLabels: {
     analogy: '🚽 The coach toilet',

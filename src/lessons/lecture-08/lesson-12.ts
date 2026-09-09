@@ -316,7 +316,7 @@ export const lesson12: Lesson<PetersonInput, PublicationState> = {
   title: 'Peterson’s Solution, and Why Hardware Breaks It',
   absorbsUnits: [44, 45, 46],
   slides: 'slides 13–18',
-  engine: 'trace',
+  engine: 'standalone',
   engineClass: PetersonEngine,
   lensLabels: {
     analogy: '🚪 Two friends at a door',
