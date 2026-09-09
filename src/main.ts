@@ -2,7 +2,6 @@ import './styles/base.css';
 import { loadUnitDynamically, loadLessonDynamically, mountUnit, mountLesson, renderFallback } from './core/registry.js';
 import { UnitPlayer } from './components/UnitPlayer.js';
 import { LessonPlayer } from './components/LessonPlayer.js';
-import { GanttEngine } from './engines/gantt.js';
 
 interface ChapterMeta {
   id: number;
@@ -289,7 +288,7 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
       return;
     }
 
-    activeLessonPlayer = new LessonPlayer(centerCol, engine as GanttEngine, animMountTarget, lesson.morphReveals, lesson.morphMode);
+    activeLessonPlayer = new LessonPlayer(centerCol, engine, animMountTarget, lesson.morphReveals, lesson.morphMode);
 
     // Right sidebar: Concept explanation & physical analogy
     const rightSidebar = document.createElement('aside');

@@ -2,12 +2,18 @@ import type { EngineId, Unit, Lesson } from './types.js';
 import { AnimationEngine } from './engine.js';
 import { GanttEngine } from '../engines/gantt.js';
 import { QueueEngine } from '../engines/queue.js';
+import { DiagramEngine } from '../engines/diagram.js';
+import { TraceEngine } from '../engines/trace.js';
+import { CounterEngine } from '../engines/counter.js';
 
 export type EngineConstructor = new (container: HTMLElement, input: any) => AnimationEngine<any, any>;
 
 const engineRegistry: Partial<Record<EngineId, EngineConstructor>> = {
   gantt: GanttEngine as any,
-  queue: QueueEngine as any
+  queue: QueueEngine as any,
+  diagram: DiagramEngine as any,
+  trace: TraceEngine as any,
+  counter: CounterEngine as any
 };
 
 // Vite lazy glob mapping for dynamic unit and lesson loading (§3A.3)

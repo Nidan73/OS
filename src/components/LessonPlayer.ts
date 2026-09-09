@@ -1,4 +1,4 @@
-import { GanttEngine } from '../engines/gantt.js';
+import { AnimationEngine } from '../core/engine.js';
 import type { Process } from '../algorithms/scheduling.js';
 
 export class LessonPlayer {
@@ -30,7 +30,7 @@ export class LessonPlayer {
 
   constructor(
     parent: HTMLElement,
-    private engine: GanttEngine,
+    private engine: AnimationEngine<any, any>,
     animViewport?: HTMLElement,
     private morphReveals?: string,
     private morphMode?: 'morph' | 'crossfade'
@@ -291,9 +291,10 @@ export class LessonPlayer {
       (window as any).__lesson = {
         setView: (v: number) => this.setView(v),
         getView: () => this.engine.getView(),
-        getProcesses: () => this.engine.getProcesses(),
+        getProcesses: () => (typeof (this.engine as any).getProcesses === 'function' ? (this.engine as any).getProcesses() : []),
         reorderTo: (procs: Process[]) => this.reorderTo(procs),
-        morphMode: this.morphMode ?? 'morph'
+        morphMode: this.morphMode ?? 'morph',
+        engine: this.engine
       };
     }
   }
@@ -305,8 +306,23 @@ export class LessonPlayer {
   }
 
   private renderPlaygroundAndScoreboard(): void {
-    const processes = this.engine.getProcesses();
-    const schedule = this.engine.getScheduleResult();
+    if (typeof (this.engine as any).renderPlayground === 'function') {
+      (this.engine as any).renderPlayground(this.playgroundSection, this.scoreboardSection, this);
+      return;
+    }
+    const processes: Process[] = typeof (this.engine as any).getProcesses === 'function' ? (this.engine as any).getProcesses() : [];
+    const schedule = typeof (this.engine as any).getScheduleResult === 'function' ? (this.engine as any).getScheduleResult() : null;
+    if (!schedule) {
+      this.playgroundSection.innerHTML = `
+        <div style="font-size: 0.92rem; font-weight: 600; color: var(--ink);">Interactive Controls</div>
+        <div style="font-size: 0.82rem; color: var(--muted); margin-top: 4px;">Use the view lens slider and transport controls above to inspect the execution frames.</div>
+      `;
+      this.scoreboardSection.innerHTML = `
+        <div style="font-size: 0.92rem; font-weight: 600; color: var(--ink);">Live Status</div>
+        <div style="font-size: 0.82rem; color: var(--muted); margin-top: 4px;">Simulation active. Step through to follow state transitions.</div>
+      `;
+      return;
+    }
 
     // Render Playground controls
     this.playgroundSection.innerHTML = `
@@ -408,7 +424,7 @@ export class LessonPlayer {
       btn.addEventListener('click', (e) => {
         const idx = Number((e.currentTarget as HTMLElement).getAttribute('data-idx'));
         if (idx > 0) {
-          const currentProcs = this.engine.getProcesses();
+          const currentProcs: Process[] = (this.engine as any).getProcesses ? (this.engine as any).getProcesses() : [];
           const temp = currentProcs[idx];
           currentProcs[idx] = currentProcs[idx - 1];
           currentProcs[idx - 1] = temp;
@@ -421,7 +437,7 @@ export class LessonPlayer {
     rightButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         const idx = Number((e.currentTarget as HTMLElement).getAttribute('data-idx'));
-        const currentProcs = this.engine.getProcesses();
+        const currentProcs: Process[] = (this.engine as any).getProcesses ? (this.engine as any).getProcesses() : [];
         if (idx < currentProcs.length - 1) {
           const temp = currentProcs[idx];
           currentProcs[idx] = currentProcs[idx + 1];
@@ -433,7 +449,9 @@ export class LessonPlayer {
   }
 
   private reorderTo(newProcs: Process[]): void {
-    this.engine.reorderProcesses(newProcs);
+    if (typeof (this.engine as any).reorderProcesses === 'function') {
+      (this.engine as any).reorderProcesses(newProcs);
+    }
     this.scrubber.max = String(Math.max(0, this.engine.getSteps().length - 1));
     this.scrubber.value = '0';
     this.stepIndicator.textContent = `1 / ${this.engine.getSteps().length}`;
