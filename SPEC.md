@@ -409,20 +409,91 @@ is regrouped around ideas instead of slides.
 There is no prediction prompt. The morph is the reveal: watching a food-truck queue *become* a
 Gantt chart is the moment the idea lands.
 
-### 3C.2 The isomorphism rule — this is what makes 20 morphs affordable
+### 3C.2 The isomorphism rule — what makes 20 morphs affordable
 
 A morph is only cheap if both views are **the same picture wearing different clothes**.
 
 > **Every analogy scene must be structurally isomorphic to its mechanism view:
 > same coordinate space, same element set, same ids, same timeline.**
 
-A person waiting in the food-truck queue and the `P2` bar are *the same element* at the same x
-position. The morph then swaps a sprite for a rectangle and tweens attributes — not a bespoke
-animation, just two renderings of one state.
+A person waiting in the food-truck queue and the `P2` bar are *the same element*. The morph then
+tweens attributes between two renderings of one state — not a bespoke animation.
 
-This also enforces analogy quality structurally. SPEC §6 already said *"if you cannot explain
-which part of the analogy is the CPU, the analogy is wrong."* Now the compiler agrees: if you
-cannot lay the analogy out over the mechanism's geometry, it is the wrong analogy — pick another.
+This also enforces analogy quality structurally. §6 already said *"if you cannot explain which
+part of the analogy is the CPU, the analogy is wrong."* Now the code agrees: if you cannot lay the
+analogy over the mechanism's element set, it is the wrong analogy — report it and pick another.
+
+### 3C.2a Shared ids are necessary but NOT sufficient — read this
+
+**This rule was violated on the first attempt in a way that passed every check, so it is now
+spelled out.**
+
+Lesson 2 shipped with correct shared ids, a passing `validateIsomorphism()`, and no morph at all:
+the analogy had been drawn *in the mechanism's geometry from the start*, so `view` only changed
+fill colour, label text and sprite opacity. Both views were geometrically identical.
+
+**A transition that changes only paint is a reskin, not a morph. The analogy must be a different
+shape, not a different colour.**
+
+The failure is seductive because it is easier: author one layout, restyle it twice, and every
+structural check passes. Guard against it with three rules.
+
+**1. Author the analogy layout independently first.**
+Draw the analogy as you would if the mechanism did not exist. People queueing at a food truck
+stand shoulder to shoulder — each occupies **the same footprint**, because that is what a queue
+looks like. Only then map it onto the mechanism's element set. Never start from the mechanism
+layout and restyle it.
+
+**2. Every lesson must declare its carrying property.**
+State, in the lesson file, which geometric property changes meaning across the morph:
+
+```ts
+/** What the morph reveals. Required. */
+morphReveals: 'In a queue every person occupies equal space. On a timeline width becomes
+               duration — so waiting depends on the time ahead of you, not the number of
+               people ahead of you.'
+```
+
+If you cannot name a geometric property that changes meaning, **there is no lesson in the morph** —
+say so and use a cross-fade instead of faking one (§3C.2b).
+
+**3. Geometry must measurably interpolate.**
+For every entity, at least one geometric attribute — `x`, `y`, `width`, `height`, or transform —
+must differ between `view = 0` and `view = 1`, and must move monotonically between them.
+
+### 3C.2b When a morph is genuinely wrong
+
+Some analogies map entity-for-entity but not layout-for-layout — two friends round a table versus
+two stacked instruction columns. Forcing a morph there produces nonsense.
+
+**Cross-fade honestly instead.** Declare `morphMode: 'crossfade'` in the lesson file with a
+one-line reason. A cross-fade that admits what it is beats a morph that changes only paint.
+Expect roughly a quarter of the twenty lessons to land here — that is fine and expected.
+
+### 3C.2c Required tests per lesson
+
+```ts
+test('analogy layout is native, not the mechanism restyled', () => {
+  const a = widthsAt(0);
+  expect(Math.max(...a) - Math.min(...a)).toBeLessThan(1);   // equal footprints in a queue
+});
+
+test('mechanism layout encodes the quantity', () => {
+  const w = widthsAt(1);
+  expect(w.P1 / w.P2).toBeCloseTo(24 / 3, 1);                // width means duration
+});
+
+test('geometry interpolates — the morph is real', () => {
+  for (const id of ids) {
+    const [a, mid, b] = [widthAt(0, id), widthAt(0.5, id), widthAt(1, id)];
+    expect(mid).toBeGreaterThan(Math.min(a, b));
+    expect(mid).toBeLessThan(Math.max(a, b));                // strictly between
+  }
+});
+```
+
+A lesson whose `view` parameter touches only colour, text or opacity **fails review**, however
+good it looks.
 
 ### 3C.3 Rendering gains a view axis
 
@@ -434,6 +505,10 @@ protected abstract render(state: S, view: number): void;
 - `render()` stays **absolute and idempotent** at every `view` value (§4A.2 unchanged).
 - Both extremes must emit the **same element ids**. Missing ids on either side = an
   isomorphism bug; throw in development.
+- **`view` must drive geometry, not only appearance.** Colour, label and opacity may also change,
+  but a `view` that changes *nothing but* those is a reskin and fails review (§3C.2a). Ship a
+  `validateMorph()` alongside `validateIsomorphism()` that asserts at least one geometric
+  attribute per entity differs between view 0 and view 1.
 - Morphing is a GSAP tween of `view` 0 → 1. Under `prefers-reduced-motion`, cross-fade instead.
 - A lesson opens at `view = 0`, morphs once, then plays at `view = 1`. The learner can morph back
   at any time — the analogy is a lens, not an intro to be skipped past.

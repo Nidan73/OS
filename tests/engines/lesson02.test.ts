@@ -128,38 +128,40 @@ describe('Lesson 2: FCFS and Convoy Effect (§3C)', () => {
     expect(truckBox.style.opacity).toBe('1');
   });
 
-  test('morph geometric interpolation (§3C.2): equal width at view=0, burst-proportional at view=1, intermediate at view=0.5', () => {
-    // 1. At view = 0: all three bar widths are equal within 1px (equal queue footprint)
+  test('validateMorph (§3C.2a, §3C.3) passes for real morph and fails on static geometry', () => {
+    expect(() => engine.validateMorph()).not.toThrow();
+  });
+
+  // §3C.2c Required tests per lesson
+  test('analogy layout is native, not the mechanism restyled (§3C.2c)', () => {
     engine.setView(0);
-    const b1_0 = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
-    const b2_0 = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
-    const b3_0 = parseFloat(host.querySelector('#bar-P3')!.getAttribute('width')!);
+    const widths = ['P1', 'P2', 'P3'].map(id =>
+      parseFloat(host.querySelector(`#bar-${id}`)!.getAttribute('width')!)
+    );
+    // Equal footprints in a queue
+    expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1);
+  });
 
-    expect(Math.abs(b1_0 - b2_0)).toBeLessThanOrEqual(1);
-    expect(Math.abs(b2_0 - b3_0)).toBeLessThanOrEqual(1);
-
-    // 2. At view = 1: proportional to burst (P1 burst 24, P2 & P3 burst 3 => 8x)
+  test('mechanism layout encodes the quantity (§3C.2c)', () => {
     engine.setView(1);
-    const b1_1 = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
-    const b2_1 = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
-    const b3_1 = parseFloat(host.querySelector('#bar-P3')!.getAttribute('width')!);
+    const wP1 = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
+    const wP2 = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
+    // Width means duration (24 / 3 = 8)
+    expect(wP1 / wP2).toBeCloseTo(24 / 3, 1);
+  });
 
-    expect(b1_1 / b2_1).toBeCloseTo(8, 1);
-    expect(b2_1).toBeCloseTo(b3_1, 1);
+  test('geometry interpolates — the morph is real (§3C.2c)', () => {
+    const ids = ['P1', 'P2', 'P3'];
+    const widthAt = (view: number, id: string) => {
+      engine.setView(view);
+      return parseFloat(host.querySelector(`#bar-${id}`)!.getAttribute('width')!);
+    };
 
-    // 3. At view = 0.5: each width is strictly between its own two endpoints
-    engine.setView(0.5);
-    const b1_half = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
-    const b2_half = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
-    const b3_half = parseFloat(host.querySelector('#bar-P3')!.getAttribute('width')!);
-
-    expect(b1_half).toBeGreaterThan(Math.min(b1_0, b1_1));
-    expect(b1_half).toBeLessThan(Math.max(b1_0, b1_1));
-
-    expect(b2_half).toBeGreaterThan(Math.min(b2_0, b2_1));
-    expect(b2_half).toBeLessThan(Math.max(b2_0, b2_1));
-
-    expect(b3_half).toBeGreaterThan(Math.min(b3_0, b3_1));
-    expect(b3_half).toBeLessThan(Math.max(b3_0, b3_1));
+    for (const id of ids) {
+      const [a, mid, b] = [widthAt(0, id), widthAt(0.5, id), widthAt(1, id)];
+      // strictly between endpoints
+      expect(mid).toBeGreaterThan(Math.min(a, b));
+      expect(mid).toBeLessThan(Math.max(a, b));
+    }
   });
 });

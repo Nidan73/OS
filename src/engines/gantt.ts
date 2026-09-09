@@ -456,12 +456,13 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     this.container.appendChild(root);
 
     this.validateIsomorphism();
+    this.validateMorph();
   }
 
   /**
    * Validates structural isomorphism (§3C.2, §3C.3): both views must emit identical element IDs.
    */
-  private validateIsomorphism(): void {
+  public validateIsomorphism(): void {
     const requiredIds = [
       'service-station',
       'core-box',
@@ -489,6 +490,54 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     for (const id of requiredIds) {
       if (!this.svg.querySelector(`#${id}`)) {
         throw new Error(`Isomorphism violation (§3C.2): element #${id} missing from SVG`);
+      }
+    }
+  }
+
+  /**
+   * Validates geometric morph (§3C.2a, §3C.3): asserts at least one geometric attribute
+   * per entity differs between view 0 and view 1.
+   */
+  public validateMorph(): void {
+    const currentState = this.steps[this.getCurrentIndex()]?.state ?? this.steps[0].state;
+    const initialView = this.currentView;
+
+    // Sample geometry at view 0
+    this.render(currentState, 0);
+    const view0 = this.input.processes.map(p => {
+      const el = this.svg.querySelector(`#bar-${p.id}`) as SVGRectElement;
+      return {
+        id: p.id,
+        x: parseFloat(el?.getAttribute('x') || '0'),
+        width: parseFloat(el?.getAttribute('width') || '0')
+      };
+    });
+
+    // Sample geometry at view 1
+    this.render(currentState, 1);
+    const view1 = this.input.processes.map(p => {
+      const el = this.svg.querySelector(`#bar-${p.id}`) as SVGRectElement;
+      return {
+        id: p.id,
+        x: parseFloat(el?.getAttribute('x') || '0'),
+        width: parseFloat(el?.getAttribute('width') || '0')
+      };
+    });
+
+    // Restore initial view
+    this.render(currentState, initialView);
+
+    // Verify each process entity differs geometrically between view 0 and view 1
+    for (let i = 0; i < this.input.processes.length; i++) {
+      const g0 = view0[i];
+      const g1 = view1[i];
+      const diffX = Math.abs(g1.x - g0.x);
+      const diffW = Math.abs(g1.width - g0.width);
+
+      if (diffX < 1 && diffW < 1) {
+        throw new Error(
+          `Morph violation (§3C.2a): Entity #${g0.id} has identical geometry at view=0 and view=1 (x: ${g0.x}, width: ${g0.width}). A transition that changes only paint is a reskin, not a morph.`
+        );
       }
     }
   }

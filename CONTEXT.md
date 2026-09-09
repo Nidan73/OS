@@ -1,7 +1,7 @@
 # CONTEXT — session handoff
 
 **Purpose:** read this first in a new session and you have everything. No prior conversation needed.
-**Last updated:** 2026-09-09, after the 89-unit → 20-lesson replan.
+**Last updated:** 2026-09-09, after the Lesson 2 review (sent back, morph not real).
 **Keep this current.** Update the State and Log sections at every phase gate.
 
 ---
@@ -142,22 +142,37 @@ Verified directly (always run these yourself, do not trust the report):
 - Design skill applied: token names all preserved, semantic states kept distinct, both themes
   structured per §5.2, no scroll-jacking or parallax in the canvas.
 
-**Three gantt findings — still open, carried into the replan:**
+**Lesson 2 reviewed and SENT BACK.** Branch `phase1/lesson-02-fcfs`, commit `a3dabed`.
+30 tests pass, tsc clean, Playwright verification real. **No other lesson starts until this is
+resolved.**
 
-1. **No real interpolation.** `playNext()` tweens an empty object as a timer; `render()` only
-   fires in `onComplete`, so nothing moves during a step. Now partly forced by §3C.3 anyway — the
-   `view` morph axis requires genuine interpolation.
-2. **`--travel` used as a process-bar fill** (`gantt.ts:338`). An analogy-domain token used as
-   state colour. Violates §5.0 #2 / §5.3. Needs `--completed` or `--idle`.
-3. **SJF test drops the slide's arrival times.** Slide 11 lists arrivals 0/2/4/5 but publishes
-   avg 7, only reachable if all arrive at t=0 (correct SJF with those arrivals gives 5). The slide
-   is internally inconsistent. Keep the published answer for exam alignment, but document it, add
-   a second test recording the discrepancy, and never display arrivals the schedule ignores.
-   **Now belongs to Lesson 3, not Lesson 2 — do not lose it.**
+Screenshots live in `~/.gemini/antigravity-cli/brain/<session>/lesson02_*.png` — the agent saves
+them outside the repo. **Always open them; the report and the pixels disagreed.**
 
-**Current instruction to the agent:** rebuild `gantt` as **Lesson 2 (FCFS and the convoy)**, end
-to end — analogy scene, morph, playground — as the reference lesson. Nothing else starts until it
-is reviewed.
+1. **CRITICAL — the morph does not morph.** `view` appears at only four lines in `gantt.ts`
+   (clamp at 496–497, a fill/label branch at 567/572). **It never touches width or x.** view=0 and
+   view=0.5 screenshots have identical geometry; only fill, label text and sprite opacity change.
+   `validateIsomorphism()` passes trivially because the analogy was authored in the mechanism's
+   coordinate space from the start. **Shared IDs were necessary, not sufficient — a gap in my
+   §3C.2, not just the implementation. §3C.2 has since been tightened**: new §3C.2a (author the
+   analogy layout independently; every lesson declares a `morphReveals` carrying property;
+   geometry must measurably interpolate), §3C.2b (`morphMode: 'crossfade'` is the honest fallback
+   — expect ~a quarter of lessons there), §3C.2c (three required tests per lesson). The payload was watching equal-width queue members
+   become duration-proportional bars; at view=0 the answer is already drawn, so there is no
+   insight. Fix is two lerps on width and x between an equal-footprint queue layout and the
+   Gantt layout.
+2. **Scoreboard reads 0 ms on arrival** (step 1/8, live-accumulation semantics). The lesson's
+   headline is 17→3 and the student lands on zeros. Show final computed metrics for the current
+   order.
+3. **Playground below the fold at 1440×900** — violates DESIGN.md §0.1 and buries the centrepiece
+   reorder interaction.
+4. **Spec jargon rendering as UI:** "ABSORBS UNITS 7, 8", "Absorbs Atlas units 7, 8", "Isomorphic
+   Lens (§3C.2)", "Structural Mapping (§3C.2)". Keep the mapping content, drop the citations.
+5. **DESIGN.md reached tokens but not components.** Action Blue and `--completed` correct; cards
+   are default bordered rectangles, table generic, buttons not pills, no tile rhythm.
+
+**Still open from earlier, do not lose:** the SJF arrival-time discrepancy belongs to Lesson 3
+(slide 11 lists arrivals 0/2/4/5 but publishes avg 7, only reachable if all arrive at t=0).
 
 ## What happens next
 

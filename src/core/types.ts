@@ -53,6 +53,12 @@ export interface Lesson<I = unknown, S = unknown> {
   analogy: Analogy;
   /** OS concept explanation */
   concept: string;
+  /** What the morph reveals. Required per §3C.2a. */
+  morphReveals: string;
+  /** 'morph' (default) or 'crossfade' per §3C.2b */
+  morphMode?: 'morph' | 'crossfade';
+  /** Required if morphMode is 'crossfade' per §3C.2b */
+  morphReason?: string;
   /** engine-specific input */
   input: I;
 }

@@ -14,6 +14,7 @@ export const lesson02: Lesson<GanttInput> = {
     text: 'A single-file food truck queue where one person orders for a party of forty meals. Customers behind ordering a single coffee are stuck waiting for the entire party order to be cooked.'
   },
   concept: 'First-Come, First-Served (FCFS) allocates the CPU strictly in arrival order. When a CPU-bound process with a large burst runs ahead of short I/O-bound processes, all subsequent jobs queue up behind it — known as the Convoy Effect. Reordering the queue to run shorter jobs first drastically reduces average waiting time.',
+  morphReveals: 'In a queue every person occupies equal space. On a timeline width becomes duration — so waiting depends on the time ahead of you, not the number of people ahead of you.',
   input: {
     processes: [
       { id: 'P1', arrival: 0, burst: 24 },

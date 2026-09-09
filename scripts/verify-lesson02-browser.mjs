@@ -1,6 +1,22 @@
 import { chromium } from 'playwright';
+import fs from 'fs';
+import path from 'path';
 
 async function main() {
+  const repoScreenshotsDir = path.resolve(process.cwd(), 'screenshots');
+  const brainDir = '/home/nidan73/.gemini/antigravity-cli/brain/fa1abc17-0bf7-43f2-929b-5075857145da';
+  fs.mkdirSync(repoScreenshotsDir, { recursive: true });
+
+  const saveShot = async (page, filename) => {
+    const p1 = path.join(repoScreenshotsDir, filename);
+    const p2 = path.join(brainDir, filename);
+    await page.screenshot({ path: p1 });
+    try {
+      fs.copyFileSync(p1, p2);
+    } catch {}
+    console.log(`Saved screenshot: ${p1}`);
+  };
+
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
@@ -26,7 +42,7 @@ async function main() {
   }
 
   // Save screenshot of Analogy View
-  await page.screenshot({ path: '/home/nidan73/.gemini/antigravity-cli/brain/fa1abc17-0bf7-43f2-929b-5075857145da/lesson02_analogy_view.png' });
+  await saveShot(page, 'lesson02_analogy_view.png');
 
   // Check scoreboard initial metrics (Slide 8: 17 ms)
   const waitScoreboard = await page.textContent('.lesson-scoreboard');
@@ -39,12 +55,12 @@ async function main() {
   await page.fill('input[aria-label*="View axis"]', '0.5');
   await page.dispatchEvent('input[aria-label*="View axis"]', 'input');
   await page.waitForTimeout(200);
-  await page.screenshot({ path: '/home/nidan73/.gemini/antigravity-cli/brain/fa1abc17-0bf7-43f2-929b-5075857145da/lesson02_midmorph_view.png' });
+  await saveShot(page, 'lesson02_midmorph_view.png');
 
   console.log('\n--- TEST LESSON 2.3: Morph View Axis to Mechanism (view = 1.0) ---');
   await page.click('button[title*="View as OS Gantt chart"]');
   await page.waitForTimeout(1000); // Allow GSAP morph tween to complete
-  await page.screenshot({ path: '/home/nidan73/.gemini/antigravity-cli/brain/fa1abc17-0bf7-43f2-929b-5075857145da/lesson02_mechanism_view.png' });
+  await saveShot(page, 'lesson02_mechanism_view.png');
 
   const morphedView = await page.$eval('input[aria-label*="View axis"]', el => el.value);
   console.log('Morphed View Axis value:', morphedView);
@@ -94,9 +110,7 @@ async function main() {
       throw new Error(`Horizontal scroll detected at ${width}px!`);
     }
 
-    const screenshotPath = `/home/nidan73/.gemini/antigravity-cli/brain/fa1abc17-0bf7-43f2-929b-5075857145da/lesson02_${width}.png`;
-    await page.screenshot({ path: screenshotPath, fullPage: false });
-    console.log(`Saved screenshot: ${screenshotPath}`);
+    await saveShot(page, `lesson02_${width}.png`);
   }
 
   await browser.close();
