@@ -24,6 +24,7 @@ const LESSONS = [
   { slug: 'lesson-03', chapter: 'lecture-06', name: 'Shortest job first' },
   { slug: 'lesson-04', chapter: 'lecture-06', name: 'Round robin & fairness' },
   { slug: 'lesson-05', chapter: 'lecture-06', name: 'Priority, starvation & aging' },
+  { slug: 'lesson-06', chapter: 'lecture-07', name: 'Queues within queues (MLFQ)' },
 ];
 
 /** Internal vocabulary that must never reach a student. */
