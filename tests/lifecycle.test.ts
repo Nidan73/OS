@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AnimationEngine } from '../src/core/engine.js';
 import { mountUnit, registerEngine } from '../src/core/registry.js';
 import type { Unit } from '../src/core/types.js';
@@ -24,11 +24,28 @@ const UNIT_STUB: Unit<void, { n: number }> = {
   input: undefined
 };
 
+function matchMediaMock(query: string, matches: boolean) {
+  window.matchMedia = vi.fn().mockImplementation((q: string) => ({
+    matches: q === query ? matches : false,
+    media: q,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+}
+
 describe('AnimationEngine Lifecycle (§7.1)', () => {
   let el: HTMLElement;
 
   beforeEach(() => {
     el = document.createElement('div');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test('seek is idempotent — §4A.2', () => {
@@ -87,5 +104,34 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
   test('an empty step list is rejected loudly', () => {
     class Empty extends FakeEngine { protected buildSteps() { return []; } }
     expect(() => new Empty(el).init()).toThrow();
+  });
+
+  test('pause() stops playback under reduced motion — regression', () => {
+    vi.useFakeTimers();
+    matchMediaMock('(prefers-reduced-motion: reduce)', true);
+    const e = new FakeEngine(el); e.init();
+    e.play();
+    e.pause();
+    const idx = e.getCurrentIndex();
+    vi.advanceTimersByTime(5000);
+    expect(e.getCurrentIndex()).toBe(idx); // must NOT have advanced
+  });
+
+  test('pause() stops playback with motion enabled', () => {
+    vi.useFakeTimers();
+    matchMediaMock('(prefers-reduced-motion: reduce)', false);
+    const e = new FakeEngine(el); e.init();
+    e.play(); e.pause();
+    const idx = e.getCurrentIndex();
+    vi.advanceTimersByTime(5000);
+    expect(e.getCurrentIndex()).toBe(idx);
+  });
+
+  test('destroy() during playback cancels pending advances', () => {
+    vi.useFakeTimers();
+    const e = new FakeEngine(el); e.init();
+    e.play(); e.destroy();
+    expect(() => vi.advanceTimersByTime(5000)).not.toThrow();
+    expect(e.getCurrentIndex()).toBe(0);
   });
 });

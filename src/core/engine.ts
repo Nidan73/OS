@@ -6,6 +6,8 @@ export abstract class AnimationEngine<I, S> {
   protected timeline: gsap.core.Timeline | null = null;
   protected index = 0;
   private disposed = false;
+  private playing = false;
+  private advanceTimer: ReturnType<typeof setTimeout> | null = null;
   private onStepListeners: ((index: number, step: Step<S>) => void)[] = [];
   private onPlayStateListeners: ((isPlaying: boolean) => void)[] = [];
 
@@ -31,6 +33,10 @@ export abstract class AnimationEngine<I, S> {
 
   getCurrentIndex(): number {
     return this.index;
+  }
+
+  isPlaying(): boolean {
+    return this.playing;
   }
 
   onStepChange(fn: (index: number, step: Step<S>) => void): () => void {
@@ -60,8 +66,17 @@ export abstract class AnimationEngine<I, S> {
     }
   }
 
+  private clearAdvanceTimer(): void {
+    if (this.advanceTimer !== null) {
+      clearTimeout(this.advanceTimer);
+      this.advanceTimer = null;
+    }
+  }
+
   seek(i: number): void {
     if (this.disposed) return;
+    this.playing = false;
+    this.clearAdvanceTimer();
     this.timeline?.kill();
     this.timeline = null;
     this.index = Math.max(0, Math.min(i, this.steps.length - 1));
@@ -89,13 +104,15 @@ export abstract class AnimationEngine<I, S> {
     if (this.index >= this.steps.length - 1) {
       this.seek(0);
     }
+    this.playing = true;
     this.notifyPlayState(true);
     this.playNext();
   }
 
   private playNext(): void {
-    if (this.disposed) return;
+    if (this.disposed || !this.playing) return;
     if (this.index >= this.steps.length - 1) {
+      this.playing = false;
       this.notifyPlayState(false);
       return;
     }
@@ -107,10 +124,18 @@ export abstract class AnimationEngine<I, S> {
 
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
-      this.seek(nextIdx);
-      setTimeout(() => {
-        if (!this.disposed && this.timeline === null) {
+      this.clearAdvanceTimer();
+      this.advanceTimer = setTimeout(() => {
+        this.advanceTimer = null;
+        if (this.disposed || !this.playing) return;
+        this.index = nextIdx;
+        this.render(this.steps[this.index].state);
+        this.notifyStep();
+        if (this.playing && this.index < this.steps.length - 1) {
           this.playNext();
+        } else {
+          this.playing = false;
+          this.notifyPlayState(false);
         }
       }, stepDuration * 1000);
       return;
@@ -119,13 +144,14 @@ export abstract class AnimationEngine<I, S> {
     this.timeline?.kill();
     this.timeline = gsap.timeline({
       onComplete: () => {
-        if (this.disposed) return;
+        if (this.disposed || !this.playing) return;
         this.index = nextIdx;
         this.render(this.steps[this.index].state);
         this.notifyStep();
-        if (this.index < this.steps.length - 1) {
+        if (this.playing && this.index < this.steps.length - 1) {
           this.playNext();
         } else {
+          this.playing = false;
           this.notifyPlayState(false);
         }
       }
@@ -136,12 +162,16 @@ export abstract class AnimationEngine<I, S> {
 
   pause(): void {
     if (this.disposed) return;
+    this.playing = false;
+    this.clearAdvanceTimer();
     this.timeline?.kill();
     this.timeline = null;
     this.notifyPlayState(false);
   }
 
   destroy(): void {
+    this.playing = false;
+    this.clearAdvanceTimer();
     this.timeline?.kill();
     this.timeline = null;
     this.container.replaceChildren();
