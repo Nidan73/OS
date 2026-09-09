@@ -31,27 +31,33 @@ export class LessonPlayer {
   constructor(
     parent: HTMLElement,
     private engine: GanttEngine,
-    animViewport?: HTMLElement
+    animViewport?: HTMLElement,
+    private morphReveals?: string
   ) {
     this.container = document.createElement('div');
     this.container.className = 'lesson-player';
     this.container.style.display = 'flex';
     this.container.style.flexDirection = 'column';
-    this.container.style.gap = 'calc(var(--step) * 2)';
+    this.container.style.gap = 'calc(var(--step) * 1)';
     this.container.style.width = '100%';
 
     // 1. Lens Switcher Header (Analogy <-> Morph <-> Mechanism)
     this.lensController = document.createElement('div');
     this.lensController.className = 'lens-controller';
     this.lensController.style.display = 'flex';
-    this.lensController.style.alignItems = 'center';
-    this.lensController.style.justifyContent = 'space-between';
-    this.lensController.style.flexWrap = 'wrap';
-    this.lensController.style.gap = 'var(--step)';
-    this.lensController.style.padding = 'calc(var(--step) * 1.5)';
+    this.lensController.style.flexDirection = 'column';
+    this.lensController.style.gap = '6px';
+    this.lensController.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.25)';
     this.lensController.style.background = 'var(--surface)';
-    this.lensController.style.border = '1px solid var(--rule)';
-    this.lensController.style.borderRadius = '8px';
+    this.lensController.style.border = '1px solid var(--hairline)';
+    this.lensController.style.borderRadius = 'var(--rounded-lg, 18px)';
+
+    const topControlsRow = document.createElement('div');
+    topControlsRow.style.display = 'flex';
+    topControlsRow.style.alignItems = 'center';
+    topControlsRow.style.justifyContent = 'space-between';
+    topControlsRow.style.flexWrap = 'wrap';
+    topControlsRow.style.gap = 'var(--step)';
 
     const lensButtons = document.createElement('div');
     lensButtons.style.display = 'flex';
@@ -63,21 +69,21 @@ export class LessonPlayer {
       b.type = 'button';
       b.textContent = text;
       b.title = title;
-      b.style.padding = '6px 14px';
+      b.style.padding = '7px 16px';
       b.style.fontSize = '0.85rem';
       b.style.fontWeight = '600';
-      b.style.borderRadius = '9999px';
-      b.style.border = '1px solid var(--rule)';
+      b.style.borderRadius = 'var(--rounded-pill, 9999px)';
+      b.style.border = '1px solid var(--hairline)';
       b.style.background = 'var(--surface-alt)';
       b.style.color = 'var(--ink)';
       b.style.cursor = 'pointer';
-      b.style.transition = 'background var(--dur-fast), transform var(--dur-fast)';
+      b.style.transition = 'all var(--dur-fast) var(--ease)';
       return b;
     };
 
-    this.analogyBtn = pillBtn('🍔 Food Truck Analogy', 'View as physical queue (view = 0)');
+    this.analogyBtn = pillBtn('🍔 Food Truck Analogy', 'View as physical queue');
     this.morphBtn = pillBtn('⟷ Morph View', 'Smoothly animate between analogy and mechanism');
-    this.mechBtn = pillBtn('📊 FCFS Mechanism', 'View as OS Gantt chart (view = 1)');
+    this.mechBtn = pillBtn('📊 FCFS Mechanism', 'View as CPU timeline');
 
     lensButtons.append(this.analogyBtn, this.morphBtn, this.mechBtn);
 
@@ -97,6 +103,8 @@ export class LessonPlayer {
     this.viewSlider.max = '1';
     this.viewSlider.step = '0.01';
     this.viewSlider.value = String(engine.getView());
+    this.viewSlider.id = 'view-lens';
+    this.viewSlider.setAttribute('data-view', 'true');
     this.viewSlider.setAttribute('aria-label', 'View axis blend between analogy and mechanism');
     this.viewSlider.style.width = '120px';
     this.viewSlider.style.cursor = 'pointer';
@@ -109,55 +117,94 @@ export class LessonPlayer {
     this.viewPercentLabel.textContent = `${Math.round(engine.getView() * 100)}%`;
 
     sliderWrap.append(sliderLabel, this.viewSlider, this.viewPercentLabel);
-    this.lensController.append(lensButtons, sliderWrap);
+    topControlsRow.append(lensButtons, sliderWrap);
+    this.lensController.appendChild(topControlsRow);
+
+    if (this.morphReveals) {
+      const morphBanner = document.createElement('div');
+      morphBanner.className = 'morph-reveals-banner';
+      morphBanner.style.fontSize = '0.85rem';
+      morphBanner.style.color = 'var(--muted)';
+      morphBanner.style.lineHeight = '1.45';
+      morphBanner.style.paddingTop = '6px';
+      morphBanner.style.borderTop = '1px solid var(--hairline)';
+      morphBanner.textContent = this.morphReveals;
+      this.lensController.appendChild(morphBanner);
+    }
 
     // 2. Animation Viewport
     this.animViewport = animViewport ?? document.createElement('div');
     this.animViewport.classList.add('anim-viewport');
     this.animViewport.style.background = 'var(--surface)';
-    this.animViewport.style.border = '1px solid var(--rule)';
-    this.animViewport.style.borderRadius = '8px';
-    this.animViewport.style.padding = 'calc(var(--step) * 2)';
-    this.animViewport.style.boxShadow = 'rgba(0, 0, 0, 0.15) 2px 4px 20px';
+    this.animViewport.style.border = '1px solid var(--hairline)';
+    this.animViewport.style.borderRadius = 'var(--rounded-lg, 18px)';
+    this.animViewport.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.2)';
+    this.animViewport.style.boxShadow = 'none';
     this.animViewport.style.overflow = 'hidden';
 
-    // 3. Caption Banner
+    // 3. Interactive Playground (Positioned directly under canvas per §0.1)
+    this.playgroundSection = document.createElement('section');
+    this.playgroundSection.className = 'lesson-playground-control playground';
+    this.playgroundSection.id = 'playground';
+    this.playgroundSection.setAttribute('data-primary-control', 'true');
+    this.playgroundSection.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.2)';
+    this.playgroundSection.style.background = 'var(--surface)';
+    this.playgroundSection.style.border = '1px solid var(--hairline)';
+    this.playgroundSection.style.borderRadius = 'var(--rounded-lg, 18px)';
+    this.playgroundSection.style.display = 'flex';
+    this.playgroundSection.style.flexDirection = 'column';
+    this.playgroundSection.style.gap = '8px';
+
+    // 4. Live Scoreboard (Positioned directly with playground above the fold)
+    this.scoreboardSection = document.createElement('section');
+    this.scoreboardSection.className = 'lesson-scoreboard';
+    this.scoreboardSection.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.2)';
+    this.scoreboardSection.style.background = 'var(--surface)';
+    this.scoreboardSection.style.border = '1px solid var(--hairline)';
+    this.scoreboardSection.style.borderRadius = 'var(--rounded-lg, 18px)';
+    this.scoreboardSection.style.display = 'flex';
+    this.scoreboardSection.style.flexDirection = 'column';
+    this.scoreboardSection.style.gap = '8px';
+
+    // 5. Caption Banner
     this.captionBanner = document.createElement('div');
     this.captionBanner.className = 'caption-banner';
-    this.captionBanner.style.padding = 'calc(var(--step) * 1.5) calc(var(--step) * 2)';
+    this.captionBanner.style.padding = 'calc(var(--step) * 0.7) calc(var(--step) * 1.2)';
     this.captionBanner.style.background = 'var(--surface-alt)';
-    this.captionBanner.style.border = '1px solid var(--rule)';
+    this.captionBanner.style.border = '1px solid var(--hairline)';
     this.captionBanner.style.borderLeft = '4px solid var(--accent)';
-    this.captionBanner.style.borderRadius = '6px';
+    this.captionBanner.style.borderRadius = 'var(--rounded-lg, 18px)';
     this.captionBanner.style.fontFamily = 'var(--font-ui)';
-    this.captionBanner.style.fontSize = '0.95rem';
-    this.captionBanner.style.lineHeight = '1.5';
+    this.captionBanner.style.fontSize = '15.5px';
+    this.captionBanner.style.lineHeight = '1.4';
+    this.captionBanner.style.letterSpacing = '-0.374px';
     this.captionBanner.style.color = 'var(--ink)';
 
-    // 4. Transport Bar
+    // 6. Transport Bar
     this.transportBar = document.createElement('div');
     this.transportBar.className = 'transport-bar sticky-transport';
     this.transportBar.style.display = 'flex';
     this.transportBar.style.alignItems = 'center';
     this.transportBar.style.gap = 'var(--step)';
-    this.transportBar.style.padding = 'calc(var(--step) * 1.2)';
+    this.transportBar.style.padding = 'calc(var(--step) * 0.75) calc(var(--step) * 1.2)';
     this.transportBar.style.background = 'var(--surface)';
-    this.transportBar.style.border = '1px solid var(--rule)';
-    this.transportBar.style.borderRadius = '8px';
+    this.transportBar.style.border = '1px solid var(--hairline)';
+    this.transportBar.style.borderRadius = 'var(--rounded-lg, 18px)';
     this.transportBar.style.flexWrap = 'wrap';
 
     const btnStyle = (btn: HTMLButtonElement) => {
       btn.style.minWidth = '44px';
       btn.style.minHeight = '44px';
-      btn.style.padding = 'var(--step)';
+      btn.style.padding = '8px 14px';
       btn.style.display = 'inline-flex';
       btn.style.alignItems = 'center';
       btn.style.justifyContent = 'center';
       btn.style.background = 'var(--surface-alt)';
-      btn.style.border = '1px solid var(--rule)';
-      btn.style.borderRadius = '6px';
+      btn.style.border = '1px solid var(--hairline)';
+      btn.style.borderRadius = 'var(--rounded-pill, 9999px)';
       btn.style.fontWeight = '600';
       btn.style.cursor = 'pointer';
+      btn.style.transition = 'all var(--dur-fast) var(--ease)';
     };
 
     this.restartBtn = document.createElement('button');
@@ -180,6 +227,9 @@ export class LessonPlayer {
     this.playBtn.title = 'Play / Pause (Space)';
     this.playBtn.setAttribute('aria-label', 'Play or pause timeline');
     btnStyle(this.playBtn);
+    this.playBtn.style.background = 'var(--accent)';
+    this.playBtn.style.color = '#FFFFFF';
+    this.playBtn.style.borderColor = 'var(--accent)';
 
     this.nextBtn = document.createElement('button');
     this.nextBtn.type = 'button';
@@ -216,39 +266,39 @@ export class LessonPlayer {
       this.stepIndicator
     );
 
-    // 5. Interactive Playground (§3C.4)
-    this.playgroundSection = document.createElement('section');
-    this.playgroundSection.className = 'lesson-playground-control';
-    this.playgroundSection.style.padding = 'calc(var(--step) * 2)';
-    this.playgroundSection.style.background = 'var(--surface)';
-    this.playgroundSection.style.border = '1px solid var(--rule)';
-    this.playgroundSection.style.borderRadius = '8px';
-    this.playgroundSection.style.display = 'flex';
-    this.playgroundSection.style.flexDirection = 'column';
-    this.playgroundSection.style.gap = 'var(--step)';
-
-    // 6. Live Scoreboard (Ch 6 Scheduling Criteria §3C.5)
-    this.scoreboardSection = document.createElement('section');
-    this.scoreboardSection.className = 'lesson-scoreboard';
-    this.scoreboardSection.style.padding = 'calc(var(--step) * 2)';
-    this.scoreboardSection.style.background = 'var(--surface)';
-    this.scoreboardSection.style.border = '1px solid var(--rule)';
-    this.scoreboardSection.style.borderRadius = '8px';
-
     this.renderPlaygroundAndScoreboard();
 
+    const interactiveGrid = document.createElement('div');
+    interactiveGrid.className = 'lesson-interactive-grid';
+    interactiveGrid.append(this.playgroundSection, this.scoreboardSection);
+
+    // Compact layout: Canvas -> Interactive Grid (Playground + Scoreboard) -> Caption -> Transport (All above fold on 1440x900)
     this.container.append(
       this.lensController,
       this.animViewport,
+      interactiveGrid,
       this.captionBanner,
-      this.transportBar,
-      this.playgroundSection,
-      this.scoreboardSection
+      this.transportBar
     );
     parent.appendChild(this.container);
 
     this.setupEventListeners();
     this.updateCaption();
+
+    if (typeof window !== 'undefined') {
+      (window as any).__lesson = {
+        setView: (v: number) => this.setView(v),
+        getView: () => this.engine.getView(),
+        getProcesses: () => this.engine.getProcesses(),
+        reorderTo: (procs: Process[]) => this.reorderTo(procs)
+      };
+    }
+  }
+
+  public setView(v: number): void {
+    this.viewSlider.value = String(v);
+    this.viewPercentLabel.textContent = `${Math.round(v * 100)}%`;
+    this.engine.setView(v);
   }
 
   private renderPlaygroundAndScoreboard(): void {
@@ -257,35 +307,32 @@ export class LessonPlayer {
 
     // Render Playground controls
     this.playgroundSection.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--step);">
-        <div>
-          <h3 style="font-size: 1.1rem; margin: 0; color: var(--ink);">🎮 Interactive Playground: Reorder Queue</h3>
-          <p style="font-size: 0.85rem; color: var(--muted); margin: 2px 0 0 0;">Swap queue arrival positions to test the Convoy Effect (§3C.4).</p>
-        </div>
-        <div style="display: flex; gap: var(--step); flex-wrap: wrap;">
-          <button id="btn-convoy-preset" type="button" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px; background: var(--surface-alt); border: 1px solid var(--waiting); color: var(--waiting); cursor: pointer;">
-            🔴 Slide 8 Convoy (P1 → P2 → P3)
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Interactive Playground</h3>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+          <button id="btn-convoy-preset" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--waiting); color: var(--waiting); cursor: pointer; transition: all var(--dur-fast) var(--ease);">
+            🔴 Convoy Order (P1 → P2 → P3)
           </button>
-          <button id="btn-optimal-preset" type="button" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px; background: var(--surface-alt); border: 1px solid var(--running); color: var(--running); cursor: pointer;">
-            🟢 Slide 9 Optimal (P2 → P3 → P1)
+          <button id="btn-optimal-preset" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--running); color: var(--running); cursor: pointer; transition: all var(--dur-fast) var(--ease);">
+            🟢 Optimal Order (P2 → P3 → P1)
           </button>
         </div>
       </div>
-      <div id="queue-order-strip" style="display: flex; gap: calc(var(--step) * 1.5); margin-top: var(--step); flex-wrap: wrap;">
+      <div id="queue-order-strip" style="display: flex; gap: 6px; margin-top: 4px;">
         ${processes.map((p, idx) => `
-          <div class="process-order-card" data-proc="${p.id}" style="flex: 1; min-width: 160px; padding: 12px; background: var(--surface-alt); border: 1px solid var(--rule); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;">
+          <div class="process-order-card" data-proc="${p.id}" style="flex: 1; min-width: 80px; padding: 4px 6px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px); display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--accent);">${p.id}</span>
-              <span style="font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--rule); font-family: var(--font-mono);">Burst: ${p.burst}</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; color: var(--accent);">${p.id}</span>
+              <span style="font-size: 0.7rem; padding: 1px 4px; border-radius: var(--rounded-pill, 9999px); background: var(--surface); border: 1px solid var(--hairline); font-family: var(--font-mono); font-weight: 600;">${p.burst}ms</span>
             </div>
-            <div style="font-size: 0.8rem; color: var(--ink-2); font-style: italic;">
-              ${p.burst >= 20 ? '🍔 Party order (24 meals)' : '☕ Single coffee (3m)'}
+            <div style="font-size: 0.7rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${p.burst >= 20 ? '🍔 Party (24m)' : '☕ Coffee (3m)'}
             </div>
-            <div style="display: flex; gap: 4px; margin-top: 4px;">
-              <button type="button" class="btn-move-left" data-idx="${idx}" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="flex:1; padding: 4px; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface);">
+            <div style="display: flex; gap: 4px; margin-top: 2px;">
+              <button type="button" class="btn-move-left" data-idx="${idx}" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="flex:1; padding: 2px 4px; border: 1px solid var(--hairline); border-radius: var(--rounded-pill, 9999px); background: var(--surface); font-size: 0.72rem; font-weight: 600;">
                 &larr; Left
               </button>
-              <button type="button" class="btn-move-right" data-idx="${idx}" ${idx === processes.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="flex:1; padding: 4px; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface);">
+              <button type="button" class="btn-move-right" data-idx="${idx}" ${idx === processes.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="flex:1; padding: 2px 4px; border: 1px solid var(--hairline); border-radius: var(--rounded-pill, 9999px); background: var(--surface); font-size: 0.72rem; font-weight: 600;">
                 Right &rarr;
               </button>
             </div>
@@ -297,36 +344,35 @@ export class LessonPlayer {
     // Render Scoreboard
     const isOptimal = schedule.avgWaiting <= 3;
     this.scoreboardSection.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <div>
-          <h3 style="font-size: 1.1rem; margin: 0; color: var(--ink);">📊 Live Scoreboard — Scheduling Criteria (Ch 6)</h3>
-          <p style="font-size: 0.85rem; color: var(--muted); margin: 2px 0 0 0;">Computed dynamically by pure function <code style="font-family:var(--font-mono)">fcfs()</code> (§2.1).</p>
+          <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Live Scoreboard</h3>
         </div>
-        <div style="padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; ${isOptimal ? 'background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);' : 'background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);'}">
+        <div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; ${isOptimal ? 'background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);' : 'background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);'}">
           ${isOptimal ? '⚡ Convoy Reversed: 82% Wait Reduction!' : '⚠️ Convoy Effect Active'}
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: calc(var(--step) * 1.5);">
-        <div style="padding: 12px; background: var(--surface-alt); border: 1px solid var(--rule); border-radius: 8px;">
-          <div style="font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Average Waiting Time</div>
-          <div style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: ${isOptimal ? 'var(--running)' : 'var(--waiting)'}; margin: 4px 0;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 6px;">
+        <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
+          <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Avg Waiting</div>
+          <div style="font-family: var(--font-display); font-size: 1.45rem; font-weight: 600; letter-spacing: -0.374px; color: ${isOptimal ? 'var(--running)' : 'var(--waiting)'}; margin: 2px 0;">
             ${schedule.avgWaiting} ms
           </div>
-          <div style="font-size: 0.75rem; color: var(--muted);">${isOptimal ? 'Slide 9: (0 + 3 + 6) / 3 = 3 ms' : 'Slide 8: (0 + 24 + 27) / 3 = 17 ms'}</div>
+          <div style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">${isOptimal ? '(0+3+6)/3 = 3 ms' : '(0+24+27)/3 = 17 ms'}</div>
         </div>
-        <div style="padding: 12px; background: var(--surface-alt); border: 1px solid var(--rule); border-radius: 8px;">
-          <div style="font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Average Turnaround Time</div>
-          <div style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: var(--ink); margin: 4px 0;">
+        <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
+          <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Turnaround</div>
+          <div style="font-family: var(--font-display); font-size: 1.45rem; font-weight: 600; letter-spacing: -0.374px; color: var(--ink); margin: 2px 0;">
             ${schedule.avgTurnaround} ms
           </div>
-          <div style="font-size: 0.75rem; color: var(--muted);">${isOptimal ? 'Slide 9: (3 + 6 + 30) / 3 = 13 ms' : 'Slide 8: (24 + 27 + 30) / 3 = 27 ms'}</div>
+          <div style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">${isOptimal ? '(3+6+30)/3 = 13 ms' : '(24+27+30)/3 = 27 ms'}</div>
         </div>
-        <div style="padding: 12px; background: var(--surface-alt); border: 1px solid var(--rule); border-radius: 8px;">
-          <div style="font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Queue Wait Breakdown</div>
-          <div style="font-family: var(--font-mono); font-size: 0.85rem; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
+          <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Breakdown</div>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; margin-top: 3px; display: flex; flex-direction: column; gap: 2px;">
             ${processes.map(p => `
               <div style="display: flex; justify-content: space-between;">
-                <span>${p.id}:</span>
+                <span style="font-weight: 600;">${p.id}:</span>
                 <span style="color: var(--waiting); font-weight: 600;">wait ${schedule.metrics[p.id]?.waiting ?? 0} ms</span>
               </div>
             `).join('')}

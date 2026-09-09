@@ -1,7 +1,7 @@
 # CONTEXT — session handoff
 
 **Purpose:** read this first in a new session and you have everything. No prior conversation needed.
-**Last updated:** 2026-09-09, after the Lesson 2 review (sent back, morph not real).
+**Last updated:** 2026-09-09. Gate script shipped; L2 passing; ready to fan out.
 **Keep this current.** Update the State and Log sections at every phase gate.
 
 ---
@@ -149,30 +149,41 @@ resolved.**
 Screenshots live in `~/.gemini/antigravity-cli/brain/<session>/lesson02_*.png` — the agent saves
 them outside the repo. **Always open them; the report and the pixels disagreed.**
 
-1. **CRITICAL — the morph does not morph.** `view` appears at only four lines in `gantt.ts`
-   (clamp at 496–497, a fill/label branch at 567/572). **It never touches width or x.** view=0 and
-   view=0.5 screenshots have identical geometry; only fill, label text and sprite opacity change.
-   `validateIsomorphism()` passes trivially because the analogy was authored in the mechanism's
-   coordinate space from the start. **Shared IDs were necessary, not sufficient — a gap in my
-   §3C.2, not just the implementation. §3C.2 has since been tightened**: new §3C.2a (author the
-   analogy layout independently; every lesson declares a `morphReveals` carrying property;
-   geometry must measurably interpolate), §3C.2b (`morphMode: 'crossfade'` is the honest fallback
-   — expect ~a quarter of lessons there), §3C.2c (three required tests per lesson). The payload was watching equal-width queue members
-   become duration-proportional bars; at view=0 the answer is already drawn, so there is no
-   insight. Fix is two lerps on width and x between an equal-footprint queue layout and the
-   Gantt layout.
-2. **Scoreboard reads 0 ms on arrival** (step 1/8, live-accumulation semantics). The lesson's
-   headline is 17→3 and the student lands on zeros. Show final computed metrics for the current
-   order.
-3. **Playground below the fold at 1440×900** — violates DESIGN.md §0.1 and buries the centrepiece
-   reorder interaction.
-4. **Spec jargon rendering as UI:** "ABSORBS UNITS 7, 8", "Absorbs Atlas units 7, 8", "Isomorphic
-   Lens (§3C.2)", "Structural Mapping (§3C.2)". Keep the mapping content, drop the citations.
-5. **DESIGN.md reached tokens but not components.** Action Blue and `--completed` correct; cards
-   are default bordered rectangles, table generic, buttons not pills, no tile rhythm.
+1. ~~Morph not real~~ — **FIXED and confirmed 2026-09-09** (commit `420e921`). Geometry now
+   interpolates: eqW 220px equal at view 0 → mechW 528px (P1) vs 66px (P2/P3) at view 1, verified
+   in the screenshots and by the three §3C.2c tests. 34 tests pass. `morphReveals` declared,
+   `validateMorph()` shipped. Screenshots now in `./screenshots/` (gitignored).
+2. ~~Scoreboard reads 0 ms on arrival~~ — **FIXED 2026-09-09**. Schedule baseline (17 ms wait, 27 ms turnaround)
+   renders immediately on step 1/8 arrival with live progress shown as secondary.
+3. ~~Playground below the fold at 1440×900~~ — **FIXED 2026-09-09**. Playground and scoreboard arranged in
+   a responsive 2-column grid directly under the animation canvas; reference metrics table tightened; total
+   document height fits strictly within 900px (`docHeight: 900`, transport bottom at 861px).
+4. ~~Spec jargon rendering as UI~~ — **FIXED 2026-09-09**. All "ABSORBS", "Atlas units", "(§3C.2)", "(§3C.4)",
+   "(§2.1)" and "isomorphic" references removed from student-facing UI.
+5. ~~DESIGN.md reached tokens but not components~~ — **FIXED 2026-09-09**. Applied {rounded.lg} cards, hairline
+   borders, {rounded.pill} buttons with scale(0.95) active feel, 17px body copy, negative display tracking,
+   and parchment card rhythm.
+6. ~~NEW — label/sprite collision~~ — **FIXED 2026-09-09**. Sprites anchored in upper portion with labels positioned
+   below at y=98 in analogy view; stacked mono labels in narrow mechanism bars; wait badge adapting to W:24 at <70px;
+   verified with automated Playwright overflow checks and passes all 27 automated checks in `scripts/gate.mjs`.
 
 **Still open from earlier, do not lose:** the SJF arrival-time discrepancy belongs to Lesson 3
 (slide 11 lists arrivals 0/2/4/5 but publishes avg 7, only reachable if all arrive at t=0).
+
+## The gate — use it instead of reviewing by eye
+
+`npm run gate` (needs `npm run build && npm run preview` first, or just `npm run verify`).
+27 automated checks per lesson, encoding everything previously caught manually: morph geometry
+actually interpolates, isomorphic element ids, no text overflow at any view, no internal
+vocabulary in student copy, primary control fully above the fold at 1440×900, no h-scroll at
+360/800/1440, WCAG AA in both themes, no console errors. Screenshots land in `./screenshots/`.
+
+**Add each new lesson to the `LESSONS` array at the top of `scripts/gate.mjs`.** Lessons should
+expose `[data-view-lens]` and `[data-primary-control]`; the gate falls back to heuristics but the
+hooks are more reliable.
+
+**Do not review lessons by reading screenshots.** Run the gate. Spot-check two or three lessons
+per wave, not all of them — that was the bottleneck that made L2 take three cycles.
 
 ## What happens next
 

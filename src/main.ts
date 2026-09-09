@@ -113,16 +113,15 @@ function renderIndex(): HTMLElement {
   const featured = document.createElement('div');
   featured.style.marginBottom = 'calc(var(--step) * 4)';
   featured.innerHTML = `
-    <a href="#/lecture-06/lesson-02" style="display: block; padding: calc(var(--step) * 3); background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: rgba(0,0,0,0.06) 0 4px 16px;">
+    <a href="#/lecture-06/lesson-02" style="display: block; padding: calc(var(--step) * 3); background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rounded-lg, 18px); text-decoration: none; color: inherit;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
-        <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Featured Reference Lesson · §3C</span>
-        <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; background: rgba(0,102,204,0.1); color: var(--accent); font-weight: 600;">Absorbs Atlas Units 7 & 8</span>
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Featured Interactive Lesson</span>
       </div>
-      <h2 style="font-size: 1.5rem; margin-bottom: var(--step); color: var(--ink);">Lesson 2: First-Come, First-Served — and the Convoy</h2>
-      <p style="font-size: 0.95rem; color: var(--muted); margin-bottom: var(--step);">
+      <h2 style="font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--step); color: var(--ink);">Lesson 2: First-Come, First-Served — and the Convoy</h2>
+      <p style="font-size: 17px; line-height: 1.47; letter-spacing: -0.374px; color: var(--muted); margin-bottom: var(--step);">
         Explore the single-file food truck queue analogy, smoothly morph into the FCFS Gantt chart, and drag to reorder the queue to watch average waiting time collapse from 17 ms to 3 ms!
       </p>
-      <div style="font-weight: 600; color: var(--accent); font-size: 0.9rem;">Launch Interactive Lesson &rarr;</div>
+      <div style="font-weight: 600; color: var(--accent); font-size: 0.95rem;">Launch Interactive Lesson &rarr;</div>
     </a>
   `;
 
@@ -136,8 +135,8 @@ function renderIndex(): HTMLElement {
     card.href = `#/${ch.slug}`;
     card.style.display = 'block';
     card.style.background = 'var(--surface)';
-    card.style.border = '1px solid var(--rule)';
-    card.style.borderRadius = '8px';
+    card.style.border = '1px solid var(--hairline)';
+    card.style.borderRadius = 'var(--rounded-lg, 18px)';
     card.style.padding = 'calc(var(--step) * 3)';
     card.style.transition = 'transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease)';
 
@@ -149,6 +148,8 @@ function renderIndex(): HTMLElement {
 
     const h2 = document.createElement('h2');
     h2.style.fontSize = '1.25rem';
+    h2.style.fontWeight = '600';
+    h2.style.letterSpacing = '-0.02em';
     h2.style.margin = 'calc(var(--step)) 0';
     h2.textContent = ch.topic;
 
@@ -196,13 +197,13 @@ function renderChapter(chSlug: string): HTMLElement {
     // Lesson 2
     const lessonItem = document.createElement('li');
     lessonItem.innerHTML = `
-      <a href="#/lecture-06/lesson-02" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 2px solid var(--accent); border-radius: 8px;">
+      <a href="#/lecture-06/lesson-02" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rounded-lg, 18px);">
         <div>
-          <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Lesson 2 (Absorbs Units 7 & 8)</span>
-          <div style="font-size: 1.1rem; font-weight: 600; color: var(--ink); margin-top: 2px;">First-Come, First-Served — and the Convoy</div>
-          <div style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">Food truck queue analogy · Isomorphic Gantt morph · Interactive reorder playground</div>
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent); text-transform: uppercase;">Lesson 2</span>
+          <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-top: 2px;">First-Come, First-Served — and the Convoy</div>
+          <div style="font-size: 0.88rem; color: var(--muted); margin-top: 2px;">Food truck queue analogy · Smooth Gantt morph · Interactive reorder playground</div>
         </div>
-        <span style="color: var(--accent); font-weight: 600; font-size: 0.9rem;">Launch &rarr;</span>
+        <span style="color: var(--accent); font-weight: 600; font-size: 0.9rem; padding: 6px 14px; border-radius: var(--rounded-pill, 9999px); background: rgba(0, 102, 204, 0.08);">Launch &rarr;</span>
       </a>
     `;
     list.appendChild(lessonItem);
@@ -248,17 +249,18 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
     leftRail.style.gap = 'var(--step)';
     leftRail.innerHTML = `
       <a href="#/${lectureSlug}" style="font-weight: 600; color: var(--accent); margin-bottom: var(--step); display: inline-block;">&larr; All ${ch?.title ?? 'Chapter'} Lessons</a>
-      <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Active Chapter</div>
+      <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Active Chapter</div>
       <div style="font-weight: 600; margin-bottom: var(--step);">${ch?.topic ?? ''}</div>
-      <div style="padding: calc(var(--step)*1.5); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 4px; font-weight: 500;">
+      <div style="padding: 14px; background: var(--surface); border-left: 4px solid var(--accent); border-radius: var(--rounded-lg, 18px); border: 1px solid var(--hairline); font-weight: 600;">
         Lesson ${lesson.id}: ${lesson.title}
-        <div style="font-size:0.75rem; color: var(--muted); margin-top: 4px;">Absorbs Atlas units ${lesson.absorbsUnits.join(', ')}</div>
       </div>
-      <div style="margin-top: var(--step); padding: var(--step); font-size: 0.8rem; background: var(--surface-alt); border-radius: 6px; border: 1px solid var(--rule);">
-        <strong>Isomorphic Lens (§3C.2):</strong><br>
-        • View 0: Food Truck Queue<br>
-        • View 1: FCFS Gantt Chart<br>
-        • ⟷ Drag / Morph between them
+      <div style="margin-top: var(--step); padding: 14px; font-size: 0.85rem; background: var(--canvas-parchment, #f5f5f7); border-radius: var(--rounded-lg, 18px); border: 1px solid var(--hairline); color: var(--ink-2); line-height: 1.45;">
+        <strong style="color: var(--ink);">Interactive Lenses</strong><br>
+        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--muted);">
+          <div>• Food Truck Queue (Physical queue)</div>
+          <div>• FCFS Gantt Chart (CPU timeline)</div>
+          <div>• Drag or scrub to morph between them</div>
+        </div>
       </div>
     `;
 
@@ -267,15 +269,14 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
     centerCol.className = 'unit-center-col';
     centerCol.style.display = 'flex';
     centerCol.style.flexDirection = 'column';
-    centerCol.style.gap = 'calc(var(--step)*2)';
+    centerCol.style.gap = 'calc(var(--step) * 0.9)';
 
     const lessonHeader = document.createElement('div');
     lessonHeader.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
-        <span style="font-size: 0.85rem; color: var(--accent); font-weight: 600; font-family: var(--font-mono);">Lesson ${lesson.id} · Lecture ${lesson.lecture} · ${lesson.slides}</span>
-        <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; background: rgba(0, 102, 204, 0.1); color: var(--accent); border: 1px solid var(--accent); font-weight: 600;">ABSORBS UNITS ${lesson.absorbsUnits.join(', ')}</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
+        <span style="font-size: 0.82rem; color: var(--accent); font-weight: 600; font-family: var(--font-mono);">Lesson ${lesson.id} · Lecture ${lesson.lecture} · ${lesson.slides}</span>
       </div>
-      <h1 style="font-size: 1.8rem; margin-bottom: var(--step);">${lesson.title}</h1>
+      <h1 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px 0; color: var(--ink);">${lesson.title}</h1>
     `;
     centerCol.appendChild(lessonHeader);
 
@@ -288,39 +289,39 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
       return;
     }
 
-    activeLessonPlayer = new LessonPlayer(centerCol, engine as GanttEngine, animMountTarget);
+    activeLessonPlayer = new LessonPlayer(centerCol, engine as GanttEngine, animMountTarget, lesson.morphReveals);
 
     // Right sidebar: Concept explanation & physical analogy
     const rightSidebar = document.createElement('aside');
     rightSidebar.className = 'unit-right-sidebar';
     rightSidebar.style.display = 'flex';
     rightSidebar.style.flexDirection = 'column';
-    rightSidebar.style.gap = 'calc(var(--step)*2)';
+    rightSidebar.style.gap = 'var(--step)';
 
     const conceptCard = document.createElement('div');
-    conceptCard.style.padding = 'calc(var(--step)*2)';
+    conceptCard.style.padding = '14px 16px';
     conceptCard.style.background = 'var(--surface)';
-    conceptCard.style.border = '1px solid var(--rule)';
-    conceptCard.style.borderRadius = '8px';
+    conceptCard.style.border = '1px solid var(--hairline)';
+    conceptCard.style.borderRadius = 'var(--rounded-lg, 18px)';
     conceptCard.innerHTML = `
-      <h3 style="font-size: 1.05rem; margin-bottom: var(--step); color: var(--ink);">OS Concept</h3>
-      <p style="font-family: var(--font-prose); font-size: 0.95rem; line-height: 1.6; color: var(--ink-2);">${lesson.concept}</p>
+      <h3 style="font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; color: var(--ink);">OS Concept</h3>
+      <p style="font-family: var(--font-ui); font-size: 15.5px; line-height: 1.45; letter-spacing: -0.3px; color: var(--ink);">${lesson.concept}</p>
     `;
 
     const analogyDomainColor = lesson.analogy.domain === 'travel' ? 'var(--travel)' : lesson.analogy.domain === 'food' ? 'var(--food)' : 'var(--friends)';
     const analogyCard = document.createElement('div');
-    analogyCard.style.padding = 'calc(var(--step)*2)';
+    analogyCard.style.padding = '14px 16px';
     analogyCard.style.background = 'var(--surface)';
-    analogyCard.style.border = '1px solid var(--rule)';
-    analogyCard.style.borderRadius = '8px';
+    analogyCard.style.border = '1px solid var(--hairline)';
+    analogyCard.style.borderRadius = 'var(--rounded-lg, 18px)';
     analogyCard.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--step);">
-        <h3 style="font-size: 1.05rem; color: var(--ink);">Physical Analogy</h3>
-        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: ${analogyDomainColor}; border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">${lesson.analogy.domain}</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <h3 style="font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink);">Physical Analogy</h3>
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: ${analogyDomainColor}; border: 1px solid currentColor; padding: 2px 8px; border-radius: var(--rounded-pill, 9999px);">${lesson.analogy.domain}</span>
       </div>
-      <p style="font-family: var(--font-prose); font-style: italic; font-size: 0.95rem; line-height: 1.6; color: var(--ink-2);">${lesson.analogy.text}</p>
-      <div style="margin-top: var(--step); font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: var(--step);">
-        <strong>Structural Mapping (§3C.2):</strong><br>
+      <p style="font-family: var(--font-ui); font-style: italic; font-size: 15.5px; line-height: 1.45; letter-spacing: -0.3px; color: var(--ink-2);">${lesson.analogy.text}</p>
+      <div style="margin-top: calc(var(--step) * 1.5); font-size: 0.88rem; line-height: 1.5; color: var(--muted); border-top: 1px solid var(--hairline); padding-top: var(--step);">
+        <strong style="color: var(--ink);">How the Analogy Maps to the OS:</strong><br>
         • Food Truck Window ➔ CPU Core<br>
         • Single Cook ➔ Uniprocessor Core<br>
         • Party Order (P1) ➔ CPU-bound job (burst 24)<br>

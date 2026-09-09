@@ -260,14 +260,14 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     root.style.width = '100%';
     root.style.display = 'flex';
     root.style.flexDirection = 'column';
-    root.style.gap = 'calc(var(--step) * 2)';
+    root.style.gap = 'calc(var(--step) * 0.75)';
 
     const svgScroll = document.createElement('div');
     svgScroll.className = 'gantt-svg-scroll';
     svgScroll.style.overflowX = 'auto';
     svgScroll.style.width = '100%';
-    svgScroll.style.border = '1px solid var(--rule)';
-    svgScroll.style.borderRadius = '8px';
+    svgScroll.style.border = '1px solid var(--hairline)';
+    svgScroll.style.borderRadius = 'var(--rounded-lg, 18px)';
     svgScroll.style.background = 'var(--surface)';
 
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -275,8 +275,9 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     this.svg.setAttribute('viewBox', `0 0 ${this.chartWidth + this.leftMargin + 40} ${this.chartHeight + this.topMargin + 50}`);
     this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     this.svg.style.width = '100%';
-    this.svg.style.height = 'auto';
+    this.svg.style.maxHeight = '180px';
     this.svg.style.display = 'block';
+    this.svg.style.margin = '0 auto';
 
     // 1. Service Station / CPU Core (Left Boundary)
     this.serviceStationGroup = document.createElementNS(svgNS, 'g');
@@ -632,140 +633,140 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
         }
       }
 
-      // Update Customer Sprite
+      // Update Customer Sprite (anchored in upper-middle portion to avoid colliding with label)
       const sprite = procGroup.querySelector(`#sprite-${p.id}`) as SVGGElement;
       if (sprite) {
         sprite.style.opacity = String(1 - v);
         sprite.replaceChildren();
 
         const cx = x + width / 2;
-        const cy = y + 42;
+        const cy = y + 36;
         const itemInfo = analogyItems[p.id];
         const avatarCol = itemInfo?.avatarColor || (p.burst > 10 ? '#D97706' : '#0284C7');
 
         // Head
         const head = document.createElementNS(svgNS, 'circle');
         head.setAttribute('cx', String(cx));
-        head.setAttribute('cy', String(cy - 16));
-        head.setAttribute('r', '11');
+        head.setAttribute('cy', String(cy - 6));
+        head.setAttribute('r', '9');
         head.setAttribute('fill', avatarCol);
 
         // Face details
         const eye1 = document.createElementNS(svgNS, 'circle');
-        eye1.setAttribute('cx', String(cx - 4));
-        eye1.setAttribute('cy', String(cy - 17));
-        eye1.setAttribute('r', '1.5');
+        eye1.setAttribute('cx', String(cx - 3));
+        eye1.setAttribute('cy', String(cy - 7));
+        eye1.setAttribute('r', '1.2');
         eye1.setAttribute('fill', '#FFFFFF');
 
         const eye2 = document.createElementNS(svgNS, 'circle');
-        eye2.setAttribute('cx', String(cx + 4));
-        eye2.setAttribute('cy', String(cy - 17));
-        eye2.setAttribute('r', '1.5');
+        eye2.setAttribute('cx', String(cx + 3));
+        eye2.setAttribute('cy', String(cy - 7));
+        eye2.setAttribute('r', '1.2');
         eye2.setAttribute('fill', '#FFFFFF');
 
         // Torso
         const torso = document.createElementNS(svgNS, 'rect');
-        torso.setAttribute('x', String(cx - 10));
-        torso.setAttribute('y', String(cy - 4));
-        torso.setAttribute('width', '20');
-        torso.setAttribute('height', '26');
-        torso.setAttribute('rx', '4');
+        torso.setAttribute('x', String(cx - 8));
+        torso.setAttribute('y', String(cy + 4));
+        torso.setAttribute('width', '16');
+        torso.setAttribute('height', '18');
+        torso.setAttribute('rx', '3');
         torso.setAttribute('fill', avatarCol);
         torso.setAttribute('opacity', '0.85');
 
         // Order badge / Tray
         const tray = document.createElementNS(svgNS, 'g');
+        const trayW = Math.min(width - 12, 46);
         const trayBg = document.createElementNS(svgNS, 'rect');
-        trayBg.setAttribute('x', String(cx - 26));
-        trayBg.setAttribute('y', String(cy + 24));
-        trayBg.setAttribute('width', '52');
-        trayBg.setAttribute('height', '18');
-        trayBg.setAttribute('rx', '4');
+        trayBg.setAttribute('x', String(cx - trayW / 2));
+        trayBg.setAttribute('y', String(cy + 25));
+        trayBg.setAttribute('width', String(trayW));
+        trayBg.setAttribute('height', '15');
+        trayBg.setAttribute('rx', '3');
         trayBg.setAttribute('fill', 'var(--surface)');
-        trayBg.setAttribute('stroke', 'var(--rule)');
+        trayBg.setAttribute('stroke', 'var(--hairline)');
         trayBg.setAttribute('stroke-width', '1');
 
         const trayTxt = document.createElementNS(svgNS, 'text');
         trayTxt.setAttribute('x', String(cx));
         trayTxt.setAttribute('y', String(cy + 36));
         trayTxt.setAttribute('font-family', 'var(--font-ui)');
-        trayTxt.setAttribute('font-size', '9');
+        trayTxt.setAttribute('font-size', '8.5');
         trayTxt.setAttribute('font-weight', '600');
         trayTxt.setAttribute('text-anchor', 'middle');
         trayTxt.setAttribute('fill', 'var(--ink)');
-        trayTxt.textContent = p.burst >= 20 ? '🍔 × 24' : '☕ 1 coffee';
+        trayTxt.textContent = width >= 150
+          ? (p.burst >= 20 ? '🍔 × 24' : '☕ 1 coffee')
+          : (p.burst >= 20 ? '🍔 24' : '☕ 1');
 
         tray.append(trayBg, trayTxt);
-
-        // Status bubble
-        const statusTxt = document.createElementNS(svgNS, 'text');
-        statusTxt.setAttribute('x', String(cx));
-        statusTxt.setAttribute('y', String(cy - 30));
-        statusTxt.setAttribute('font-family', 'var(--font-ui)');
-        statusTxt.setAttribute('font-size', '9');
-        statusTxt.setAttribute('font-weight', '700');
-        statusTxt.setAttribute('text-anchor', 'middle');
-
-        if (isCurrent) {
-          statusTxt.setAttribute('fill', 'var(--running)');
-          statusTxt.textContent = '🍳 Cooking';
-        } else if (isCompleted) {
-          statusTxt.setAttribute('fill', 'var(--completed)');
-          statusTxt.textContent = '✔ Served';
-        } else {
-          statusTxt.setAttribute('fill', 'var(--waiting)');
-          statusTxt.textContent = `⏳ Waiting`;
-        }
-
-        sprite.append(head, eye1, eye2, torso, tray, statusTxt);
+        sprite.append(head, eye1, eye2, torso, tray);
       }
 
-      // Update Label
+      // Update Label (anchored below sprite in analogy view; centered or stacked in mechanism view)
       const label = procGroup.querySelector(`#label-${p.id}`) as SVGTextElement;
       if (label) {
         label.setAttribute('x', String(x + width / 2));
-        label.setAttribute('y', String(y + height / 2 + (v >= 0.5 ? 4 : 28)));
         label.setAttribute('text-anchor', 'middle');
         label.setAttribute('font-weight', '600');
 
         if (v >= 0.5) {
-          label.setAttribute('font-family', 'var(--font-mono)');
-          label.setAttribute('font-size', '12');
           label.setAttribute('fill', isCurrent || isCompleted ? '#FFFFFF' : 'var(--ink)');
-          label.textContent = `${p.id} (${p.burst}ms)`;
+          if (width >= 80) {
+            label.setAttribute('y', String(y + height / 2 + 5));
+            label.setAttribute('font-family', 'var(--font-mono)');
+            label.setAttribute('font-size', '12');
+            label.textContent = `${p.id} (${p.burst}ms)`;
+          } else {
+            // Narrow width (e.g. 66px): stack process ID and burst time to prevent clipping
+            label.setAttribute('y', String(y + height / 2 - 2));
+            label.setAttribute('font-family', 'var(--font-ui)');
+            label.setAttribute('font-size', '11');
+            label.innerHTML = `
+              <tspan x="${x + width / 2}" dy="0">${p.id}</tspan>
+              <tspan x="${x + width / 2}" dy="13" font-size="9" font-family="var(--font-mono)" fill="${isCurrent || isCompleted ? 'rgba(255,255,255,0.85)' : 'var(--muted)'}">${p.burst}ms</tspan>
+            `;
+          }
         } else {
+          // Analogy view: positioned cleanly BELOW the customer sprite (never collides)
+          label.setAttribute('y', String(y + 98));
           label.setAttribute('font-family', 'var(--font-ui)');
-          label.setAttribute('font-size', '10');
+          label.setAttribute('font-size', width >= 160 ? '10.5' : '9.5');
           label.setAttribute('fill', 'var(--ink)');
-          label.textContent = `${p.id}: ${p.burst}m order`;
+          label.textContent = width >= 160 ? `${p.id}: ${p.burst}m order` : `${p.id} (${p.burst}m)`;
         }
       }
 
-      // Update Badge
+      // Update Badge (anchored at top; adapts width & abbreviation to never clip)
       const badge = procGroup.querySelector(`#badge-${p.id}`) as SVGGElement;
       if (badge) {
         badge.replaceChildren();
-        const m = state.metrics[p.id] ?? { waiting: 0, turnaround: 0, response: 0 };
+        const finalWait = this.scheduleResult.metrics[p.id]?.waiting ?? 0;
+        const liveWait = state.metrics[p.id]?.waiting ?? 0;
+        const displayWait = v >= 0.5 ? liveWait : finalWait;
+
+        const badgeW = width < 70 ? 38 : width < 110 ? 52 : 64;
+        const badgeX = x + width / 2 - badgeW / 2;
 
         const pill = document.createElementNS(svgNS, 'rect');
-        pill.setAttribute('x', String(x + 4));
-        pill.setAttribute('y', String(y + 6));
-        pill.setAttribute('width', String(Math.max(48, Math.min(width - 8, 70))));
-        pill.setAttribute('height', '16');
+        pill.setAttribute('x', String(badgeX));
+        pill.setAttribute('y', String(y + 5));
+        pill.setAttribute('width', String(badgeW));
+        pill.setAttribute('height', '15');
         pill.setAttribute('rx', '3');
         pill.setAttribute('fill', 'var(--surface)');
-        pill.setAttribute('stroke', 'var(--rule)');
+        pill.setAttribute('stroke', 'var(--hairline)');
         pill.setAttribute('stroke-width', '1');
 
         const pillTxt = document.createElementNS(svgNS, 'text');
-        pillTxt.setAttribute('x', String(x + 4 + Math.max(48, Math.min(width - 8, 70)) / 2));
-        pillTxt.setAttribute('y', String(y + 17));
+        pillTxt.setAttribute('x', String(x + width / 2));
+        pillTxt.setAttribute('y', String(y + 16));
         pillTxt.setAttribute('font-family', 'var(--font-mono)');
-        pillTxt.setAttribute('font-size', '9');
+        pillTxt.setAttribute('font-size', width < 70 ? '8.5' : '9');
         pillTxt.setAttribute('font-weight', '600');
         pillTxt.setAttribute('text-anchor', 'middle');
         pillTxt.setAttribute('fill', isWaiting ? 'var(--waiting)' : 'var(--muted)');
-        pillTxt.textContent = `Wait: ${m.waiting}`;
+        pillTxt.textContent = width < 70 ? `W:${displayWait}` : `Wait: ${displayWait}`;
 
         badge.append(pill, pillTxt);
       }
@@ -800,41 +801,42 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     this.cursorLabel.setAttribute('y', String(this.topMargin - 3));
     this.cursorLabel.textContent = labelText;
 
-    // 5. Live Metrics Table
+    // 5. Reference Metrics Table (Showing FINAL computed schedule metrics per Finding 2 + live accumulation)
     this.metricsTable.innerHTML = `
-      <table class="gantt-metrics-table" style="width:100%; border-collapse: collapse; font-family: var(--font-ui); font-size: 0.85rem; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;">
+      <table class="gantt-metrics-table" style="width:100%; border-collapse: collapse; font-family: var(--font-ui); font-size: 0.74rem; line-height: 1.25; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px); overflow: hidden;">
         <thead>
-          <tr style="border-bottom: 2px solid var(--rule); background: var(--surface-alt); text-align: left;">
-            <th style="padding: 8px 12px;">Process</th>
-            <th style="padding: 8px 12px;">Burst</th>
-            <th style="padding: 8px 12px;">Arrival</th>
-            <th style="padding: 8px 12px;">Wait Time</th>
-            <th style="padding: 8px 12px;">Turnaround</th>
-            <th style="padding: 8px 12px;">Response</th>
+          <tr style="border-bottom: 1px solid var(--hairline); background: var(--surface-alt); text-align: left;">
+            <th style="padding: 2px 6px; font-weight: 600;">Process</th>
+            <th style="padding: 2px 6px; font-weight: 600;">Burst</th>
+            <th style="padding: 2px 6px; font-weight: 600;">Arrival</th>
+            <th style="padding: 2px 6px; font-weight: 600;">Wait Time</th>
+            <th style="padding: 2px 6px; font-weight: 600;">Turnaround</th>
+            <th style="padding: 2px 6px; font-weight: 600;">Live Progress</th>
           </tr>
         </thead>
         <tbody>
           ${this.input.processes.map(p => {
-            const m = state.metrics[p.id] ?? { waiting: 0, turnaround: 0, response: 0 };
+            const finalM = this.scheduleResult.metrics[p.id] ?? { waiting: 0, turnaround: 0, response: 0 };
+            const liveM = state.metrics[p.id] ?? { waiting: 0, turnaround: 0, response: 0 };
             const isRowActive = state.activeProcessId === p.id;
             return `
-              <tr style="border-bottom: 1px solid var(--rule); ${isRowActive ? 'background: var(--surface-alt); font-weight:600;' : ''}">
-                <td style="padding: 6px 12px; font-family: var(--font-mono);">${p.id}</td>
-                <td style="padding: 6px 12px; font-family: var(--font-mono);">${p.burst}</td>
-                <td style="padding: 6px 12px; font-family: var(--font-mono);">${p.arrival}</td>
-                <td style="padding: 6px 12px; font-family: var(--font-mono); color: var(--waiting);">${m.waiting}</td>
-                <td style="padding: 6px 12px; font-family: var(--font-mono);">${m.turnaround}</td>
-                <td style="padding: 6px 12px; font-family: var(--font-mono);">${m.response}</td>
+              <tr style="border-bottom: 1px solid var(--hairline); ${isRowActive ? 'background: rgba(0,102,204,0.06); font-weight:600;' : ''}">
+                <td style="padding: 2px 6px; font-family: var(--font-mono);">${p.id}</td>
+                <td style="padding: 2px 6px; font-family: var(--font-mono);">${p.burst}</td>
+                <td style="padding: 2px 6px; font-family: var(--font-mono);">${p.arrival}</td>
+                <td style="padding: 2px 6px; font-family: var(--font-mono); color: var(--waiting); font-weight: 600;">${finalM.waiting} ms</td>
+                <td style="padding: 2px 6px; font-family: var(--font-mono);">${finalM.turnaround} ms</td>
+                <td style="padding: 2px 6px; font-family: var(--font-mono); color: var(--muted); font-size: 0.72rem;">waited ${liveM.waiting}ms</td>
               </tr>
             `;
           }).join('')}
         </tbody>
         <tfoot>
-          <tr style="background: var(--surface-alt); font-weight: 700;">
-            <td colspan="3" style="padding: 8px 12px;">Average</td>
-            <td style="padding: 8px 12px; font-family: var(--font-mono); color: var(--waiting); font-size: 1rem;">${state.averages.avgWaiting} ms</td>
-            <td style="padding: 8px 12px; font-family: var(--font-mono);">${state.averages.avgTurnaround} ms</td>
-            <td style="padding: 8px 12px; font-family: var(--font-mono);">${state.averages.avgResponse} ms</td>
+          <tr style="background: var(--surface-alt); font-weight: 600;">
+            <td colspan="3" style="padding: 2px 6px;">Average Schedule Baseline</td>
+            <td style="padding: 2px 6px; font-family: var(--font-mono); color: var(--waiting); font-size: 0.82rem; font-weight: 700;">${this.scheduleResult.avgWaiting} ms</td>
+            <td style="padding: 2px 6px; font-family: var(--font-mono);">${this.scheduleResult.avgTurnaround} ms</td>
+            <td style="padding: 2px 6px; font-family: var(--font-mono); color: var(--muted); font-size: 0.72rem;">live avg: ${state.averages.avgWaiting}ms</td>
           </tr>
         </tfoot>
       </table>
