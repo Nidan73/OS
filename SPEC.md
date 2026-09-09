@@ -78,7 +78,12 @@ through interactive 2D animations. Each concept gets one self-contained "unit" p
 
 There is **no audio and no narration** anywhere in this project. Explanation is on-screen text.
 
-Target: Netlify or Vercel, static output, no backend, no database, no auth.
+Target: a static `dist/` bundle — no backend, no database, no auth.
+
+**Deployment is out of scope.** The project owner handles hosting entirely. Your deliverable is a
+verified production build, never a deploy. Do not run deploy commands, do not create hosting
+accounts, do not push to a hosting provider. Producing the config files the build needs is in
+scope; using them is not.
 
 ---
 
@@ -387,6 +392,57 @@ exactly the failure mode you are trying to avoid.
 
 ---
 
+## 3B. Git workflow
+
+Git is not optional bookkeeping here — Phase 1 runs seven subagents in `branch` isolation, so the
+repository *is* the coordination mechanism. It is also your recovery path: a crashed session or a
+quota lockout loses nothing that has been pushed.
+
+Remote: `https://github.com/Nidan73/OS.git`
+
+### 3B.1 Push early, push often
+
+- Commit at meaningful checkpoints — a working engine, a passing test suite, a completed lecture —
+  never one giant commit at the end of a phase.
+- **Push after every phase gate, minimum.** Push more often during long phases.
+- Any fresh session must be able to `git pull` and resume with no context loss. If the work only
+  exists in your working tree, it does not exist.
+
+### 3B.2 Branch per unit of work
+
+| Phase | Branch | Merges to `main` |
+|---|---|---|
+| 0 | `main` directly | — |
+| 1 | `phase1/engine-<name>`, one per subagent | after review of that engine |
+| 2 | `phase2/lecture-<nn>`, one per subagent | after that lecture's units render |
+| 3 | `phase3/<task>` | after review |
+| 4 | `phase4/integration` | at handover |
+
+Subagents in `branch` isolation get their own worktree. Each pushes its own branch. **A subagent
+never merges to `main` and never touches another agent's branch.** Merging is the orchestrator's
+job, after review.
+
+### 3B.3 Rules
+
+- **Never force-push. Never rewrite published history.** With seven agents sharing a remote, a
+  force-push destroys someone else's work.
+- **`main` must always build.** Never merge a branch whose tests fail or whose build errors.
+- Commit messages state what and why: `feat(engine): gantt renders preemptive SRTF timeline`,
+  `test(bankers): assert safe sequence from L10 slide 31`. Reference unit ids where relevant.
+- `.gitignore` must cover `node_modules/`, `dist/`, `.env*`, `.DS_Store`, and editor directories.
+- **Never commit secrets, API keys, or `.env` files.** If one is committed, say so immediately —
+  do not quietly rewrite history to hide it.
+- Do not commit `dist/`. The build is reproducible; the owner builds it themselves.
+
+### 3B.4 Pushing is not deploying
+
+Pushing to GitHub is version control and nothing more. Deployment remains entirely the owner's
+(§1). **Be aware that if the owner later connects a host to this repository, pushes to `main`
+become deploys** — which is another reason feature work stays on branches and `main` moves only
+through deliberate, reviewed merges.
+
+---
+
 ## 4. The seven engines
 
 Each engine is `(input) => Step[]`. Each is built by one subagent, in isolation, against tests.
@@ -532,8 +588,12 @@ A top bar present on every page, containing:
 
 ### 4B.4 Deep links must work
 
-Every unit has a stable URL that restores the unit at step 0. Refreshing must not 404. On
-Netlify this needs a `_redirects` file containing `/*  /index.html  200`.
+Every unit has a stable URL that restores the unit at step 0. Refreshing must not 404.
+
+Because the app is hash-routed, a refresh resolves client-side and needs no server rewrite. Still
+ship a `_redirects` file containing `/*  /index.html  200` and a minimal `netlify.toml`, so the
+owner can deploy without editing anything — but **do not deploy them yourself**. Verify routing
+against the built output with `vite preview`, not against the dev server.
 
 ---
 
@@ -702,17 +762,23 @@ A unit ships only when **all** of these hold:
 
 | Phase | Work | Parallel? |
 |---|---|---|
-| **0** | Scaffold, `types.ts`, `tokens.css`, `UnitPlayer`, deploy empty site | **No — serial** |
+| **0** | Scaffold, `types.ts`, `tokens.css`, `UnitPlayer`, verified production build | **No — serial** |
 | **1** | 7 engines + their algorithms + tests | **Yes — 7 agents** |
 | **2** | 89 unit data files | **Yes — 5 agents, one per lecture** |
 | **3** | Index page, routing, analogy scenes | Yes — 2 agents |
-| **4** | Integration pass, a11y audit, deploy | No — serial |
+| **4** | Integration pass, a11y audit, responsive sweep, final build handover | No — serial |
 
 **Phase 0 must be complete and reviewed before Phase 1 starts.** It defines the contracts
 everything else is written against. Parallelising it produces seven incompatible interfaces.
 
-Deploy at the end of Phase 0 — not at the end. Discovering a build problem at unit 60 is
-expensive; discovering it on day one is free.
+**Verify the production build at the end of Phase 0 — not at the end of the project.** Run
+`npm run build` and then `vite preview`, and check the app in a browser against the *built*
+output. The dev server hides exactly the class of bug that breaks a deploy: wrong base paths,
+broken asset URLs, and routing that only works under HMR. Discovering those at unit 60 is
+expensive; discovering them on day one is free.
+
+Handover at the end of Phase 4 is a clean `dist/` plus a one-page `DEPLOY.md` stating the build
+command, publish directory, and Node version. The owner takes it from there.
 
 ---
 

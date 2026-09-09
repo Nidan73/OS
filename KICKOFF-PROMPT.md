@@ -12,7 +12,12 @@ redesign them. `ATLAS.md` is the 89-unit backlog.
 
 **Project:** a deployable static site that teaches 89 Operating Systems concepts through
 interactive 2D animations. Vite + TypeScript + GSAP + inline SVG. No audio, no narration —
-explanation is on-screen text. Deploys to Netlify.
+explanation is on-screen text.
+
+**Deployment is out of scope and handled entirely by the project owner.** Do not deploy, do not
+run deploy commands, do not create hosting accounts, do not push to a hosting provider. Your
+deliverable is a verified production build in `dist/`. Writing the config files a deploy needs
+(`netlify.toml`, `_redirects`) is in scope; using them is not.
 
 ## The three rules that matter most
 
@@ -74,6 +79,26 @@ the error, chapter navigation keeps working, and unit modules load dynamically s
 file cannot break the index. A student hitting a bug on unit 63 must still be able to use the
 other 88. SPEC.md §3A.3.
 
+## Git
+
+Push your work to `https://github.com/Nidan73/OS.git`. This is version control and recovery, not
+deployment — see below.
+
+- Commit at meaningful checkpoints, never one giant commit per phase. **Push after every phase
+  gate, minimum.** If a session crashes or you hit a quota lockout, anything unpushed is lost.
+- Branch per unit of work: `phase1/engine-gantt`, `phase2/lecture-10`, and so on. Phase 1
+  subagents run in `branch` isolation and each pushes its own branch.
+- **A subagent never merges to `main` and never touches another agent's branch.** You merge,
+  after review, and only when tests pass and the build is clean. `main` must always build.
+- Never force-push and never rewrite published history — with seven agents on one remote that
+  destroys other people's work.
+- `.gitignore` covers `node_modules/`, `dist/`, `.env*`. Never commit secrets or `dist/`. If a
+  secret does get committed, say so immediately rather than quietly rewriting history.
+
+**Pushing is not deploying.** Deployment stays with the owner. Note that if a host is later
+connected to this repo, pushes to `main` become deploys — another reason work stays on branches
+and `main` moves only through reviewed merges. SPEC.md §3B.
+
 ## How to use subagents
 
 Parallelise aggressively, but **only inside a phase**. The phase boundaries are hard gates.
@@ -83,11 +108,11 @@ done, you get seven incompatible engines and a rewrite. Do Phase 0 yourself, ser
 
 | Phase | Work | Agents |
 |---|---|---|
-| 0 | Scaffold, `core/types.ts`, `tokens.css`, `UnitPlayer`, deploy empty site to Netlify | **you, alone** |
+| 0 | Scaffold, `core/types.ts`, `tokens.css`, `UnitPlayer`, verified production build | **you, alone** |
 | 1 | 7 engines + their algorithms + Vitest suites | **7 in parallel** |
 | 2 | 89 unit data files | **5 in parallel**, one per lecture |
 | 3 | Index page + routing; analogy scene layer | 2 in parallel |
-| 4 | Integration, a11y audit, responsive pass, deploy | you, alone |
+| 4 | Integration, a11y audit, responsive sweep, `dist/` + `DEPLOY.md` handover | you, alone |
 
 Define subagents as `.agents/agents/<name>.md` with YAML frontmatter, and spawn them with
 `invoke_subagent`. Use `branch` isolation for Phase 1 so the seven engines cannot collide in the
@@ -105,8 +130,9 @@ Each one must contain:
 - "if the spec is ambiguous, stop and report — do not invent"
 
 Between phases, verify before proceeding: `npm run build` clean, `npm test` green, and spot-check
-two units in the browser in both light and dark theme. A phase gate that passes on assertion
-rather than inspection is not a gate.
+two units in the browser in both light and dark theme. Check against the **built output** via
+`vite preview`, not the dev server — the dev server hides base-path, asset-URL and routing bugs.
+A phase gate that passes on assertion rather than inspection is not a gate.
 
 ## Order within Phase 1
 
@@ -134,5 +160,11 @@ which and why. Do not report a phase complete until it actually is.
 ## Start now
 
 Begin Phase 0. Before writing code, restate in three or four sentences: what you are building,
-what `core/types.ts` will contain, and what your Phase 1 subagent split will be. Then build it,
-deploy the empty site, and report back before starting Phase 1.
+what `core/types.ts` will contain, and what your Phase 1 subagent split will be — paste the
+actual type definitions as code, not file line references.
+
+Then build it, run `npm run build`, serve the result with `vite preview`, and confirm in a real
+browser that the shell renders, the five-chapter nav marks the active chapter, the theme toggle
+works both ways, and the layout holds at 360 px and 1440 px. Report what you actually saw.
+
+Do not deploy. Report back and wait for review before starting Phase 1.

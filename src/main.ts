@@ -1,4 +1,6 @@
 import './styles/base.css';
+import { loadUnitDynamically, mountUnit, renderFallback } from './core/registry.js';
+import { UnitPlayer } from './components/UnitPlayer.js';
 
 interface ChapterMeta {
   id: number;
@@ -15,6 +17,8 @@ const CHAPTERS: ChapterMeta[] = [
   { id: 9, slug: 'lecture-09', title: 'L9 Semaphores', topic: 'Synchronization — Hardware, Mutexes & Semaphores', unitCount: 16 },
   { id: 10, slug: 'lecture-10', title: 'L10 Deadlocks', topic: 'Deadlocks', unitCount: 27 },
 ];
+
+let activePlayer: UnitPlayer | null = null;
 
 function initTheme(): void {
   let savedTheme = 'light';
@@ -33,7 +37,7 @@ function toggleTheme(): void {
   try {
     localStorage.setItem('os-theme', next);
   } catch {
-    // ignore
+    // ignore in restricted environments
   }
 }
 
@@ -160,7 +164,39 @@ function renderChapter(chSlug: string): HTMLElement {
   return container;
 }
 
-function handleRoute(): void {
+async function renderUnitRoute(lectureSlug: string, unitSlug: string, mainContainer: HTMLElement): Promise<void> {
+  try {
+    const unit = await loadUnitDynamically(lectureSlug, unitSlug);
+    if (!unit) {
+      mainContainer.innerHTML = `
+        <div class="unit-not-found" style="padding: calc(var(--step)*3);">
+          <h2>Unit not found</h2>
+          <p>The unit "${unitSlug}" in ${lectureSlug} could not be located.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const animMountTarget = document.createElement('div');
+    const engine = mountUnit(unit, animMountTarget);
+    if (!engine) {
+      // mountUnit already rendered fallback
+      mainContainer.appendChild(animMountTarget);
+      return;
+    }
+
+    activePlayer = new UnitPlayer(mainContainer, engine);
+  } catch (err) {
+    renderFallback(mainContainer, { slug: unitSlug }, err);
+  }
+}
+
+async function handleRoute(): Promise<void> {
+  if (activePlayer) {
+    activePlayer.destroy();
+    activePlayer = null;
+  }
+
   const hash = window.location.hash.slice(1) || '/';
   const app = document.getElementById('app');
   if (!app) return;
@@ -175,11 +211,10 @@ function handleRoute(): void {
     if (parts.length === 1) {
       app.appendChild(renderChapter(parts[0]));
     } else {
-      // Unit route placeholder
-      const placeholder = document.createElement('main');
-      placeholder.className = 'unit-layout';
-      placeholder.innerHTML = `<h2>Unit Route: ${hash}</h2><p>Engine dynamically mounts here.</p>`;
-      app.appendChild(placeholder);
+      const mainContainer = document.createElement('main');
+      mainContainer.className = 'unit-layout';
+      app.appendChild(mainContainer);
+      await renderUnitRoute(parts[0], parts[1], mainContainer);
     }
   } else {
     const notFound = document.createElement('main');
@@ -190,5 +225,7 @@ function handleRoute(): void {
 }
 
 initTheme();
-window.addEventListener('hashchange', handleRoute);
-handleRoute();
+window.addEventListener('hashchange', () => {
+  handleRoute().catch(console.error);
+});
+handleRoute().catch(console.error);

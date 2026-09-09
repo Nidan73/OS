@@ -4,8 +4,9 @@ import { AnimationEngine } from './engine.js';
 export type EngineConstructor = new (container: HTMLElement, input: any) => AnimationEngine<any, any>;
 
 const engineRegistry: Partial<Record<EngineId, EngineConstructor>> = {};
-const unitRegistry: Map<number, Unit<any, any>> = new Map();
-const unitSlugMap: Map<string, Unit<any, any>> = new Map();
+
+// Vite lazy glob mapping for dynamic unit loading (§3A.3)
+const unitModules = import.meta.glob('../units/**/*.ts');
 
 export function registerEngine(id: EngineId, ctor: EngineConstructor): void {
   engineRegistry[id] = ctor;
@@ -15,24 +16,26 @@ export function getEngine(id: EngineId): EngineConstructor | undefined {
   return engineRegistry[id];
 }
 
-export function registerUnit(unit: Unit<any, any>): void {
-  unitRegistry.set(unit.id, unit);
-  unitSlugMap.set(unit.slug, unit);
+/**
+ * Dynamic unit loader (§3A.3).
+ * Loads unit modules dynamically at route time so one bad file cannot break the index.
+ */
+export async function loadUnitDynamically(lectureFolder: string, slug: string): Promise<Unit<any, any> | null> {
+  const path = `../units/${lectureFolder}/${slug}.ts`;
+  const loader = unitModules[path];
+  if (!loader) {
+    return null;
+  }
+  try {
+    const mod = (await loader()) as { default?: Unit<any, any>; unit?: Unit<any, any> };
+    return mod.unit || mod.default || null;
+  } catch (err) {
+    console.error(`Failed to dynamically import unit module ${path}:`, err);
+    throw err;
+  }
 }
 
-export function getUnitById(id: number): Unit<any, any> | undefined {
-  return unitRegistry.get(id);
-}
-
-export function getUnitBySlug(slug: string): Unit<any, any> | undefined {
-  return unitSlugMap.get(slug);
-}
-
-export function getAllUnits(): Unit<any, any>[] {
-  return Array.from(unitRegistry.values()).sort((a, b) => a.id - b.id);
-}
-
-export function renderFallback(container: HTMLElement, unit: Unit<any, any>, error: unknown): void {
+export function renderFallback(container: HTMLElement, unit: Partial<Unit<any, any>> & { id?: number; title?: string; slug?: string; lecture?: number; slides?: string; engine?: string }, error: unknown): void {
   container.replaceChildren();
   const card = document.createElement('div');
   card.className = 'unit-error-card';
@@ -46,7 +49,7 @@ export function renderFallback(container: HTMLElement, unit: Unit<any, any>, err
   const heading = document.createElement('h2');
   heading.style.color = 'var(--accent)';
   heading.style.marginBottom = 'var(--step)';
-  heading.textContent = `Unit ${unit.id}: ${unit.title} failed to load`;
+  heading.textContent = `Unit ${unit.id ?? '?'}: ${unit.title ?? unit.slug ?? 'Unknown'} failed to load`;
 
   const msg = document.createElement('p');
   msg.style.marginBottom = 'var(--step)';
@@ -54,7 +57,7 @@ export function renderFallback(container: HTMLElement, unit: Unit<any, any>, err
 
   const meta = document.createElement('small');
   meta.style.color = 'var(--muted)';
-  meta.textContent = `Lecture ${unit.lecture} · ${unit.slides} · Engine: ${unit.engine}`;
+  meta.textContent = `Lecture ${unit.lecture ?? '?'} · ${unit.slides ?? ''} · Engine: ${unit.engine ?? '?'}`;
 
   card.append(heading, msg, meta);
   container.appendChild(card);
