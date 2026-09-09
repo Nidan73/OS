@@ -1,6 +1,8 @@
 import './styles/base.css';
-import { loadUnitDynamically, mountUnit, renderFallback } from './core/registry.js';
+import { loadUnitDynamically, loadLessonDynamically, mountUnit, mountLesson, renderFallback } from './core/registry.js';
 import { UnitPlayer } from './components/UnitPlayer.js';
+import { LessonPlayer } from './components/LessonPlayer.js';
+import { GanttEngine } from './engines/gantt.js';
 
 interface ChapterMeta {
   id: number;
@@ -19,6 +21,7 @@ const CHAPTERS: ChapterMeta[] = [
 ];
 
 let activePlayer: UnitPlayer | null = null;
+let activeLessonPlayer: LessonPlayer | null = null;
 
 function initTheme(): void {
   try {
@@ -102,9 +105,26 @@ function renderIndex(): HTMLElement {
   const subtitle = document.createElement('p');
   subtitle.style.fontSize = '1.1rem';
   subtitle.style.color = 'var(--muted)';
-  subtitle.textContent = '89 interactive 2D animated lessons across 5 core lectures.';
+  subtitle.textContent = '20 Interactive Lessons & Reference Layer across 5 core lectures.';
 
   header.append(title, subtitle);
+
+  // Featured Lesson Card
+  const featured = document.createElement('div');
+  featured.style.marginBottom = 'calc(var(--step) * 4)';
+  featured.innerHTML = `
+    <a href="#/lecture-06/lesson-02" style="display: block; padding: calc(var(--step) * 3); background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: rgba(0,0,0,0.06) 0 4px 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
+        <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Featured Reference Lesson · §3C</span>
+        <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; background: rgba(0,102,204,0.1); color: var(--accent); font-weight: 600;">Absorbs Atlas Units 7 & 8</span>
+      </div>
+      <h2 style="font-size: 1.5rem; margin-bottom: var(--step); color: var(--ink);">Lesson 2: First-Come, First-Served — and the Convoy</h2>
+      <p style="font-size: 0.95rem; color: var(--muted); margin-bottom: var(--step);">
+        Explore the single-file food truck queue analogy, smoothly morph into the FCFS Gantt chart, and drag to reorder the queue to watch average waiting time collapse from 17 ms to 3 ms!
+      </p>
+      <div style="font-weight: 600; color: var(--accent); font-size: 0.9rem;">Launch Interactive Lesson &rarr;</div>
+    </a>
+  `;
 
   const grid = document.createElement('div');
   grid.style.display = 'grid';
@@ -135,13 +155,13 @@ function renderIndex(): HTMLElement {
     const count = document.createElement('p');
     count.style.fontSize = '0.9rem';
     count.style.color = 'var(--muted)';
-    count.textContent = `${ch.unitCount} animated units`;
+    count.textContent = ch.id === 6 ? '5 interactive lessons' : `${ch.unitCount} animated units`;
 
     card.append(num, h2, count);
     grid.appendChild(card);
   });
 
-  container.append(header, grid);
+  container.append(header, featured, grid);
   return container;
 }
 
@@ -164,27 +184,156 @@ function renderChapter(chSlug: string): HTMLElement {
   const desc = document.createElement('p');
   desc.style.color = 'var(--muted)';
   desc.style.marginBottom = 'calc(var(--step) * 3)';
-  desc.textContent = `Lecture overview. Select a unit below:`;
+  desc.textContent = `Lecture interactive lessons and reference layer:`;
 
   const list = document.createElement('ul');
   list.style.listStyle = 'none';
   list.style.display = 'flex';
   list.style.flexDirection = 'column';
-  list.style.gap = 'var(--step)';
+  list.style.gap = 'calc(var(--step) * 1.5)';
 
   if (ch.id === 6) {
-    const item = document.createElement('li');
-    item.innerHTML = `
+    // Lesson 2
+    const lessonItem = document.createElement('li');
+    lessonItem.innerHTML = `
+      <a href="#/lecture-06/lesson-02" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 2px solid var(--accent); border-radius: 8px;">
+        <div>
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Lesson 2 (Absorbs Units 7 & 8)</span>
+          <div style="font-size: 1.1rem; font-weight: 600; color: var(--ink); margin-top: 2px;">First-Come, First-Served — and the Convoy</div>
+          <div style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">Food truck queue analogy · Isomorphic Gantt morph · Interactive reorder playground</div>
+        </div>
+        <span style="color: var(--accent); font-weight: 600; font-size: 0.9rem;">Launch &rarr;</span>
+      </a>
+    `;
+    list.appendChild(lessonItem);
+
+    // Unit 7
+    const unit7Item = document.createElement('li');
+    unit7Item.innerHTML = `
       <a href="#/lecture-06/fcfs" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;">
-        <span><strong>Unit 7:</strong> First-Come, First-Served (FCFS)</span>
+        <div>
+          <span style="font-size: 0.8rem; color: var(--muted);">Unit 7 (Baseline)</span>
+          <div style="font-weight: 600; color: var(--ink);">First-Come, First-Served (FCFS)</div>
+        </div>
         <span style="color: var(--muted); font-size: 0.85rem;">slide 8 &rarr;</span>
       </a>
     `;
-    list.appendChild(item);
+    list.appendChild(unit7Item);
   }
 
   container.append(heading, desc, list);
   return container;
+}
+
+async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainContainer: HTMLElement): Promise<void> {
+  try {
+    const lesson = await loadLessonDynamically(lectureSlug, lessonSlug);
+    if (!lesson) {
+      mainContainer.innerHTML = `
+        <div class="unit-not-found" style="padding: calc(var(--step)*3);">
+          <h2>Lesson not found</h2>
+          <p>The lesson "${lessonSlug}" in ${lectureSlug} could not be located.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const ch = CHAPTERS.find(c => c.slug === lectureSlug);
+
+    // Left chapter rail
+    const leftRail = document.createElement('aside');
+    leftRail.className = 'unit-sidebar-rail';
+    leftRail.style.display = 'flex';
+    leftRail.style.flexDirection = 'column';
+    leftRail.style.gap = 'var(--step)';
+    leftRail.innerHTML = `
+      <a href="#/${lectureSlug}" style="font-weight: 600; color: var(--accent); margin-bottom: var(--step); display: inline-block;">&larr; All ${ch?.title ?? 'Chapter'} Lessons</a>
+      <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Active Chapter</div>
+      <div style="font-weight: 600; margin-bottom: var(--step);">${ch?.topic ?? ''}</div>
+      <div style="padding: calc(var(--step)*1.5); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 4px; font-weight: 500;">
+        Lesson ${lesson.id}: ${lesson.title}
+        <div style="font-size:0.75rem; color: var(--muted); margin-top: 4px;">Absorbs Atlas units ${lesson.absorbsUnits.join(', ')}</div>
+      </div>
+      <div style="margin-top: var(--step); padding: var(--step); font-size: 0.8rem; background: var(--surface-alt); border-radius: 6px; border: 1px solid var(--rule);">
+        <strong>Isomorphic Lens (§3C.2):</strong><br>
+        • View 0: Food Truck Queue<br>
+        • View 1: FCFS Gantt Chart<br>
+        • ⟷ Drag / Morph between them
+      </div>
+    `;
+
+    // Center animation column
+    const centerCol = document.createElement('section');
+    centerCol.className = 'unit-center-col';
+    centerCol.style.display = 'flex';
+    centerCol.style.flexDirection = 'column';
+    centerCol.style.gap = 'calc(var(--step)*2)';
+
+    const lessonHeader = document.createElement('div');
+    lessonHeader.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
+        <span style="font-size: 0.85rem; color: var(--accent); font-weight: 600; font-family: var(--font-mono);">Lesson ${lesson.id} · Lecture ${lesson.lecture} · ${lesson.slides}</span>
+        <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; background: rgba(0, 102, 204, 0.1); color: var(--accent); border: 1px solid var(--accent); font-weight: 600;">ABSORBS UNITS ${lesson.absorbsUnits.join(', ')}</span>
+      </div>
+      <h1 style="font-size: 1.8rem; margin-bottom: var(--step);">${lesson.title}</h1>
+    `;
+    centerCol.appendChild(lessonHeader);
+
+    // Mount engine & LessonPlayer (opens at view = 0 per §3C.3)
+    const animMountTarget = document.createElement('div');
+    const engine = mountLesson(lesson, animMountTarget, 0);
+    if (!engine) {
+      centerCol.appendChild(animMountTarget);
+      mainContainer.append(leftRail, centerCol);
+      return;
+    }
+
+    activeLessonPlayer = new LessonPlayer(centerCol, engine as GanttEngine, animMountTarget);
+
+    // Right sidebar: Concept explanation & physical analogy
+    const rightSidebar = document.createElement('aside');
+    rightSidebar.className = 'unit-right-sidebar';
+    rightSidebar.style.display = 'flex';
+    rightSidebar.style.flexDirection = 'column';
+    rightSidebar.style.gap = 'calc(var(--step)*2)';
+
+    const conceptCard = document.createElement('div');
+    conceptCard.style.padding = 'calc(var(--step)*2)';
+    conceptCard.style.background = 'var(--surface)';
+    conceptCard.style.border = '1px solid var(--rule)';
+    conceptCard.style.borderRadius = '8px';
+    conceptCard.innerHTML = `
+      <h3 style="font-size: 1.05rem; margin-bottom: var(--step); color: var(--ink);">OS Concept</h3>
+      <p style="font-family: var(--font-prose); font-size: 0.95rem; line-height: 1.6; color: var(--ink-2);">${lesson.concept}</p>
+    `;
+
+    const analogyDomainColor = lesson.analogy.domain === 'travel' ? 'var(--travel)' : lesson.analogy.domain === 'food' ? 'var(--food)' : 'var(--friends)';
+    const analogyCard = document.createElement('div');
+    analogyCard.style.padding = 'calc(var(--step)*2)';
+    analogyCard.style.background = 'var(--surface)';
+    analogyCard.style.border = '1px solid var(--rule)';
+    analogyCard.style.borderRadius = '8px';
+    analogyCard.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--step);">
+        <h3 style="font-size: 1.05rem; color: var(--ink);">Physical Analogy</h3>
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: ${analogyDomainColor}; border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">${lesson.analogy.domain}</span>
+      </div>
+      <p style="font-family: var(--font-prose); font-style: italic; font-size: 0.95rem; line-height: 1.6; color: var(--ink-2);">${lesson.analogy.text}</p>
+      <div style="margin-top: var(--step); font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: var(--step);">
+        <strong>Structural Mapping (§3C.2):</strong><br>
+        • Food Truck Window ➔ CPU Core<br>
+        • Single Cook ➔ Uniprocessor Core<br>
+        • Party Order (P1) ➔ CPU-bound job (burst 24)<br>
+        • Quick Coffees (P2, P3) ➔ I/O-bound jobs (burst 3)<br>
+        • Queue Order ➔ Ready Queue Arrival Sequence
+      </div>
+    `;
+
+    rightSidebar.append(conceptCard, analogyCard);
+    mainContainer.append(leftRail, centerCol, rightSidebar);
+  } catch (err) {
+    renderFallback(mainContainer, { slug: lessonSlug }, err);
+  }
 }
 
 async function renderUnitRoute(lectureSlug: string, unitSlug: string, mainContainer: HTMLElement): Promise<void> {
@@ -288,6 +437,10 @@ async function handleRoute(): Promise<void> {
     activePlayer.destroy();
     activePlayer = null;
   }
+  if (activeLessonPlayer) {
+    activeLessonPlayer.destroy();
+    activeLessonPlayer = null;
+  }
 
   const hash = window.location.hash.slice(1) || '/';
   const app = document.getElementById('app');
@@ -298,6 +451,11 @@ async function handleRoute(): Promise<void> {
 
   if (hash === '/' || hash === '') {
     app.appendChild(renderIndex());
+  } else if (hash === '/lesson-02' || hash === '/lecture-06/lesson-02') {
+    const mainContainer = document.createElement('main');
+    mainContainer.className = 'unit-layout';
+    app.appendChild(mainContainer);
+    await renderLessonRoute('lecture-06', 'lesson-02', mainContainer);
   } else if (hash.startsWith('/lecture-')) {
     const parts = hash.split('/').filter(Boolean);
     if (parts.length === 1) {
@@ -306,7 +464,11 @@ async function handleRoute(): Promise<void> {
       const mainContainer = document.createElement('main');
       mainContainer.className = 'unit-layout';
       app.appendChild(mainContainer);
-      await renderUnitRoute(parts[0], parts[1], mainContainer);
+      if (parts[1].startsWith('lesson-')) {
+        await renderLessonRoute(parts[0], parts[1], mainContainer);
+      } else {
+        await renderUnitRoute(parts[0], parts[1], mainContainer);
+      }
     }
   } else {
     const notFound = document.createElement('main');
