@@ -379,7 +379,7 @@ export const lesson15: Lesson<SemaphoreLessonInput, CounterState> = {
   },
   analogy: {
     domain: 'travel',
-    text: 'Five charging ports at the airport gate and a live count of what is free: take one and the count drops, leave and it rises. When every port is taken the count keeps falling past zero — and below zero it counts the seated travellers waiting, not the ports.'
+    text: 'Charging ports at the airport gate and a live count of what is free: take one and the count drops, leave and it rises. When every port is taken the count keeps falling past zero — and below zero it counts the seated travellers waiting, not the ports.'
   },
   concept:
     'A semaphore is an integer with two indivisible operations: wait takes a slot and signal returns one. The initial count is the whole difference between five rental bikes and one platform toilet — same tool, different dock. The count board is itself shared, so the tool that solves the problem has the problem; and sitting down with a ticket beats hovering once the wait grows. Used wrongly — swapped calls, a doubled take, a forgotten signal — the same integer deadlocks the room, each mistake with its own computed outcome.',

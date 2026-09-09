@@ -111,10 +111,11 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
   it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
     const strip = (s: string): string => s.replace(/slides?\s*\d[\d–-]*/gi, '');
     const digits = (s: string): string[] => [...strip(s).matchAll(/\d+/g)].map((m) => m[0]);
-    // the dock size (five/one) is the lesson's fixed subject, stated as words
-    // plus the two numerals the brief itself names — everything else must hold
-    // in every reachable state
-    for (const copy of [lesson15.analogy.text, lesson15.concept, lesson15.morphReveals]) {
+    // the analogy names no count at all — the dock slider owns the number
+    expect(digits(lesson15.analogy.text)).toEqual([]);
+    // concept/morph name only the slider endpoints (five/one) and the slide
+    // number — never a live outcome
+    for (const copy of [lesson15.concept, lesson15.morphReveals]) {
       for (const d of digits(copy)) {
         expect(['5', '22', '1'].includes(d)).toBe(true);
       }
