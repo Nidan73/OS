@@ -22,6 +22,7 @@ const LESSONS = [
   { slug: 'lesson-01', chapter: 'lecture-06', name: 'Why a scheduler exists at all' },
   { slug: 'lesson-02', chapter: 'lecture-06', name: 'FCFS & the convoy' },
   { slug: 'lesson-03', chapter: 'lecture-06', name: 'Shortest job first' },
+  { slug: 'lesson-04', chapter: 'lecture-06', name: 'Round robin & fairness' },
 ];
 
 /** Internal vocabulary that must never reach a student. */
