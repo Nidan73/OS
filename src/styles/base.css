@@ -13,8 +13,10 @@ html, body {
   font-family: var(--font-ui);
   font-size: 15px;
   line-height: 1.5;
+  letter-spacing: -0.01em;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -29,9 +31,14 @@ button {
   background: none;
   cursor: pointer;
   color: inherit;
+  transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
-button:focus-visible, a:focus-visible, select:focus-visible {
+button:active {
+  transform: scale(0.98);
+}
+
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -41,7 +48,7 @@ code, kbd, samp, pre {
   font-variant-numeric: tabular-nums;
 }
 
-/* Base layout container */
+/* Base Layout */
 #app {
   display: flex;
   flex-direction: column;
@@ -53,18 +60,20 @@ code, kbd, samp, pre {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--step) * 2);
+  padding: calc(var(--step) * 1.5) calc(var(--step) * 3);
   background: var(--surface);
   border-bottom: 1px solid var(--rule);
   position: sticky;
   top: 0;
   z-index: 50;
-  gap: var(--step);
+  gap: calc(var(--step) * 2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .brand {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
   display: flex;
   align-items: center;
   gap: var(--step);
@@ -75,19 +84,34 @@ code, kbd, samp, pre {
   gap: var(--step);
   list-style: none;
   overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+}
+
+.chapter-links::-webkit-scrollbar {
+  display: none;
 }
 
 .chapter-link {
-  padding: var(--step) calc(var(--step) * 1.5);
-  border-radius: 4px;
-  font-size: 0.9rem;
+  padding: calc(var(--step) * 0.8) calc(var(--step) * 1.5);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
   white-space: nowrap;
+  color: var(--muted);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.chapter-link:hover {
+  color: var(--ink);
+  background: var(--surface-alt);
 }
 
 .chapter-link[aria-current="page"] {
   background: var(--surface-alt);
+  color: var(--ink);
   font-weight: 600;
-  border-bottom: 2px solid var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .theme-toggle {
@@ -96,17 +120,22 @@ code, kbd, samp, pre {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid var(--rule);
   background: var(--surface-alt);
+  font-size: 1.1rem;
+}
+
+.theme-toggle:hover {
+  border-color: var(--faint);
 }
 
 /* Responsive grid for unit page */
 .unit-layout {
   display: grid;
   flex: 1;
-  padding: calc(var(--step) * 2);
-  gap: calc(var(--step) * 2);
+  padding: calc(var(--step) * 3);
+  gap: calc(var(--step) * 3);
   max-width: 1440px;
   margin: 0 auto;
   width: 100%;
@@ -116,6 +145,7 @@ code, kbd, samp, pre {
 @media (min-width: 1100px) {
   .unit-layout {
     grid-template-columns: 280px 1fr 340px;
+    align-items: start;
   }
   .unit-sidebar-select {
     display: none;
@@ -126,6 +156,7 @@ code, kbd, samp, pre {
 @media (min-width: 760px) and (max-width: 1099px) {
   .unit-layout {
     grid-template-columns: 1fr 320px;
+    align-items: start;
   }
   .unit-sidebar-rail {
     display: none;
@@ -137,8 +168,8 @@ code, kbd, samp, pre {
   .unit-layout {
     grid-template-columns: 1fr;
     padding: var(--step);
-    gap: var(--step);
-    padding-bottom: 80px; /* space for sticky transport */
+    gap: calc(var(--step) * 2);
+    padding-bottom: 96px; /* space for sticky transport */
   }
   .unit-sidebar-rail {
     display: none;
@@ -150,8 +181,9 @@ code, kbd, samp, pre {
     right: 0;
     background: var(--surface);
     border-top: 1px solid var(--rule);
-    padding: var(--step);
+    padding: var(--step) calc(var(--step) * 2);
     z-index: 40;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   }
 }
 
