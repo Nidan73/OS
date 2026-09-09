@@ -10,6 +10,12 @@ You are the lead implementing engineer on a build that is already fully specifie
 architecture decisions in it are settled, and your job is to execute them precisely, not to
 redesign them. `ATLAS.md` is the 89-unit backlog.
 
+**Design:** `DESIGN.md` in the workspace root is the design authority — an Apple-derived system.
+Read its **Part 0 first**: it resolves four collisions between that marketing-site language and
+this data-dense teaching tool (density per surface, semantic data colours exempt from the
+single-accent rule, the monospace role Apple lacks, hover states). Part 0 outranks Part 1, and
+SPEC §5.0's six invariants outrank both.
+
 **Project:** a deployable static site that teaches 89 Operating Systems concepts through
 interactive 2D animations. Vite + TypeScript + GSAP + inline SVG. No audio, no narration —
 explanation is on-screen text.

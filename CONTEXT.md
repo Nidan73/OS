@@ -1,7 +1,7 @@
 # CONTEXT — session handoff
 
 **Purpose:** read this first in a new session and you have everything. No prior conversation needed.
-**Last updated:** 2026-09-09, after Phase 0 report #3 review.
+**Last updated:** 2026-09-09, after the 89-unit → 20-lesson replan.
 **Keep this current.** Update the State and Log sections at every phase gate.
 
 ---
@@ -49,8 +49,10 @@ Source material: 10 `.pptx` lecture decks in the parent folder `~/Downloads/New 
 
 | File | Role |
 |---|---|
-| `SPEC.md` | 900 lines. Authoritative. Architecture, 7 engines, contracts, tests, traps. |
-| `ATLAS.md` | 89-unit backlog: id, engine, topic, slides, analogy domain, analogy text. |
+| `SPEC.md` | 950 lines. Authoritative. Architecture, 7 engines, contracts, tests, traps. |
+| `LESSONS.md` | **The 20-lesson structure. Supersedes the 89-unit model.** |
+| `ATLAS.md` | Source inventory, 89 units: id, engine, topic, slides, analogy domain, analogy text. |
+| `DESIGN.md` | Design authority. Apple-derived. **Part 0 is mine and outranks Part 1.** |
 | `KICKOFF-PROMPT.md` | The opening message pasted into Antigravity. |
 | `CONTEXT.md` | This file. |
 
@@ -72,9 +74,25 @@ Two published artifacts exist from earlier (topic inventory; the Flash verdict +
    `AnimationEngine`; algorithms stay pure functions. (§3A.1)
 5. **Encapsulation is not fault isolation.** Error boundary at `mountUnit`, dynamic unit imports,
    nav outside the boundary. One broken unit must not blank the site. (§3A.3)
-6. **Seven engines** — gantt 9, queue 10, trace 8, counter 13, graph 6, matrix 7, diagram 36
+6. **`DESIGN.md` is the design authority** — an Apple-derived system supplied by the user.
+   Precedence: **SPEC §5.0 invariants > DESIGN.md Part 0 > DESIGN.md Part 1**. Part 1 is the
+   verbatim Apple system (a marketing-site language); **Part 0 is mine** and resolves four
+   collisions with a data-dense teaching tool:
+   (a) **density is per-surface** — full Apple airiness on index/chapter pages, compact on the 89
+   unit pages, because a student mid-scrub must never scroll to see the caption for the frame
+   they are looking at;
+   (b) **the single-accent rule governs chrome, not data** — `--running`/`--waiting`/`--blocked`/
+   `--idle`/`--completed` and the three analogy-domain colours stay distinct hues and are exempt;
+   (c) **monospace is a third type role Apple lacks** — SF Mono → JetBrains Mono for all numbers,
+   process ids and matrix cells, with tabular-nums;
+   (d) **hover exists** — Part 1's "never document hover" is an instruction to its own author,
+   not a prohibition.
+   The `design-taste-frontend` skill (taste-skill, MIT, 85.7k stars) is now optional and
+   secondary; where it and DESIGN.md differ, DESIGN.md wins. The originally frozen tokens were a
+   spec error — freezing values produced a coherent but characterless site.
+7. **Seven engines** — gantt 9, queue 10, trace 8, counter 13, graph 6, matrix 7, diagram 36
    units. All 89 mapped in `ATLAS.md`.
-7. **Text-to-video AI was ruled out** and should stay ruled out: Sora-2 renders accurate on-screen
+8. **Text-to-video AI was ruled out** and should stay ruled out: Sora-2 renders accurate on-screen
    text ~79% of the time, Veo-3.1 ~69%, and this content is almost entirely precise text and state.
 
 ---
@@ -98,45 +116,59 @@ Checked 2026-09-09. Re-verify only if something depends on a change.
   Parallel subagents multiply burn. Advice given: measure after Phase 0, stagger fan-out, or
   attach an API key (~$30–100 for the whole build) to protect the Pro quota.
 - **GSAP** is fully free including all plugins (Webflow, April 2025).
+- **taste-skill** — `github.com/leonxlnx/taste-skill`, MIT, 85.7k stars, 154 commits. Billed as
+  "the anti-slop frontend framework for AI agents." Ships GSAP templates, so it matches the stack.
+  Skill used: `design-taste-frontend` (v2, experimental). Three dials: DESIGN_VARIANCE,
+  MOTION_INTENSITY, VISUAL_DENSITY. Invocation the user specified:
+  `npx skills use "https://github.com/leonxlnx/taste-skill" --skill "design-taste-frontend"`
+  (the repo README documents `npx skills add <url>`). Flagged to the user once: this runs
+  third-party code whose instructions an agent with repo write access then follows.
 
 ---
 
 ## State
 
-**Phase 0 APPROVED except one base-class bug. Phase 1 NOT started.**
+**Phase 0 signed off. Phase 1 in progress — `gantt` built, reviewed, SENT BACK with 3 findings.**
+Branch `phase1/engine-gantt`, commit `dbad354`. **The other six engines have NOT been started and
+must not be until these are resolved** — gantt is the reference implementation they copy.
 
-Verified directly by reading the repo (the agent builds in this same folder — inspect the code
-rather than relaying questions):
-- `core/types.ts` matches SPEC §3.1 exactly. Contract frozen.
-- `AnimationEngine` additions accepted: `stepForward`/`stepBack`, `onStepChange`/
-  `onPlayStateChange`, `getSteps`/`getCurrentIndex`.
-- **Theme default correct** — `initTheme()` removes `data-theme` when nothing is stored, and
-  `toggleTheme()` resolves the effective theme via `matchMedia` so the first click flips away
-  from the system theme. Earlier concern was unfounded; its report described this imprecisely.
-- **`import.meta.glob` is lazy** — no `{ eager: true }`. §3A.3 isolation intact.
-- **`destroy()` clears both subscriber lists**, the timeline, and the container.
-- `npm test` → **9 passed** (8 lifecycle from §7.1 + 1 sanity). `tsc --noEmit` clean.
+Verified directly (always run these yourself, do not trust the report):
+- `npx vitest run` → **21 passed / 4 files**. `tsc --noEmit` clean.
+- Pause bug fixed correctly: explicit `private playing`, stored `advanceTimer`, both cleared in
+  `pause()`/`destroy()`/`seek()`. All 11 §7.1 tests green.
+- Scheduling numbers hand-checked against the decks: FCFS slide 8 ✓, convoy slide 9 ✓,
+  SRTF slide 15 ✓ (avg 6.5 / 13), RR q=4 slide 17 ✓ (5.67), Priority slide 21 ✓ (8.2).
+- `render()` is genuinely idempotent — full `replaceChildren()` rebuild from state. Correct.
+- Design skill applied: token names all preserved, semantic states kept distinct, both themes
+  structured per §5.2, no scroll-jacking or parallax in the canvas.
 
-**Open bug — blocking Phase 1:**
-`playNext()` schedules the reduced-motion advance with a bare `setTimeout` guarded on
-`!this.disposed && this.timeline === null`. But `pause()` also sets `timeline = null`, so after
-pause the pending timer's guard passes and playback resumes. **Pause is broken under
-`prefers-reduced-motion`.** It is in the base class, so all seven engines would inherit it.
+**Three gantt findings — still open, carried into the replan:**
 
-Fix: add an explicit `private playing = false` flag, store the timeout handle, and clear both in
-`pause()` and `destroy()`. Never infer playing state from `timeline === null`.
-SPEC §7.1 gained three regression tests for this (now eleven total).
+1. **No real interpolation.** `playNext()` tweens an empty object as a timer; `render()` only
+   fires in `onComplete`, so nothing moves during a step. Now partly forced by §3C.3 anyway — the
+   `view` morph axis requires genuine interpolation.
+2. **`--travel` used as a process-bar fill** (`gantt.ts:338`). An analogy-domain token used as
+   state colour. Violates §5.0 #2 / §5.3. Needs `--completed` or `--idle`.
+3. **SJF test drops the slide's arrival times.** Slide 11 lists arrivals 0/2/4/5 but publishes
+   avg 7, only reachable if all arrive at t=0 (correct SJF with those arrivals gives 5). The slide
+   is internally inconsistent. Keep the published answer for exam alignment, but document it, add
+   a second test recording the discrepancy, and never display arrivals the schedule ignores.
+   **Now belongs to Lesson 3, not Lesson 2 — do not lose it.**
+
+**Current instruction to the agent:** rebuild `gantt` as **Lesson 2 (FCFS and the convoy)**, end
+to end — analogy scene, morph, playground — as the reference lesson. Nothing else starts until it
+is reviewed.
 
 ## What happens next
 
-1. User pastes Phase 0 report #3. Verify the three items above.
-2. On pass → **Phase 1 begins with `gantt` alone.** It must be built and reviewed before the other
-   six start. It is the most complex renderer and sets the step/caption/scrub patterns the other
-   six copy; getting it wrong six times in parallel is the main way this project fails.
-3. Review `gantt` hard — this is the highest-leverage review in the project.
-4. Then fan out the remaining six engines on `phase1/engine-<name>` branches.
+1. **Immediate:** agent resolves the three gantt findings above, especially #1 (real
+   interpolation). Re-review before anything fans out.
+2. Then fan out the remaining six engines on `phase1/engine-<name>` branches.
 5. Phase 2: five agents, one per lecture, `phase2/lecture-<nn>`.
-6. Phase 3: index/routing + analogy scenes. Phase 4: integration, a11y, responsive sweep, handover.
+6. **Run `design-taste-frontend` and review the design language it produces against the six §5.0
+   constraints BEFORE it is applied across all units.** Applying a bad direction to 89 units is
+   expensive to undo.
+7. Phase 3: index/routing + analogy scenes. Phase 4: integration, a11y, responsive sweep, handover.
 
 **Estimate:** ~9–15 h agent time; realistically 3–4 sessions, or ~2 weeks if pacing against the
 Pro weekly quota alone.
@@ -155,6 +187,18 @@ Pro weekly quota alone.
   recall, OOP + fault isolation, git workflow. Removed deployment from agent scope.
 - **Sep 9** — **Phase 0 report #1 rejected.** Deploy not done, restatement gave line numbers
   instead of content, "tests pass" on a likely empty suite. Versions checked and were all correct.
+- **Sep 9** — **Replan.** User rejected the design *and* the explanations. Diagnosed the root
+  cause as the content model, not the visuals: 89 slide-shaped clips, 36 of them fades on stills,
+  analogies stapled on as captions, no interaction. Replaced with 20 interactive lessons plus a
+  reference layer. User chose: 20 lessons, playground (no predict/commit), analogy-first-morph.
+- **Sep 9** — User supplied an Apple-derived design system. Wrote it to `DESIGN.md` with a Part 0
+  adaptation preamble resolving four marketing-site-vs-teaching-tool collisions. Demoted the
+  taste-skill to optional. SPEC §5.0 and KICKOFF-PROMPT updated to point at it.
+- **Sep 9** — **Phase 0 signed off.** Pause bug fixed properly. `gantt` built with 6 slide-verified
+  scheduling algorithms; 5 of 6 hand-checked correct. Sent back on 3 findings — chiefly that GSAP
+  was being used as a bare timer, so nothing actually animates.
+- **Sep 9** — User rejected the frontend design. Owned it as a spec error and rewrote §5 to hand
+  the design language to the `design-taste-frontend` skill under six non-overridable constraints.
 - **Sep 9** — Wrote `CONTEXT.md`. Discovered the agent builds in this same folder, so outstanding
   items are now verified by reading code directly rather than by asking.
 - **Sep 9** — **Phase 0 report #3 / direct verification:** theme, glob and destroy all correct;

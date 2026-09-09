@@ -392,6 +392,75 @@ exactly the failure mode you are trying to avoid.
 
 ---
 
+## 3C. The lesson model — REPLACES the 89-unit model
+
+**Amended.** The 89-unit inventory decomposed the *slides*, not the *concepts*. Thirty-six of
+those units landed on the `diagram` engine — annotated stills with reveals — which is a
+PowerPoint with fades, and is the thing this project exists to escape.
+
+`LESSONS.md` now defines **20 lessons** plus a **reference layer**. `ATLAS.md` stays as the source
+inventory; each lesson names the Atlas ids it absorbs. Nothing researched is lost — the material
+is regrouped around ideas instead of slides.
+
+### 3C.1 The shape of a lesson
+
+**Open in the analogy → morph into the mechanism → hand over the controls.**
+
+There is no prediction prompt. The morph is the reveal: watching a food-truck queue *become* a
+Gantt chart is the moment the idea lands.
+
+### 3C.2 The isomorphism rule — this is what makes 20 morphs affordable
+
+A morph is only cheap if both views are **the same picture wearing different clothes**.
+
+> **Every analogy scene must be structurally isomorphic to its mechanism view:
+> same coordinate space, same element set, same ids, same timeline.**
+
+A person waiting in the food-truck queue and the `P2` bar are *the same element* at the same x
+position. The morph then swaps a sprite for a rectangle and tweens attributes — not a bespoke
+animation, just two renderings of one state.
+
+This also enforces analogy quality structurally. SPEC §6 already said *"if you cannot explain
+which part of the analogy is the CPU, the analogy is wrong."* Now the compiler agrees: if you
+cannot lay the analogy out over the mechanism's geometry, it is the wrong analogy — pick another.
+
+### 3C.3 Rendering gains a view axis
+
+```ts
+/** view: 0 = pure analogy, 1 = pure mechanism, fractional = mid-morph. */
+protected abstract render(state: S, view: number): void;
+```
+
+- `render()` stays **absolute and idempotent** at every `view` value (§4A.2 unchanged).
+- Both extremes must emit the **same element ids**. Missing ids on either side = an
+  isomorphism bug; throw in development.
+- Morphing is a GSAP tween of `view` 0 → 1. Under `prefers-reduced-motion`, cross-fade instead.
+- A lesson opens at `view = 0`, morphs once, then plays at `view = 1`. The learner can morph back
+  at any time — the analogy is a lens, not an intro to be skipped past.
+
+### 3C.4 Playgrounds come nearly free — this is the payoff of §2.1
+
+Because every algorithm is a **pure function** (§2.1), a playground is just:
+
+```
+control changes input → re-run the algorithm → new Step[] → re-render
+```
+
+No new machinery. Dragging the quantum from 4 to 12 re-runs `roundRobin()` and the chart, the
+metrics and the captions all update because they were computed, never typed. **This is the
+dividend of the compute-don't-hardcode rule**, and it is why that rule was worth enforcing.
+
+Every lesson ships with at least one control that changes the outcome. A lesson with only
+play/pause is not finished.
+
+### 3C.5 The reference layer
+
+Definitions that are not mechanisms do **not** get animations. One scrollable reference page per
+chapter, clean typography and small static diagrams. Forcing a definition into an animation is
+what produced the 36 weak units. See `LESSONS.md` for what goes there.
+
+---
+
 ## 3B. Git workflow
 
 Git is not optional bookkeeping here — Phase 1 runs seven subagents in `branch` isolation, so the
@@ -631,9 +700,60 @@ item 9 of §8 and it is not waivable.
 
 ---
 
-## 5. Visual system — locked
+## 5. Visual system
 
-Put these in `src/styles/tokens.css`. Do not add colours. Do not change these values.
+### 5.0 The design language is defined by DESIGN.md
+
+**Amended twice.** The original token values below were a functional baseline, not a design.
+Freezing them produced a coherent, characterless site — a spec error, not an implementation
+failure.
+
+**`DESIGN.md` in the workspace root is now the design authority.** It is an Apple-derived system:
+Action Blue as the sole interactive colour, SF Pro / Inter with negative display tracking, 17px
+body, the 300/400/600/700 ladder, the pill/8/11/18 radius grammar, one drop-shadow in the whole
+system, and surface-colour-change as the section divider.
+
+**Read `DESIGN.md` Part 0 first.** It resolves four collisions between that marketing-site
+language and this data-dense teaching tool — density per surface, semantic data colours being
+exempt from the single-accent rule, the monospace role Apple lacks, and hover states. Those
+resolutions are binding.
+
+The `design-taste-frontend` skill is now **optional and secondary**. If used, it must produce a
+result consistent with `DESIGN.md`; where they differ, `DESIGN.md` wins.
+
+**What DESIGN.md MAY change:** every token value below, the type pairing and scale, spacing
+rhythm, layout composition, border/radius/shadow treatment, and page-level motion character.
+
+**What it MUST NOT change — these are load-bearing and outrank any design direction:**
+
+1. **Tokens stay the single source of truth.** No colour, size, or duration literal anywhere
+   outside `tokens.css`. The skill may replace the values; it may not scatter them. (§2.3)
+2. **Semantic colours keep their meanings.** `--running`, `--waiting`, `--blocked`, `--idle` must
+   stay four visually distinct states, and a bar is `--running` because it holds the CPU — never
+   because the hue looked better there. Restyle them; do not repurpose them.
+3. **Both themes, structured per §5.2.** Light on bare `:root`, dark redefined under both
+   `prefers-color-scheme` and `[data-theme="dark"]`. No colour defined only inside a media query.
+4. **§4A.5 outranks MOTION_INTENSITY.** This is a teaching tool. Every moving element must
+   correspond to something real in the mechanism. Scroll-jacking, magnetic cursors, parallax, and
+   decorative easing on data are still banned no matter what the motion dial suggests. Chrome on
+   the page — nav, cards, transitions between units — may have character. **The animation canvas
+   may not.**
+5. **Legibility beats style in the canvas.** Process ids, timings, and matrix cells must stay
+   readable at 360 px. Contrast must pass WCAG AA in both themes. An animation that looks
+   striking and teaches badly has failed the only thing this project is for.
+6. **VISUAL_DENSITY does not override the responsive contract.** §4C breakpoints and the 360 px
+   floor hold regardless.
+
+Where `DESIGN.md` and a rule above conflict, the rule wins — and say so in your report rather
+than silently picking one. Where `DESIGN.md` Part 1 and its own Part 0 conflict, Part 0 wins:
+Part 1 documents a marketing site, Part 0 adapts it to this one.
+
+### 5.1 Baseline tokens
+
+These are the starting values. The skill is expected to replace them. Keep the token *names* —
+components reference them by name and renaming breaks every component at once.
+
+
 
 ```css
 :root {
@@ -653,16 +773,22 @@ Put these in `src/styles/tokens.css`. Do not add colours. Do not change these va
 }
 ```
 
+### 5.2 Theme structure
+
 Dark theme is required. Redefine **only these tokens** under both
 `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }` and
 `:root[data-theme="dark"] { … }`. Never define a colour inside a media query that has no
 definition on bare `:root`.
 
+### 5.3 Rules that survive any redesign
+
 **Semantic colour is meaning, not decoration.** A bar is `--running` because that process holds
 the CPU. Never use `--running` because green looked nice there.
 
-**Type:** Archivo (UI/structure) · Source Serif 4 (analogy + concept prose) · IBM Plex Mono
-(all numbers, process IDs, code). Numbers that change on screen get `font-variant-numeric: tabular-nums`.
+**Type:** the skill sets the pairing. Whatever it chooses, the *roles* persist: a UI/structure
+face, a prose face for analogy and concept text, and a monospace face for all numbers, process
+ids, and code — that three-role split encodes the difference between chrome, explanation, and
+data, and it stays. Numbers that change on screen get `font-variant-numeric: tabular-nums`.
 
 **Motion:** honour `prefers-reduced-motion` — snap to step end states, no tweening. Every
 control has a visible `:focus-visible` outline. The player must be fully keyboard-operable:
