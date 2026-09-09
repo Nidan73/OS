@@ -1,7 +1,7 @@
 # CONTEXT — session handoff
 
 **Purpose:** read this first in a new session and you have everything. No prior conversation needed.
-**Last updated:** 2026-09-09. Gate script shipped; L2 passing; ready to fan out.
+**Last updated:** 2026-09-09. **Wave 1 complete and merged.** Wave 2 next.
 **Keep this current.** Update the State and Log sections at every phase gate.
 
 ---
@@ -53,7 +53,8 @@ Source material: 10 `.pptx` lecture decks in the parent folder `~/Downloads/New 
 | `LESSONS.md` | **The 20-lesson structure. Supersedes the 89-unit model.** |
 | `ATLAS.md` | Source inventory, 89 units: id, engine, topic, slides, analogy domain, analogy text. |
 | `DESIGN.md` | Design authority. Apple-derived. **Part 0 is mine and outranks Part 1.** |
-| `KICKOFF-PROMPT.md` | The opening message pasted into Antigravity. |
+| `HANDOFF.md` | **Cold-start brief for a fresh agent session.** Self-contained; on `main`. |
+| `KICKOFF-PROMPT.md` | The original opening message. Superseded by `HANDOFF.md` for new sessions. |
 | `CONTEXT.md` | This file. |
 
 Two published artifacts exist from earlier (topic inventory; the Flash verdict + handover).
@@ -128,47 +129,38 @@ Checked 2026-09-09. Re-verify only if something depends on a change.
 
 ## State
 
-**Phase 0 signed off. Phase 1 in progress — `gantt` built, reviewed, SENT BACK with 3 findings.**
-Branch `phase1/engine-gantt`, commit `dbad354`. **The other six engines have NOT been started and
-must not be until these are resolved** — gantt is the reference implementation they copy.
+**Wave 1 COMPLETE and merged to `main`** (`ee40883`). Verified independently on 2026-09-09:
 
-Verified directly (always run these yourself, do not trust the report):
-- `npx vitest run` → **21 passed / 4 files**. `tsc --noEmit` clean.
-- Pause bug fixed correctly: explicit `private playing`, stored `advanceTimer`, both cleared in
-  `pause()`/`destroy()`/`seek()`. All 11 §7.1 tests green.
-- Scheduling numbers hand-checked against the decks: FCFS slide 8 ✓, convoy slide 9 ✓,
-  SRTF slide 15 ✓ (avg 6.5 / 13), RR q=4 slide 17 ✓ (5.67), Priority slide 21 ✓ (8.2).
-- `render()` is genuinely idempotent — full `replaceChildren()` rebuild from state. Correct.
-- Design skill applied: token names all preserved, semantic states kept distinct, both themes
-  structured per §5.2, no scroll-jacking or parallax in the canvas.
+- `npm test` → **96 passing / 13 files**
+- `npm run gate` → **219 checks passing across 8 lessons**
+- `npm run build` → clean
 
-**Lesson 2 reviewed and SENT BACK.** Branch `phase1/lesson-02-fcfs`, commit `a3dabed`.
-30 tests pass, tsc clean, Playwright verification real. **No other lesson starts until this is
-resolved.**
+Lessons 1–8 shipped: L1 why a scheduler exists · L2 FCFS & the convoy · L3 shortest job first ·
+L4 round robin & fairness · L5 priority, starvation & aging · L6 queues within queues ·
+L7 more cores, more problems · L8 load balancing & affinity. Engines `gantt` and `queue` proven.
 
-Screenshots live in `~/.gemini/antigravity-cli/brain/<session>/lesson02_*.png` — the agent saves
-them outside the repo. **Always open them; the report and the pixels disagreed.**
+**L1 and L3–L8 landed with zero review round-trips from me.** That is the gate working — the
+three-cycle grind on L2 was the cost of building the patterns, and it is paid.
 
-1. ~~Morph not real~~ — **FIXED and confirmed 2026-09-09** (commit `420e921`). Geometry now
-   interpolates: eqW 220px equal at view 0 → mechW 528px (P1) vs 66px (P2/P3) at view 1, verified
-   in the screenshots and by the three §3C.2c tests. 34 tests pass. `morphReveals` declared,
-   `validateMorph()` shipped. Screenshots now in `./screenshots/` (gitignored).
-2. ~~Scoreboard reads 0 ms on arrival~~ — **FIXED 2026-09-09**. Schedule baseline (17 ms wait, 27 ms turnaround)
-   renders immediately on step 1/8 arrival with live progress shown as secondary.
-3. ~~Playground below the fold at 1440×900~~ — **FIXED 2026-09-09**. Playground and scoreboard arranged in
-   a responsive 2-column grid directly under the animation canvas; reference metrics table tightened; total
-   document height fits strictly within 900px (`docHeight: 900`, transport bottom at 861px).
-4. ~~Spec jargon rendering as UI~~ — **FIXED 2026-09-09**. All "ABSORBS", "Atlas units", "(§3C.2)", "(§3C.4)",
-   "(§2.1)" and "isomorphic" references removed from student-facing UI.
-5. ~~DESIGN.md reached tokens but not components~~ — **FIXED 2026-09-09**. Applied {rounded.lg} cards, hairline
-   borders, {rounded.pill} buttons with scale(0.95) active feel, 17px body copy, negative display tracking,
-   and parchment card rhythm.
-6. ~~NEW — label/sprite collision~~ — **FIXED 2026-09-09**. Sprites anchored in upper portion with labels positioned
-   below at y=98 in analogy view; stacked mono labels in narrow mechanism bars; wait badge adapting to W:24 at <70px;
-   verified with automated Playwright overflow checks and passes all 27 automated checks in `scripts/gate.mjs`.
+**Wave 2 is next** — L9 (`diagram`), L10/L11/L12 (`trace`), L13/L14/L15 (`counter`). Seven
+parallel subagents, branch isolation, `phase1/lesson-NN-<slug>`. First wave to introduce three
+new engines, so it is the real test of whether the L2 patterns generalise. **`trace` is the risk**
+— L10, L11 and L12 all depend on it, and L10's two-friends-and-a-plate is the most likely
+`morphMode: 'crossfade'` candidate in the whole set.
 
-**Still open from earlier, do not lose:** the SJF arrival-time discrepancy belongs to Lesson 3
-(slide 11 lists arrivals 0/2/4/5 but publishes avg 7, only reachable if all arrive at t=0).
+**Account switch:** the user moved to a second Google AI Pro account mid-project (quota
+exhaustion on the first), same machine. `HANDOFF.md` on `main` is the cold-start brief. No
+persisted subagent definitions exist in `.agents/agents/` or `~/.gemini/config/agents/` — new
+sessions define their own.
+
+**Still open, do not lose:**
+- **L2 finding 5** — DESIGN.md Part 1 components were only partly applied: buttons are not
+  `{rounded.pill}`, cards need `{rounded.lg}` on `{colors.hairline}`, and there is no tile rhythm.
+  Cosmetic, not blocking, but it should land before the site is called done.
+- **The slide-inconsistency trap.** L6 slide 11 lists SJF arrivals 0/2/4/5 but publishes avg 7,
+  only reachable if all arrive at t=0 (honouring arrivals gives 5). L3 keeps the published answer
+  for exam alignment and documents it. **Every wave must report any lesson where a slide's stated
+  inputs do not reproduce its stated answer** — the gate cannot catch this.
 
 ## The gate — use it instead of reviewing by eye
 
@@ -187,28 +179,14 @@ per wave, not all of them — that was the bottleneck that made L2 take three cy
 
 ## What happens next
 
-1. **Immediate:** agent resolves the three gantt findings above, especially #1 (real
-   interpolation). Re-review before anything fans out.
-2. **Fan out in three waves of seven**, grouped so each wave introduces at most two new engines:
-   - **Wave 1** — L1, L3, L4, L5 (`gantt`, engine already proven by L2) + L6, L7, L8 (`queue`).
-     Lowest risk by design: validates the parallel-subagent process itself on lessons whose engine
-     already works, rather than discovering process problems on Banker's.
-   - **Wave 2** — L9 (`diagram`) + L10, L11, L12 (`trace`) + L13, L14, L15 (`counter`).
-   - **Wave 3** — L16, L17, L18, L19 (`graph`) + L20, L21 (`matrix`) + L22 (`diagram`).
-     The hardest chapter, run when the patterns are most established.
-   Every lesson must pass `npm run gate` before it is reported. A wave is not done until all
-   seven pass. Spot-check two per wave, not seven.
-3. Then fan out the remaining six engines on `phase1/engine-<name>` branches.
-5. Phase 2: five agents, one per lecture, `phase2/lecture-<nn>`.
-6. **Run `design-taste-frontend` and review the design language it produces against the six §5.0
-   constraints BEFORE it is applied across all units.** Applying a bad direction to 89 units is
-   expensive to undo.
-7. Phase 3: index/routing + analogy scenes. Phase 4: integration, a11y, responsive sweep, handover.
-
-**Estimate:** ~9–15 h agent time; realistically 3–4 sessions, or ~2 weeks if pacing against the
-Pro weekly quota alone.
-
----
+1. **Wave 2** — L9, L10, L11, L12, L13, L14, L15. Seven parallel subagents. Verify with
+   `npm test` and `npm run gate` here yourself; spot-check two lessons, not seven.
+2. **Wave 3** — L16, L17, L18, L19 (`graph`) · L20, L21 (`matrix`) · L22 (`diagram`). The
+   hardest chapter, run last when the patterns are most established.
+3. **Finish L2 finding 5** and do a DESIGN.md pass across all 22 lessons.
+4. **Reference layer** — the 9 definition-only Atlas units (6, 17, 18, 31, 32, 33, 47, 48, 49) as
+   one scrollable page per chapter. Not animations.
+5. Final integration, a11y sweep, `dist/` + `DEPLOY.md` handover. **The owner deploys, not us.**
 
 ## Log
 
@@ -222,6 +200,14 @@ Pro weekly quota alone.
   recall, OOP + fault isolation, git workflow. Removed deployment from agent scope.
 - **Sep 9** — **Phase 0 report #1 rejected.** Deploy not done, restatement gave line numbers
   instead of content, "tests pass" on a likely empty suite. Versions checked and were all correct.
+- **Sep 9** — **Wave 1 shipped.** L1–L8 merged to `main`; 96 tests, 219 gate checks, clean build.
+  Wrote and pushed `HANDOFF.md` for the account switch.
+- **Sep 9** — **Built `scripts/gate.mjs`** (27 checks/lesson) after the user pushed back that the
+  pace was unsustainable. Owned the cause: reviewing by eyeball does not scale and I had
+  over-specified in prose instead of shipping a reference implementation early. The gate replaced
+  human screenshot review and Wave 1 then landed with no review round-trips.
+- **Sep 9** — Split L19/L20; 20 → **22 lessons**. Coverage verified 89/89 units, none missing or
+  double-counted. Deadlocks was 31% of material on 25% of lessons.
 - **Sep 9** — **Replan.** User rejected the design *and* the explanations. Diagnosed the root
   cause as the content model, not the visuals: 89 slide-shaped clips, 36 of them fades on stills,
   analogies stapled on as captions, no interaction. Replaced with 20 interactive lessons plus a
