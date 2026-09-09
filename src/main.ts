@@ -21,18 +21,26 @@ const CHAPTERS: ChapterMeta[] = [
 let activePlayer: UnitPlayer | null = null;
 
 function initTheme(): void {
-  let savedTheme = 'light';
   try {
-    savedTheme = localStorage.getItem('os-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const savedTheme = localStorage.getItem('os-theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      // Per SPEC.md §5: Default must be UNSTAMPED — no data-theme attribute at all,
+      // allowing CSS prefers-color-scheme to decide naturally.
+      document.documentElement.removeAttribute('data-theme');
+    }
   } catch {
     // ignore in restricted private browsing
+    document.documentElement.removeAttribute('data-theme');
   }
-  document.documentElement.setAttribute('data-theme', savedTheme);
 }
 
 function toggleTheme(): void {
-  const current = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = current === 'dark' ? 'light' : 'dark';
+  const currentAttr = document.documentElement.getAttribute('data-theme');
+  const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = currentAttr ? currentAttr === 'dark' : isSystemDark;
+  const next = isDark ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   try {
     localStorage.setItem('os-theme', next);
@@ -180,7 +188,6 @@ async function renderUnitRoute(lectureSlug: string, unitSlug: string, mainContai
     const animMountTarget = document.createElement('div');
     const engine = mountUnit(unit, animMountTarget);
     if (!engine) {
-      // mountUnit already rendered fallback
       mainContainer.appendChild(animMountTarget);
       return;
     }

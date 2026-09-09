@@ -9,7 +9,7 @@ export abstract class AnimationEngine<I, S> {
   private onStepListeners: ((index: number, step: Step<S>) => void)[] = [];
   private onPlayStateListeners: ((isPlaying: boolean) => void)[] = [];
 
-  constructor(protected container: HTMLElement, protected input: I) {}
+  constructor(protected container: HTMLElement, protected input: I = undefined as I) {}
 
   /** Pure. Input -> complete step list. Calls into algorithms. */
   protected abstract buildSteps(input: I): Step<S>[];
@@ -20,7 +20,7 @@ export abstract class AnimationEngine<I, S> {
 
   init(): void {
     this.steps = this.buildSteps(this.input);
-    if (!this.steps.length) throw new Error('Engine produced no steps');
+    if (!this.steps || !this.steps.length) throw new Error('Engine produced no steps');
     this.mount();
     this.seek(0);
   }
@@ -105,7 +105,7 @@ export abstract class AnimationEngine<I, S> {
     const nextStep = this.steps[nextIdx];
     const stepDuration = Math.max(0.6, Math.min(1.5, nextStep.t - currentStep.t || 1.0));
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
       this.seek(nextIdx);
       setTimeout(() => {
