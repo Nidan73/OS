@@ -804,7 +804,42 @@ test('an empty step list is rejected loudly', () => {
 });
 ```
 
-These eight tests gate Phase 1. Do not start building engines until they pass.
+```ts
+test('pause() stops playback under reduced motion — regression', () => {
+  // The reduced-motion path in play() must be cancellable. Inferring "not playing"
+  // from `timeline === null` is unsafe: pause() also nulls the timeline, so a pending
+  // timer sees a null timeline and resumes playback after the user pressed pause.
+  matchMediaMock('(prefers-reduced-motion: reduce)', true);
+  const e = new FakeEngine(el); e.init();
+  e.play();
+  e.pause();
+  const idx = e.getCurrentIndex();
+  vi.advanceTimersByTime(5000);
+  expect(e.getCurrentIndex()).toBe(idx);      // must NOT have advanced
+});
+
+test('pause() stops playback with motion enabled', () => {
+  matchMediaMock('(prefers-reduced-motion: reduce)', false);
+  const e = new FakeEngine(el); e.init();
+  e.play(); e.pause();
+  const idx = e.getCurrentIndex();
+  vi.advanceTimersByTime(5000);
+  expect(e.getCurrentIndex()).toBe(idx);
+});
+
+test('destroy() during playback cancels pending advances', () => {
+  const e = new FakeEngine(el); e.init();
+  e.play(); e.destroy();
+  expect(() => vi.advanceTimersByTime(5000)).not.toThrow();
+});
+```
+
+**Track playback state explicitly.** `private playing = false`, set in `play()` and cleared in
+`pause()` and `destroy()`, and gate every scheduled advance on it. Any pending `setTimeout` handle
+must be stored and cleared in both `pause()` and `destroy()`. Never infer "is playing" from
+`timeline === null` — `pause()` nulls the timeline too, so the two states are indistinguishable.
+
+These eleven tests gate Phase 1. Do not start building engines until they pass.
 
 Required coverage before any engine is considered done:
 `fcfs`, `sjf`, `srtf`, `roundRobin`, `priority`, `exponentialAverage`, `safeSequence`,

@@ -1,7 +1,7 @@
 # CONTEXT — session handoff
 
 **Purpose:** read this first in a new session and you have everything. No prior conversation needed.
-**Last updated:** 2026-09-09, after Phase 0 report #2.
+**Last updated:** 2026-09-09, after Phase 0 report #3 review.
 **Keep this current.** Update the State and Log sections at every phase gate.
 
 ---
@@ -49,7 +49,7 @@ Source material: 10 `.pptx` lecture decks in the parent folder `~/Downloads/New 
 
 | File | Role |
 |---|---|
-| `SPEC.md` | 873 lines. Authoritative. Architecture, 7 engines, contracts, tests, traps. |
+| `SPEC.md` | 900 lines. Authoritative. Architecture, 7 engines, contracts, tests, traps. |
 | `ATLAS.md` | 89-unit backlog: id, engine, topic, slides, analogy domain, analogy text. |
 | `KICKOFF-PROMPT.md` | The opening message pasted into Antigravity. |
 | `CONTEXT.md` | This file. |
@@ -103,34 +103,29 @@ Checked 2026-09-09. Re-verify only if something depends on a change.
 
 ## State
 
-**Phase 0 — near complete, gated on three items. Phase 1 NOT started.**
+**Phase 0 APPROVED except one base-class bug. Phase 1 NOT started.**
 
-Approved:
-- `core/types.ts` matches SPEC §3.1 **exactly**. Contract is frozen.
-- `AnimationEngine` additions accepted into the contract: `stepForward`/`stepBack`,
-  `onStepChange`/`onPlayStateChange`, `getSteps`/`getCurrentIndex`.
-- Production build verified via `vite preview` + Playwright: shell renders, `aria-current` applies,
-  theme toggle works both ways with `localStorage` values observed, deep link survives hard
-  refresh, `scrollWidth === clientWidth` at 360/800/1440.
-- `prefers-reduced-motion` handled in both CSS and engine. `localStorage` wrapped in try/catch.
-- Pushed to `main`, commit `27d74f8`.
+Verified directly by reading the repo (the agent builds in this same folder — inspect the code
+rather than relaying questions):
+- `core/types.ts` matches SPEC §3.1 exactly. Contract frozen.
+- `AnimationEngine` additions accepted: `stepForward`/`stepBack`, `onStepChange`/
+  `onPlayStateChange`, `getSteps`/`getCurrentIndex`.
+- **Theme default correct** — `initTheme()` removes `data-theme` when nothing is stored, and
+  `toggleTheme()` resolves the effective theme via `matchMedia` so the first click flips away
+  from the system theme. Earlier concern was unfounded; its report described this imprecisely.
+- **`import.meta.glob` is lazy** — no `{ eager: true }`. §3A.3 isolation intact.
+- **`destroy()` clears both subscriber lists**, the timeline, and the container.
+- `npm test` → **9 passed** (8 lifecycle from §7.1 + 1 sanity). `tsc --noEmit` clean.
 
-Sent back, awaiting response:
-1. **Write the eight §7.1 base-class lifecycle tests and make them pass.** Newly added to the
-   spec. Uses a trivial `FakeEngine`. Gates Phase 1 — a bug in `AnimationEngine` is a bug in all
-   seven engines.
-2. **Theme default may be a live bug.** It reported initial `data-theme="light"`. Per §5 the
-   default must be **unstamped** so `prefers-color-scheme` decides; stamping `"light"` gives every
-   system-dark user a light page. Playwright defaults to light, so its observation does not
-   distinguish the two. Asked it to test with `colorScheme: 'dark'` and no stored value.
-3. **Confirm `import.meta.glob` is lazy, not `{ eager: true }`.** Eager defeats §3A.3 fault
-   isolation entirely.
+**Open bug — blocking Phase 1:**
+`playNext()` schedules the reduced-motion advance with a bare `setTimeout` guarded on
+`!this.disposed && this.timeline === null`. But `pause()` also sets `timeline = null`, so after
+pause the pending timer's guard passes and playback resumes. **Pause is broken under
+`prefers-reduced-motion`.** It is in the base class, so all seven engines would inherit it.
 
-Also asked: confirm `destroy()` clears the subscriber lists, not just the GSAP timeline.
-Noted: `sanity.test.ts` asserts a literal written in the same file — it tests nothing, do not
-count it toward coverage.
-
----
+Fix: add an explicit `private playing = false` flag, store the timeout handle, and clear both in
+`pause()` and `destroy()`. Never infer playing state from `timeline === null`.
+SPEC §7.1 gained three regression tests for this (now eleven total).
 
 ## What happens next
 
@@ -160,5 +155,10 @@ Pro weekly quota alone.
   recall, OOP + fault isolation, git workflow. Removed deployment from agent scope.
 - **Sep 9** — **Phase 0 report #1 rejected.** Deploy not done, restatement gave line numbers
   instead of content, "tests pass" on a likely empty suite. Versions checked and were all correct.
+- **Sep 9** — Wrote `CONTEXT.md`. Discovered the agent builds in this same folder, so outstanding
+  items are now verified by reading code directly rather than by asking.
+- **Sep 9** — **Phase 0 report #3 / direct verification:** theme, glob and destroy all correct;
+  9 tests green; tsc clean. Found the reduced-motion pause bug in `playNext()`. Sent back as the
+  single blocker before `gantt`.
 - **Sep 9** — **Phase 0 report #2:** types approved, real browser evidence accepted. Three items
   sent back (§7.1 tests, theme default, glob laziness). Spec gained §7.1 — a genuine omission.

@@ -16,7 +16,11 @@ export class UnitPlayer {
   private unsubscribePlayState: (() => void) | null = null;
   private keydownHandler: (e: KeyboardEvent) => void;
 
-  constructor(parent: HTMLElement, private engine: AnimationEngine<unknown, unknown>) {
+  constructor(
+    parent: HTMLElement,
+    private engine: AnimationEngine<unknown, unknown>,
+    animViewport?: HTMLElement
+  ) {
     this.container = document.createElement('div');
     this.container.className = 'unit-player';
     this.container.style.display = 'flex';
@@ -25,13 +29,14 @@ export class UnitPlayer {
     this.container.style.width = '100%';
 
     // Animation viewport
-    this.animViewport = document.createElement('div');
-    this.animViewport.className = 'anim-viewport';
+    this.animViewport = animViewport ?? document.createElement('div');
+    this.animViewport.classList.add('anim-viewport');
     this.animViewport.style.background = 'var(--surface)';
     this.animViewport.style.border = '1px solid var(--rule)';
     this.animViewport.style.borderRadius = '8px';
     this.animViewport.style.padding = 'calc(var(--step) * 2)';
     this.animViewport.style.display = 'flex';
+    this.animViewport.style.flexDirection = 'column';
     this.animViewport.style.justifyContent = 'center';
     this.animViewport.style.alignItems = 'center';
     this.animViewport.style.overflow = 'hidden';
@@ -132,9 +137,8 @@ export class UnitPlayer {
     parent.appendChild(this.container);
 
     // Event listeners
-    let isPlaying = false;
     this.playBtn.addEventListener('click', () => {
-      if (isPlaying) {
+      if (this.engine.isPlaying()) {
         this.engine.pause();
       } else {
         this.engine.play();
@@ -164,7 +168,6 @@ export class UnitPlayer {
     });
 
     this.unsubscribePlayState = this.engine.onPlayStateChange((playing) => {
-      isPlaying = playing;
       this.playBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
     });
 
@@ -179,7 +182,7 @@ export class UnitPlayer {
       }
       if (e.code === 'Space') {
         e.preventDefault();
-        if (isPlaying) {
+        if (this.engine.isPlaying()) {
           this.engine.pause();
         } else {
           this.engine.play();

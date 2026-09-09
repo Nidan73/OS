@@ -26,12 +26,9 @@ function initTheme(): void {
     if (savedTheme === 'dark' || savedTheme === 'light') {
       document.documentElement.setAttribute('data-theme', savedTheme);
     } else {
-      // Per SPEC.md §5: Default must be UNSTAMPED — no data-theme attribute at all,
-      // allowing CSS prefers-color-scheme to decide naturally.
       document.documentElement.removeAttribute('data-theme');
     }
   } catch {
-    // ignore in restricted private browsing
     document.documentElement.removeAttribute('data-theme');
   }
 }
@@ -45,7 +42,7 @@ function toggleTheme(): void {
   try {
     localStorage.setItem('os-theme', next);
   } catch {
-    // ignore in restricted environments
+    // ignore
   }
 }
 
@@ -166,9 +163,27 @@ function renderChapter(chSlug: string): HTMLElement {
 
   const desc = document.createElement('p');
   desc.style.color = 'var(--muted)';
-  desc.textContent = `Phase 0 scaffold active. ${ch.unitCount} units will load dynamically.`;
+  desc.style.marginBottom = 'calc(var(--step) * 3)';
+  desc.textContent = `Lecture overview. Select a unit below:`;
 
-  container.append(heading, desc);
+  const list = document.createElement('ul');
+  list.style.listStyle = 'none';
+  list.style.display = 'flex';
+  list.style.flexDirection = 'column';
+  list.style.gap = 'var(--step)';
+
+  if (ch.id === 6) {
+    const item = document.createElement('li');
+    item.innerHTML = `
+      <a href="#/lecture-06/fcfs" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;">
+        <span><strong>Unit 7:</strong> First-Come, First-Served (FCFS)</span>
+        <span style="color: var(--muted); font-size: 0.85rem;">slide 8 &rarr;</span>
+      </a>
+    `;
+    list.appendChild(item);
+  }
+
+  container.append(heading, desc, list);
   return container;
 }
 
@@ -185,14 +200,84 @@ async function renderUnitRoute(lectureSlug: string, unitSlug: string, mainContai
       return;
     }
 
+    const ch = CHAPTERS.find(c => c.slug === lectureSlug);
+
+    // Left chapter rail
+    const leftRail = document.createElement('aside');
+    leftRail.className = 'unit-sidebar-rail';
+    leftRail.style.display = 'flex';
+    leftRail.style.flexDirection = 'column';
+    leftRail.style.gap = 'var(--step)';
+    leftRail.innerHTML = `
+      <a href="#/${lectureSlug}" style="font-weight: 600; color: var(--accent); margin-bottom: var(--step); display: inline-block;">&larr; All ${ch?.title ?? 'Chapter'} Units</a>
+      <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Active Chapter</div>
+      <div style="font-weight: 600; margin-bottom: var(--step);">${ch?.topic ?? ''}</div>
+      <div style="padding: calc(var(--step)*1.5); background: var(--surface); border-left: 3px solid var(--accent); border-radius: 4px; font-weight: 500;">
+        Unit ${unit.id}: ${unit.title}
+      </div>
+    `;
+
+    // Center animation column
+    const centerCol = document.createElement('section');
+    centerCol.className = 'unit-center-col';
+    centerCol.style.display = 'flex';
+    centerCol.style.flexDirection = 'column';
+    centerCol.style.gap = 'calc(var(--step)*2)';
+
+    const unitHeader = document.createElement('div');
+    unitHeader.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
+        <span style="font-size: 0.85rem; color: var(--accent); font-weight: 600; font-family: var(--font-mono);">Unit ${unit.id} · Lecture ${unit.lecture} · ${unit.slides}</span>
+        <span style="font-size: 0.85rem; padding: 2px 8px; border-radius: 4px; background: var(--surface-alt); border: 1px solid var(--rule); text-transform: uppercase; font-family: var(--font-mono);">${unit.engine}</span>
+      </div>
+      <h1 style="font-size: 1.8rem; margin-bottom: var(--step);">${unit.title}</h1>
+    `;
+    centerCol.appendChild(unitHeader);
+
+    // Mount engine & UnitPlayer
     const animMountTarget = document.createElement('div');
     const engine = mountUnit(unit, animMountTarget);
     if (!engine) {
-      mainContainer.appendChild(animMountTarget);
+      centerCol.appendChild(animMountTarget);
+      mainContainer.append(leftRail, centerCol);
       return;
     }
 
-    activePlayer = new UnitPlayer(mainContainer, engine);
+    activePlayer = new UnitPlayer(centerCol, engine, animMountTarget);
+
+    // Right sidebar: Concept prose & physical analogy
+    const rightSidebar = document.createElement('aside');
+    rightSidebar.className = 'unit-right-sidebar';
+    rightSidebar.style.display = 'flex';
+    rightSidebar.style.flexDirection = 'column';
+    rightSidebar.style.gap = 'calc(var(--step)*2)';
+
+    const conceptCard = document.createElement('div');
+    conceptCard.style.padding = 'calc(var(--step)*2)';
+    conceptCard.style.background = 'var(--surface)';
+    conceptCard.style.border = '1px solid var(--rule)';
+    conceptCard.style.borderRadius = '8px';
+    conceptCard.innerHTML = `
+      <h3 style="font-size: 1.05rem; margin-bottom: var(--step); color: var(--ink);">Concept</h3>
+      <p style="font-family: var(--font-prose); font-size: 0.95rem; line-height: 1.6; color: var(--ink-2);">${unit.concept}</p>
+    `;
+
+    const analogyDomainColor = unit.analogy.domain === 'travel' ? 'var(--travel)' : unit.analogy.domain === 'food' ? 'var(--food)' : 'var(--friends)';
+    const analogyCard = document.createElement('div');
+    analogyCard.style.padding = 'calc(var(--step)*2)';
+    analogyCard.style.background = 'var(--surface)';
+    analogyCard.style.border = '1px solid var(--rule)';
+    analogyCard.style.borderRadius = '8px';
+    analogyCard.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--step);">
+        <h3 style="font-size: 1.05rem; color: var(--ink);">Real-Life Analogy</h3>
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: ${analogyDomainColor}; border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">${unit.analogy.domain}</span>
+      </div>
+      <p style="font-family: var(--font-prose); font-style: italic; font-size: 0.95rem; line-height: 1.6; color: var(--ink-2);">${unit.analogy.text}</p>
+    `;
+
+    rightSidebar.append(conceptCard, analogyCard);
+    mainContainer.append(leftRail, centerCol, rightSidebar);
   } catch (err) {
     renderFallback(mainContainer, { slug: unitSlug }, err);
   }
