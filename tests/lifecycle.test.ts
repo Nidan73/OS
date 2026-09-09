@@ -134,4 +134,41 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     expect(() => vi.advanceTimersByTime(5000)).not.toThrow();
     expect(e.getCurrentIndex()).toBe(0);
   });
+
+  test('setView updates view axis, clamps [0, 1], and notifies listeners — §3C.3', () => {
+    const e = new FakeEngine(el); e.init(0);
+    expect(e.getView()).toBe(0);
+    let notifiedView = -1;
+    const off = e.onViewChange(v => { notifiedView = v; });
+
+    e.setView(0.5);
+    expect(e.getView()).toBe(0.5);
+    expect(notifiedView).toBe(0.5);
+
+    // Clamping
+    e.setView(2.0);
+    expect(e.getView()).toBe(1.0);
+    e.setView(-1.0);
+    expect(e.getView()).toBe(0.0);
+
+    off();
+    e.setView(0.75);
+    expect(notifiedView).toBe(0.0); // listener detached
+  });
+
+  test('morphView snaps under prefers-reduced-motion — §3C.3', async () => {
+    matchMediaMock('(prefers-reduced-motion: reduce)', true);
+    const e = new FakeEngine(el); e.init(0);
+    await e.morphView(1.0);
+    expect(e.getView()).toBe(1.0);
+  });
+
+  test('destroy cleans up view subscriptions and tweens', () => {
+    const e = new FakeEngine(el); e.init(0);
+    let viewCalls = 0;
+    e.onViewChange(() => { viewCalls++; });
+    e.destroy();
+    e.setView(1);
+    expect(viewCalls).toBe(0);
+  });
 });

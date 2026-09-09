@@ -13,12 +13,14 @@
   /* Structural Dividers */
   --rule: #D8E0E8;
 
-  /* Accent & State Colors */
-  --accent: #C92A2A;                    /* playhead, active step, focus */
+  /* Accent & State Colors (DESIGN.md Part 0 §0.2) */
+  --accent: #0066cc;                    /* Action Blue: single brand interactive color & playhead */
+  --accent-focus: #0071e3;              /* Focus Blue: keyboard focus rings */
   --running: #087F5B;                   /* holding CPU / holding resource */
   --waiting: #D97706;                   /* ready but not running */
   --blocked: #A21CAF;                   /* blocked on I/O or a lock */
-  --idle:    #8C9BA5;
+  --idle:    #8C9BA5;                   /* unallocated / idle */
+  --completed: #2A6F97;                 /* finished execution / completed */
   --travel:  #0284C7;
   --food:    #D97706;
   --friends: #087F5B;
@@ -31,9 +33,10 @@
   --ease: cubic-bezier(.16, 1, .3, 1);
 
   /* Typography Families */
-  --font-ui: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-prose: 'Source Serif 4', Georgia, serif;
-  --font-mono: 'IBM Plex Mono', Menlo, Consolas, Monaco, monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  --font-prose: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Source Serif 4", Georgia, serif;
+  --font-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, Monaco, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,11 +52,13 @@
 
     --rule: #24303D;
 
-    --accent: #F03E3E;
+    --accent: #2997ff;                  /* Sky Link Blue on dark surfaces */
+    --accent-focus: #0071e3;
     --running: #20C997;
     --waiting: #F59E0B;
     --blocked: #E879F9;
     --idle:    #6C7D8C;
+    --completed: #4EA8DE;
     --travel:  #38BDF8;
     --food:    #F59E0B;
     --friends: #20C997;
@@ -78,11 +83,13 @@
 
   --rule: #24303D;
 
-  --accent: #F03E3E;
+  --accent: #2997ff;
+  --accent-focus: #0071e3;
   --running: #20C997;
   --waiting: #F59E0B;
   --blocked: #E879F9;
   --idle:    #6C7D8C;
+  --completed: #4EA8DE;
   --travel:  #38BDF8;
   --food:    #F59E0B;
   --friends: #20C997;

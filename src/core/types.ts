@@ -38,5 +38,25 @@ export interface Unit<I = unknown, S = unknown> {
   input: I;
 }
 
+export interface Lesson<I = unknown, S = unknown> {
+  /** 1–20, matches LESSONS.md */
+  id: number;
+  lecture: 6 | 7 | 8 | 9 | 10;
+  /** url-safe, stable, e.g. 'lesson-02' */
+  slug: string;
+  title: string;
+  /** absorbed Atlas units, e.g. [7, 8] */
+  absorbsUnits: number[];
+  /** provenance, e.g. 'slides 8–9' */
+  slides: string;
+  engine: EngineId;
+  analogy: Analogy;
+  /** OS concept explanation */
+  concept: string;
+  /** engine-specific input */
+  input: I;
+}
+
 /** Every engine is this shape. Pure. Deterministic. Same input → same output. */
 export type Engine<I, S> = (input: I) => Step<S>[];
+
