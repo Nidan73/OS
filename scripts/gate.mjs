@@ -31,6 +31,7 @@ const LESSONS = [
   { slug: 'lesson-10', chapter: 'lecture-08', name: 'The last slice' },
   { slug: 'lesson-11', chapter: 'lecture-08', name: 'What a correct solution must promise' },
   { slug: 'lesson-12', chapter: 'lecture-08', name: "Peterson's solution" },
+  { slug: 'lesson-13', chapter: 'lecture-09', name: 'One indivisible motion' },
 ];
 
 /** Internal vocabulary that must never reach a student. */

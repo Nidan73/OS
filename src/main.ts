@@ -41,6 +41,7 @@ const LESSONS_META: LessonMeta[] = [
   { id: 10, slug: 'lesson-10', chapterSlug: 'lecture-08', title: 'The Last Slice', blurb: 'One friend puts a slice back while the other takes one off — both read the same count, one update never lands. Reorder the interleaving and find the orders that corrupt the count.' },
   { id: 11, slug: 'lesson-11', chapterSlug: 'lecture-08', title: 'What a Correct Solution Must Promise', blurb: 'The single toilet on a long-haul coach. Break mutual exclusion, progress or bounded waiting and watch the exact failure each one permits.' },
   { id: 12, slug: 'lesson-12', chapterSlug: 'lecture-08', title: 'Peterson’s Solution, and Why Hardware Breaks It', blurb: 'Two friends at a door, each waving the other through. Toggle hardware reordering and watch the printed output flip.' },
+  { id: 13, slug: 'lesson-13', chapterSlug: 'lecture-09', title: 'One Indivisible Motion', blurb: 'The restroom key on a hook — run the same race split and fused, then compare_and_swap.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;

@@ -406,6 +406,212 @@ export function simulateTestAndSetLock(atomic: boolean): AtomicTestResult {
   };
 }
 
+/**
+ * compare_and_swap verdict (L13, Units 52–53). Deck slide 9: the swap takes
+ * place only if *value == expected. Atomic (fused): T1 compares live 0
+ * against expected 0, swaps to 1 and enters; T2 compares live 1 against
+ * expected 0 and refuses. Split (check-then-act): both threads check 0
+ * before either acts, so both write 1 and both enter — the change slips
+ * through between the check and the act.
+ */
+export function simulateCompareAndSwap(atomic: boolean): AtomicTestResult {
+  let lock = 0;
+  let t1Acquired = false;
+  let t2Acquired = false;
+
+  if (atomic) {
+    t1Acquired = lock === 0;
+    if (t1Acquired) lock = 1;
+
+    t2Acquired = lock === 0;
+    if (t2Acquired) lock = 1;
+  } else {
+    const t1Checked = lock;
+    const t2Checked = lock;
+    t1Acquired = t1Checked === 0;
+    lock = 1;
+    t2Acquired = t2Checked === 0;
+    lock = 1;
+  }
+
+  return {
+    atomic,
+    thread1Acquired: t1Acquired,
+    thread2Acquired: t2Acquired,
+    bothEnteredCS: t1Acquired && t2Acquired,
+    lockValue: lock
+  };
+}
+
+// ── 4b. Stepwise atomicity trace (L13, Units 50–55) ──
+
+export type AtomicMechanism = "tas" | "cas";
+
+export interface AtomicTraceStep {
+  step: number;
+  actorId: string;
+  action: string;
+  /** Deck value: 0 = free, 1 = held (slides 8, 10). */
+  lock: number;
+  entered: string[];
+  waiting: string[];
+  /** What actorId last read, on split read/check steps; otherwise null. */
+  snapshot: number | null;
+  bothInside: boolean;
+  /** First waiter handed the key on this step; otherwise null. */
+  handoffTo: string | null;
+  caption: string;
+}
+
+export interface AtomicTraceResult {
+  mechanism: AtomicMechanism;
+  atomic: boolean;
+  steps: AtomicTraceStep[];
+  bothEnteredCS: boolean;
+  /** Order in which threads first held the lock. */
+  handoffOrder: string[];
+}
+
+/**
+ * The full instruction-level story of two threads racing for one lock, as an
+ * explicit script per (mechanism, atomicity) combination — the same style as
+ * simulatePeterson's scripts. TAS follows deck slide 8 (boolean lock, spin
+ * until test_and_set reads free); CAS follows slide 10 (swap 0 for 1 only on
+ * a live match). The split versions separate the read from the write so both
+ * threads act on a stale observation. The lesson maps these steps 1:1 onto
+ * CounterState; every number on screen comes from here.
+ */
+export function simulateAtomicSteps(
+  mechanism: AtomicMechanism,
+  atomic: boolean
+): AtomicTraceResult {
+  const steps: AtomicTraceStep[] = [];
+  const order: string[] = [];
+  const seen = new Set<string>();
+  const note = (id: string) => {
+    if (!seen.has(id)) {
+      seen.add(id);
+      order.push(id);
+    }
+  };
+
+  const push = (
+    actorId: string,
+    action: string,
+    lock: number,
+    entered: string[],
+    waiting: string[],
+    caption: string,
+    extra?: { snapshot?: number | null; handoffTo?: string | null }
+  ) => {
+    entered.forEach(note);
+    steps.push({
+      step: steps.length,
+      actorId,
+      action,
+      lock,
+      entered: [...entered],
+      waiting: [...waiting],
+      snapshot: extra?.snapshot ?? null,
+      bothInside: entered.length > 1,
+      handoffTo: extra?.handoffTo ?? null,
+      caption
+    });
+  };
+
+  if (mechanism === "tas" && atomic) {
+    push("—", "free", 0, [], [], "The key hangs on the hook. The lock reads free and nobody holds it.");
+    push("T1", "acquire", 1, ["T1"], [], "T1 looks and grabs in one motion — the lock read free, so T1 steps in.");
+    push("T2", "spin", 1, ["T1"], ["T2"], "T2 jiggles the handle: still held. T2 waits and checks again.");
+    push("T1", "release", 0, [], ["T2"], "T1 hangs the key back. The lock reads free.");
+    push("T2", "acquire", 1, ["T2"], [], "T2's next check reads free — T2 steps in, first in line, handed the key directly.", { handoffTo: "T2" });
+  } else if (mechanism === "tas" && !atomic) {
+    push("—", "free", 0, [], [], "The key hangs on the hook. The lock reads free and nobody holds it.");
+    push("T1", "read", 0, [], [], "T1 looks at the hook: the key is there.", { snapshot: 0 });
+    push("T2", "read", 0, [], [], "T2 looks: the key is still there — T1 looked but hasn't grabbed.", { snapshot: 0 });
+    push("T1", "write", 1, ["T1"], [], "T1 grabs on its earlier look and steps in.");
+    push("T2", "write", 1, ["T1", "T2"], [], "T2 grabs on its stale look — and steps in too. Two holders, one key.");
+    push("T2", "verdict", 1, ["T1", "T2"], [], "The meter reads held, yet the room holds two. That disagreement is the corruption.");
+  } else if (mechanism === "cas" && atomic) {
+    push("—", "free", 0, [], [], "The tag reads 0. Nobody holds the lock.");
+    push("T1", "swap", 1, ["T1"], [], "T1 compares: the lock still reads 0 — swaps in 1 and steps in.");
+    push("T2", "compare", 1, ["T1"], ["T2"], "T2 compares: the lock reads 1, not 0 — the swap refuses, and T2 waits.");
+    push("T1", "release", 0, [], ["T2"], "T1 writes the lock back to 0.");
+    push("T2", "swap", 1, ["T2"], [], "T2 compares again: 0 as expected — swaps and steps in, first in line.", { handoffTo: "T2" });
+  } else {
+    push("—", "free", 0, [], [], "The tag reads 0. Nobody holds the lock.");
+    push("T1", "check", 0, [], [], "T1 checks the tag: 0.", { snapshot: 0 });
+    push("T2", "check", 0, [], [], "T2 checks the tag: still 0 — T1 hasn't acted.", { snapshot: 0 });
+    push("T1", "act", 1, ["T1"], [], "T1 acts on its check: writes 1 and steps in.");
+    push("T2", "act", 1, ["T1", "T2"], [], "T2 acts on its stale check: writes 1 and steps in too.");
+    push("T2", "verdict", 1, ["T1", "T2"], [], "The tag reads claimed — twice. The change slipped through between check and act.");
+  }
+
+  return {
+    mechanism,
+    atomic,
+    steps,
+    bothEnteredCS: steps.some(s => s.bothInside),
+    handoffOrder: order
+  };
+}
+
+// ── 4c. Atomic increment, built on compare-and-swap (L13, Unit 55) ──
+
+export interface AtomicIncrementResult {
+  start: number;
+  expected: number;
+  finalCAS: number;
+  retriesCAS: number;
+  finalPlain: number;
+  lostPlain: number;
+}
+
+/**
+ * Deck slides 12–13: increment() retried through compare_and_swap until the
+ * swap lands. Two threads increment once from 0. The plain version snapshots
+ * a stale value and one update never lands; the CAS version's second thread
+ * sees its swap refused, re-reads, and retries — so nothing is lost. The
+ * retry count is executed, not asserted: it falls out of the interleaving.
+ */
+export function simulateAtomicIncrement(): AtomicIncrementResult {
+  const start = 0;
+  const threads = 2;
+
+  let plain = start;
+  const p1 = plain;
+  const p2 = plain;
+  plain = p1 + 1;
+  plain = p2 + 1;
+
+  let cas = start;
+  let retries = 0;
+  const t1 = cas;
+  const t2 = cas;
+  if (cas === t1) {
+    cas = t1 + 1;
+  } else {
+    retries++;
+  }
+  if (cas === t2) {
+    cas = t2 + 1;
+  } else {
+    retries++;
+    const t2Retry = cas;
+    if (cas === t2Retry) cas = t2Retry + 1;
+  }
+
+  const expected = start + threads;
+  return {
+    start,
+    expected,
+    finalCAS: cas,
+    retriesCAS: retries,
+    finalPlain: plain,
+    lostPlain: expected - plain
+  };
+}
+
 // ── 5. Spinlock vs Sleep-Lock Cost Evaluation (L14, Units 56–57) ──
 
 export interface LockCostModel {
