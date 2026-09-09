@@ -13,6 +13,7 @@ import { lesson05 } from '../src/lessons/lecture-06/lesson-05.js';
 import { lesson06 } from '../src/lessons/lecture-07/lesson-06.js';
 import { lesson07 } from '../src/lessons/lecture-07/lesson-07.js';
 import { lesson08 } from '../src/lessons/lecture-07/lesson-08.js';
+import { lesson09 } from '../src/lessons/lecture-07/lesson-09.js';
 import { lesson10 } from '../src/lessons/lecture-08/lesson-10.js';
 import { lesson11 } from '../src/lessons/lecture-08/lesson-11.js';
 import { lesson12 } from '../src/lessons/lecture-08/lesson-12.js';
@@ -33,14 +34,14 @@ const SHARED: Record<Exclude<EngineId, 'standalone' | 'graph' | 'matrix'>, unkno
 describe('engine taxonomy: declared engine id matches the real inheritance', () => {
   const lessons: Lesson<any, any>[] = [
     lesson01, lesson02, lesson03, lesson04, lesson05,
-    lesson06, lesson07, lesson08,
+    lesson06, lesson07, lesson08, lesson09,
     lesson10, lesson11, lesson12
   ];
 
   it('covers every shipped lesson', () => {
     expect(lessons.map(l => l.slug).sort()).toEqual([
       'lesson-01', 'lesson-02', 'lesson-03', 'lesson-04', 'lesson-05',
-      'lesson-06', 'lesson-07', 'lesson-08',
+      'lesson-06', 'lesson-07', 'lesson-08', 'lesson-09',
       'lesson-10', 'lesson-11', 'lesson-12'
     ]);
   });
