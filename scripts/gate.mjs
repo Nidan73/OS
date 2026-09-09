@@ -27,6 +27,7 @@ const LESSONS = [
   { slug: 'lesson-06', chapter: 'lecture-07', name: 'Queues within queues (MLFQ)' },
   { slug: 'lesson-07', chapter: 'lecture-07', name: 'More cores, more problems' },
   { slug: 'lesson-08', chapter: 'lecture-07', name: 'Load balancing & affinity' },
+  { slug: 'lesson-09', chapter: 'lecture-07', name: 'When late means failed' },
   { slug: 'lesson-10', chapter: 'lecture-08', name: 'The last slice' },
   { slug: 'lesson-11', chapter: 'lecture-08', name: 'What a correct solution must promise' },
   { slug: 'lesson-12', chapter: 'lecture-08', name: "Peterson's solution" },
