@@ -50,7 +50,7 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> i
       (this.input as any).renderPlayground(host, scoreboardHost, this);
     }
   }
-  private svg!: SVGSVGElement;
+  protected svg!: SVGSVGElement;
   private resourceGroup!: SVGGElement;
   private holdersGroup!: SVGGElement;
   private waitingGroup!: SVGGElement;

@@ -1,7 +1,6 @@
 import type { Lesson } from '../../core/types.js';
 import type { GanttInput, GanttState } from '../../engines/gantt.js';
 import { GanttEngine } from '../../engines/gantt.js';
-import { registerEngine } from '../../core/registry.js';
 
 export class RoundRobinGanttEngine extends GanttEngine {
   constructor(container: HTMLElement, input: GanttInput) {
@@ -14,7 +13,7 @@ export class RoundRobinGanttEngine extends GanttEngine {
   public setQuantum(q: number): void {
     const clampedQ = Math.max(1, Math.min(30, Math.round(q)));
     this.input.quantum = clampedQ;
-    (this as any).steps = (this as any).buildSteps(this.input);
+    this.steps = this.buildSteps(this.input);
     const totalTime = Math.max(1, (this as any).scheduleResult?.totalTime || 30);
     (this as any).timeScale = (this as any).chartWidth / totalTime;
     (this as any).remountScaffolding();
@@ -300,9 +299,8 @@ export class RoundRobinGanttEngine extends GanttEngine {
 }
 
 // Register RoundRobinGanttEngine so dynamic lesson loader uses it
-registerEngine('gantt', RoundRobinGanttEngine as any);
 
-export const lesson04: Lesson<GanttInput> = {
+export const lesson04: Lesson<GanttInput, GanttState> = {
   id: 4,
   lecture: 6,
   slug: 'lesson-04',
@@ -310,12 +308,13 @@ export const lesson04: Lesson<GanttInput> = {
   absorbsUnits: [12, 13],
   slides: 'slides 16–19',
   engine: 'gantt',
+  engineClass: RoundRobinGanttEngine,
   analogy: {
     domain: 'friends',
     text: 'Karaoke night with friends and a timer. Everyone gets a hard turn with the microphone before passing it to the next friend in the circle. Nobody hogs the mic, ensuring everyone sings within (n−1)q time. But drop the timer to ten seconds and the whole night becomes swapping microphones and browsing the track list — switching overhead eats the entire evening.'
   },
   concept: 'Round Robin (RR) allocates the CPU using fixed time slices called time quanta (q). Each process executes for at most q units before being preempted to the back of the ready queue, ensuring no process waits more than (n−1)q time units. However, when q is too small, context-switch overhead dominates execution time, causing turnaround time to spike. When q is too large, Round Robin degenerates into First-Come First-Served (FCFS). Tuning q balances responsiveness against switching costs.',
-  morphReveals: 'At karaoke everyone gets one turn with the microphone. On a CPU time quantum slices turns into preemptible execution windows — short quantum gives responsiveness, but too short and context switching eats the night.',
+  morphReveals: 'At karaoke every turn is the same length, so fairness is just taking your place in the circle. On the timeline that same equal width becomes the quantum — and a long song now needs many separate turns, so shrinking the slice to feel fairer multiplies the handovers until the night is spent passing the microphone.',
   morphMode: 'morph',
   analogyMapping: [
     'Karaoke Stage & Mic ➔ CPU Core & Dispatcher',

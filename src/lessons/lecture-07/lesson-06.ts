@@ -1,37 +1,33 @@
-import type { Lesson } from '../../core/types.js';
-import { QueueEngine, type QueueInput, type QueueEvent } from '../../engines/queue.js';
-import { registerEngine } from '../../core/registry.js';
+import type { Lesson, PlaygroundCapable } from '../../core/types.js';
+import { QueueEngine, type QueueInput, type QueueEvent, type QueueState } from '../../engines/queue.js';
+import { mlfq, type Process, type ScheduleResult } from '../../algorithms/scheduling.js';
 
-// Ensure QueueEngine prototype has fallback methods so LessonPlayer does not throw
-if (!('getProcesses' in QueueEngine.prototype)) {
-  (QueueEngine.prototype as any).getProcesses = function () {
-    return (this.input?.items ?? []).map((it: any) => ({
-      id: it.id,
-      burst: it.burst ?? 10,
-      arrival: 0
-    }));
-  };
+/**
+ * Demotions are DERIVED from burst vs quantum, never counted by hand (§2.1).
+ * A job demotes once when it outlives Q0's quantum, and again when the
+ * remainder outlives Q1's.
+ */
+export function countDemotions(
+  items: { id: string; burst?: number; queueId?: string }[],
+  q0: number,
+  q1: number
+): number {
+  let n = 0;
+  for (const it of items) {
+    if (it.queueId !== 'Q0') continue;
+    const burst = it.burst ?? 0;
+    if (burst > q0) {
+      n += 1;
+      if (burst - q0 > q1) n += 1;
+    }
+  }
+  return n;
 }
 
-if (!('getScheduleResult' in QueueEngine.prototype)) {
-  (QueueEngine.prototype as any).getScheduleResult = function () {
-    return {
-      avgWaiting: 8.7,
-      avgTurnaround: 26.3,
-      metrics: {
-        P1: { waiting: 14, turnaround: 44 },
-        P2: { waiting: 0, turnaround: 8 },
-        P3: { waiting: 12, turnaround: 27 }
-      }
-    };
-  };
-}
+export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
+  /** Q1's round-robin quantum in ms. Q0's is the adjustable demotion threshold. */
+  static readonly Q1_QUANTUM = 16;
 
-if (!('reorderProcesses' in QueueEngine.prototype)) {
-  (QueueEngine.prototype as any).reorderProcesses = function () {};
-}
-
-export class MLFQQueueEngine extends QueueEngine {
   private threshold = 8;
   private playgroundAttached = false;
 
@@ -41,27 +37,21 @@ export class MLFQQueueEngine extends QueueEngine {
     setTimeout(() => this.setupMLFQPlayground(), 20);
   }
 
-  public getProcesses() {
+  /** Real processes from the lesson input — never invented (§2.1). */
+  public getProcesses(): Process[] {
     return (this.input?.items ?? []).map(it => ({
       id: it.id,
-      burst: it.burst ?? 10,
+      burst: it.burst ?? 0,
       arrival: 0
     }));
   }
 
-  public getScheduleResult() {
-    return {
-      avgWaiting: 8.7,
-      avgTurnaround: 26.3,
-      metrics: {
-        P1: { waiting: 14, turnaround: 44 },
-        P2: { waiting: 0, turnaround: 8 },
-        P3: { waiting: 12, turnaround: 27 }
-      }
-    };
+  /** Computed by mlfq(), never typed. Reflects the current demotion threshold. */
+  public getScheduleResult(): ScheduleResult {
+    return mlfq(this.getProcesses(), this.threshold, MLFQQueueEngine.Q1_QUANTUM);
   }
 
-  public reorderProcesses() {}
+  public reorderProcesses(): void {}
 
   public setDemotionThreshold(q0Quantum: number): void {
     this.threshold = q0Quantum;
@@ -87,7 +77,7 @@ export class MLFQQueueEngine extends QueueEngine {
       { caption: 'P3 enters Q0 (q=8). It uses 8ms, still needs 7ms, demoting to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
       { caption: 'P1 runs in Q1 (q=16), uses 16ms, still needs 6ms, demoting to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' }
     ];
-    this.steps = (this as any).buildSteps(this.input);
+    this.steps = this.buildSteps(this.input);
     this.seek(0);
     this.updateTransportUI();
     this.updateScoreboardUI();
@@ -157,7 +147,7 @@ export class MLFQQueueEngine extends QueueEngine {
     }
 
     this.input.events = events;
-    this.steps = (this as any).buildSteps(this.input);
+    this.steps = this.buildSteps(this.input);
     this.seek(0);
     this.updateTransportUI();
     this.updateScoreboardUI();
@@ -179,28 +169,64 @@ export class MLFQQueueEngine extends QueueEngine {
     }
   }
 
+  /**
+   * Every figure here is computed from mlfq() and the live threshold (§2.1).
+   * Nothing in this method may be a typed constant.
+   */
   private updateScoreboardUI(): void {
     const q0 = this.threshold;
-    const p1 = this.input.items.find(x => x.id === 'P1');
-    const p2 = this.input.items.find(x => x.id === 'P2');
-    const p3 = this.input.items.find(x => x.id === 'P3');
+    const q1 = MLFQQueueEngine.Q1_QUANTUM;
+    const items = this.input.items ?? [];
+    const schedule = this.getScheduleResult();
+    const demotions = countDemotions(items, q0, q1);
 
-    let demotions = 0;
-    if ((p1?.burst ?? 0) > q0 && p1?.queueId === 'Q0') demotions += 2;
-    if ((p3?.burst ?? 0) > q0 && p3?.queueId === 'Q0') demotions += 1;
+    const turnaroundEl = document.getElementById('metric-turnaround');
+    if (turnaroundEl) {
+      turnaroundEl.textContent = `${schedule.avgTurnaround.toFixed(1)} ms`;
+    }
+
+    const waitingEl = document.getElementById('metric-turnaround-sub');
+    if (waitingEl) {
+      waitingEl.textContent = `avg wait ${schedule.avgWaiting.toFixed(1)} ms`;
+    }
 
     const countEl = document.getElementById('metric-demotions');
     if (countEl) {
-      countEl.textContent = `${demotions} demotions`;
+      countEl.textContent = `${demotions} ${demotions === 1 ? 'demotion' : 'demotions'}`;
+    }
+
+    const demotionsSubEl = document.getElementById('metric-demotions-sub');
+    if (demotionsSubEl) {
+      const paths = items
+        .filter(it => it.queueId === 'Q0' && (it.burst ?? 0) > q0)
+        .map(it => {
+          const deep = (it.burst ?? 0) - q0 > q1;
+          return `${it.id} (Q0\u2192Q1${deep ? '\u2192Q2' : ''})`;
+        });
+      demotionsSubEl.textContent = paths.length > 0 ? paths.join(', ') : 'none at this threshold';
     }
 
     const distEl = document.getElementById('metric-distribution');
     if (distEl) {
-      distEl.innerHTML = `
-        <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">Q0 (Top):</span><span style="color: var(--running);">${(p2?.burst ?? 0) <= q0 ? 'P2 completes' : 'P2 demotes'}</span></div>
-        <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">Q1 (Mid):</span><span style="color: var(--waiting);">${(p3?.burst ?? 0) <= q0 ? 'P3 stays in Q0' : 'P3 demotes'}</span></div>
-        <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">Q2 (Base):</span><span style="color: var(--ink-2);">${demotions >= 2 ? 'P1 demotes to Q2' : 'P1 runs in Q1'}</span></div>
-      `;
+      distEl.innerHTML = items
+        .map(it => {
+          const burst = it.burst ?? 0;
+          const remainder = burst - q0;
+          let lands: string;
+          let tone: string;
+          if (burst <= q0) {
+            lands = 'finishes in Q0';
+            tone = 'var(--running)';
+          } else if (remainder <= q1) {
+            lands = 'finishes in Q1';
+            tone = 'var(--waiting)';
+          } else {
+            lands = 'falls to Q2';
+            tone = 'var(--ink-2)';
+          }
+          return `<div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">${it.id} (${burst}ms):</span><span style="color: ${tone};">${lands}</span></div>`;
+        })
+        .join('');
     }
   }
 
@@ -287,21 +313,17 @@ export class MLFQQueueEngine extends QueueEngine {
         <div style="display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px;">
           <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
             <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Avg Turnaround</div>
-            <div id="metric-turnaround" style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.374px; color: var(--ink); margin: 2px 0;">26.3 ms</div>
-            <div style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">Interactive prioritized</div>
+            <div id="metric-turnaround" style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.374px; color: var(--ink); margin: 2px 0;">${this.getScheduleResult().avgTurnaround.toFixed(1)} ms</div>
+            <div id="metric-turnaround-sub" style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">avg wait ${this.getScheduleResult().avgWaiting.toFixed(1)} ms</div>
           </div>
           <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
             <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Feedback Demotions</div>
-            <div id="metric-demotions" style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.374px; color: var(--waiting); margin: 2px 0;">2 demotions</div>
-            <div style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">P1 (Q0&rarr;Q1&rarr;Q2), P3 (Q0&rarr;Q1)</div>
+            <div id="metric-demotions" style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.374px; color: var(--waiting); margin: 2px 0;">${countDemotions(this.input.items ?? [], this.threshold, MLFQQueueEngine.Q1_QUANTUM)} demotions</div>
+            <div id="metric-demotions-sub" style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">&nbsp;</div>
           </div>
           <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
             <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Queue Distribution</div>
-            <div id="metric-distribution" style="font-family: var(--font-mono); font-size: 0.72rem; margin-top: 3px; display: flex; flex-direction: column; gap: 2px;">
-              <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">Q0 (Top):</span><span style="color: var(--running);">P2 completes</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">Q1 (Mid):</span><span style="color: var(--waiting);">P3 demotes</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="font-weight: 600;">Q2 (Base):</span><span style="color: var(--ink-2);">P1 demotes</span></div>
-            </div>
+            <div id="metric-distribution" style="font-family: var(--font-mono); font-size: 0.72rem; margin-top: 3px; display: flex; flex-direction: column; gap: 2px;"></div>
           </div>
         </div>
       `;
@@ -358,6 +380,9 @@ export class MLFQQueueEngine extends QueueEngine {
         }
       });
     });
+  
+    // Fill the computed tiles now that the scoreboard exists in the DOM.
+    this.updateScoreboardUI();
   }
 }
 
@@ -366,7 +391,6 @@ function buttonsHas(list: NodeListOf<Element>, index: number): boolean {
 }
 
 // Register MLFQQueueEngine for engine id 'queue'
-registerEngine('queue', MLFQQueueEngine as any);
 
 export const lesson06Input: QueueInput = {
   queues: [
@@ -393,7 +417,7 @@ export const lesson06Input: QueueInput = {
   }
 };
 
-export const lesson06: Lesson<QueueInput> = {
+export const lesson06: Lesson<QueueInput, QueueState> = {
   id: 6,
   lecture: 7,
   slug: 'lesson-06',
@@ -401,12 +425,19 @@ export const lesson06: Lesson<QueueInput> = {
   absorbsUnits: [15, 16],
   slides: 'slides 3–6',
   engine: 'queue',
+  engineClass: MLFQQueueEngine,
+  lensLabels: {
+    analogy: '\u2708\ufe0f Airport Lanes Analogy',
+    mechanism: '\u2699\ufe0f MLFQ Mechanism',
+    analogyTitle: 'View as class-based airport lanes',
+    mechanismTitle: 'View as multilevel feedback queue mechanism'
+  },
   analogy: {
     domain: 'travel',
     text: 'Airport check-in with permanently separate lines for first, business, and economy where lower classes wait indefinitely — paired with a counter that demotes dithering customers to slower lanes with longer time slots, while quick orders stay in express.'
   },
   concept: 'Multilevel Queue scheduling partitions ready jobs into permanent priority tiers with independent scheduling algorithms, risking starvation for lower queues. Multilevel Feedback Queue (MLFQ) dynamically adjusts priority based on observed CPU-burst behavior: jobs that exhaust their time quantum are demoted to lower-priority, higher-quantum queues, while interactive I/O jobs remain at top priority. Aging mechanisms periodically promote long-waiting jobs to prevent starvation.',
-  morphReveals: 'In class-based boarding, passengers remain in fixed lines. In MLFQ, a job moves down queues as its CPU burst exceeds the threshold, separating interactive jobs from batch jobs automatically.',
+  morphReveals: 'At the airport, which lane you stand in is printed on your ticket — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.',
   morphMode: 'morph',
   analogyMapping: [
     'First Class Lane ➔ Top Priority Queue Q0 (RR q=8ms)',
@@ -416,7 +447,7 @@ export const lesson06: Lesson<QueueInput> = {
     'Fast Check-in / Quick Order (P2) ➔ Interactive I/O-bound job',
     'Complex Inquiry / Dithering (P1, P3) ➔ CPU-bound batch job',
     'Lane Demotion ➔ MLFQ Feedback Demotion on Quantum Expiry'
-  ] as any,
+  ],
   input: lesson06Input
 };
 

@@ -111,7 +111,9 @@ export function mountUnit(unit: Unit<any, any>, container: HTMLElement): Animati
 
 export function mountLesson(lesson: Lesson<any, any>, container: HTMLElement, initialView = 0): AnimationEngine<any, any> | null {
   try {
-    const EngineCtor = engineRegistry[lesson.engine];
+    // A lesson's own engineClass wins over the shared registry, so a subclass
+    // stays scoped to the lesson that needs it (§3A.3).
+    const EngineCtor = lesson.engineClass ?? engineRegistry[lesson.engine];
     if (!EngineCtor) {
       throw new Error(`Unknown or unregistered engine "${lesson.engine}"`);
     }

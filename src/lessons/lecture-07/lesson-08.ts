@@ -1,18 +1,5 @@
-import type { Lesson } from '../../core/types.js';
-import { QueueEngine, type QueueInput, type QueueEvent } from '../../engines/queue.js';
-import { LessonPlayer } from '../../components/LessonPlayer.js';
-
-// Polyfill Gantt-specific methods on QueueEngine prototype if absent
-if (!(QueueEngine.prototype as any).getProcesses) {
-  (QueueEngine.prototype as any).getProcesses = function() {
-    return (this as any).getItems?.() ?? [];
-  };
-}
-if (!(QueueEngine.prototype as any).getScheduleResult) {
-  (QueueEngine.prototype as any).getScheduleResult = function() {
-    return { avgWaiting: 0, avgTurnaround: 0, metrics: {} };
-  };
-}
+import type { Lesson, PlaygroundCapable } from '../../core/types.js';
+import { QueueEngine, type QueueInput, type QueueEvent, type QueueState } from '../../engines/queue.js';
 
 export type MigrationScenario = 'push' | 'pull' | 'affinity';
 
@@ -37,33 +24,34 @@ export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
   ]
 };
 
-// Augment QueueEngine prototype with reconfigure for lesson 08 interactive playground
-if (!(QueueEngine.prototype as any).reconfigure) {
-  (QueueEngine.prototype as any).reconfigure = function(events: QueueEvent[]) {
+/**
+ * Lesson 08's engine. Scoped to this lesson: the queue engine is shared with
+ * lessons 6 and 7, so patching its prototype — or LessonPlayer's — made the
+ * page depend on which lesson the learner opened first.
+ */
+export class MigrationQueueEngine extends QueueEngine implements PlaygroundCapable {
+  /** Rebuild the timeline for a migration scenario. */
+  public reconfigure(events: QueueEvent[]): void {
     this.input.events = events;
-    (this as any).steps = (this as any).buildSteps(this.input);
+    this.setSteps(this.buildSteps(this.input));
     this.seek(0);
-  };
-}
-
-// Hook LessonPlayer for QueueEngine lessons
-const origRenderPlayground = (LessonPlayer.prototype as any).renderPlaygroundAndScoreboard;
-(LessonPlayer.prototype as any).renderPlaygroundAndScoreboard = function() {
-  const engine = (this as any).engine;
-  if (!engine || typeof engine.getItems !== 'function') {
-    origRenderPlayground.call(this);
-    return;
   }
 
-  // Update lens controller buttons for Multiprocessor queue domain
-  if ((this as any).analogyBtn) {
-    (this as any).analogyBtn.textContent = '✈️ Agent Desk Analogy';
-    (this as any).analogyBtn.title = 'View as physical airport counter and passenger queues';
+  public debugHooks(): Record<string, unknown> {
+    return {
+      getItems: () => this.getItems(),
+      setScenario: (sc: MigrationScenario) => this.activeScenario(sc)
+    };
   }
-  if ((this as any).mechBtn) {
-    (this as any).mechBtn.textContent = '📊 Multiprocessor Runqueues';
-    (this as any).mechBtn.title = 'View as multi-core runqueues and CPU caches';
+
+  private scenarioSwitcher: ((sc: MigrationScenario) => void) | null = null;
+
+  private activeScenario(sc: MigrationScenario): void {
+    this.scenarioSwitcher?.(sc);
   }
+
+  public renderPlayground(playgroundSection: HTMLElement, scoreboardSection: HTMLElement): void {
+  const engine = this;
 
   const updatePlaygroundAndScoreboard = (sc: MigrationScenario) => {
     const isPush = sc === 'push';
@@ -72,7 +60,7 @@ const origRenderPlayground = (LessonPlayer.prototype as any).renderPlaygroundAnd
     const isBalanced = isPush || isPull;
 
     // 1. Playground controls
-    const playground = (this as any).playgroundSection as HTMLElement;
+    const playground = playgroundSection;
     playground.setAttribute('data-primary-control', 'true');
     playground.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
@@ -95,7 +83,7 @@ const origRenderPlayground = (LessonPlayer.prototype as any).renderPlaygroundAnd
     `;
 
     // 2. Scoreboard
-    const scoreboard = (this as any).scoreboardSection as HTMLElement;
+    const scoreboard = scoreboardSection;
     scoreboard.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Multiprocessor Performance Metrics</h3>
@@ -135,37 +123,15 @@ const origRenderPlayground = (LessonPlayer.prototype as any).renderPlaygroundAnd
 
   const switchScenario = (sc: MigrationScenario) => {
     engine.reconfigure(SCENARIO_EVENTS[sc]);
-    const steps = engine.getSteps();
-    const scrubber = (this as any).scrubber as HTMLInputElement;
-    if (scrubber) {
-      scrubber.max = String(Math.max(0, steps.length - 1));
-      scrubber.value = '0';
-    }
-    const stepIndicator = (this as any).stepIndicator as HTMLElement;
-    if (stepIndicator) {
-      stepIndicator.textContent = `1 / ${steps.length}`;
-    }
-    const captionBanner = (this as any).captionBanner as HTMLElement;
-    if (captionBanner && steps[0]) {
-      captionBanner.textContent = steps[0].caption;
-    }
     updatePlaygroundAndScoreboard(sc);
   };
 
-  updatePlaygroundAndScoreboard('push');
-
-  if (typeof window !== 'undefined') {
-    (window as any).__lesson = {
-      setView: (v: number) => (this as any).setView(v),
-      getView: () => engine.getView(),
-      getItems: () => engine.getItems(),
-      setScenario: (sc: MigrationScenario) => switchScenario(sc),
-      morphMode: (this as any).morphMode ?? 'morph'
-    };
+    this.scenarioSwitcher = switchScenario;
+    updatePlaygroundAndScoreboard('push');
   }
-};
+}
 
-export const lesson08: Lesson<QueueInput> = {
+export const lesson08: Lesson<QueueInput, QueueState> = {
   id: 8,
   lecture: 7,
   slug: 'lesson-08',
@@ -173,12 +139,19 @@ export const lesson08: Lesson<QueueInput> = {
   absorbsUnits: [24, 25, 26],
   slides: 'slides 15–17',
   engine: 'queue',
+  engineClass: MigrationQueueEngine,
+  lensLabels: {
+    analogy: '\u2708\ufe0f Agent Desk Analogy',
+    mechanism: '\u{1F4CA} Multiprocessor Runqueues',
+    analogyTitle: 'View as physical airport counter and passenger queues',
+    mechanismTitle: 'View as multi-core runqueues and CPU caches'
+  },
   analogy: {
     domain: 'travel',
     text: 'A staffer waving passengers from a long queue over to an empty counter balances waiting lines immediately. However, if an agent already knows your travel booking, switching counters discards that warm context and forces re-explaining from scratch.'
   },
   concept: 'Multiprocessor scheduling balances workloads across cores using push and pull migration. However, migrating threads across processor cores destroys CPU cache state (processor affinity), introducing cold-cache memory stalls. NUMA systems further penalize migration when threads are moved away from their local memory nodes.',
-  morphReveals: 'Waving a passenger to an empty counter balances line length instantly, but if the previous agent already knew their booking details, switching counters forces re-explaining everything — that is the cost of migrating across CPU caches.',
+  morphReveals: 'In the terminal, walking to a shorter counter is free — sideways distance costs nothing but a few steps, so you always join the shortest line. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.',
   morphMode: 'morph',
   analogyMapping: [
     'Service Counter / Desk ➔ CPU Core',

@@ -68,7 +68,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> impleme
       (this.input as any).renderPlayground(host, scoreboardHost, this);
     }
   }
-  private svg!: SVGSVGElement;
+  protected svg!: SVGSVGElement;
   private lanesGroup!: SVGGElement;
   private coresGroup!: SVGGElement;
   private itemsGroup!: SVGGElement;

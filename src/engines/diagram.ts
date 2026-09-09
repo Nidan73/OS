@@ -65,7 +65,7 @@ export class DiagramEngine extends AnimationEngine<DiagramInput, DiagramState> i
       (this.input as any).renderPlayground(host, scoreboardHost, this);
     }
   }
-  private svg!: SVGSVGElement;
+  protected svg!: SVGSVGElement;
   private connectionsGroup!: SVGGElement;
   private nodesGroup!: SVGGElement;
   private overlayGroup!: SVGGElement;

@@ -24,7 +24,7 @@ describe('Lesson 4: Round Robin and the Cost of Fairness (§3C)', () => {
     expect(lesson04.analogy.text).toContain('Karaoke night');
     expect(lesson04.concept).toContain('Round Robin');
     expect(lesson04.morphReveals).toBe(
-      'At karaoke everyone gets one turn with the microphone. On a CPU time quantum slices turns into preemptible execution windows — short quantum gives responsiveness, but too short and context switching eats the night.'
+      'At karaoke every turn is the same length, so fairness is just taking your place in the circle. On the timeline that same equal width becomes the quantum — and a long song now needs many separate turns, so shrinking the slice to feel fairer multiplies the handovers until the night is spent passing the microphone.'
     );
   });
 

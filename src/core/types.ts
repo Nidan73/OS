@@ -1,10 +1,13 @@
 import type { Process, ScheduleResult } from '../algorithms/scheduling.js';
+import type { AnimationEngine } from './engine.js';
 
 export interface PlaygroundCapable {
   getProcesses?(): Process[];
   getScheduleResult?(): ScheduleResult | null;
   reorderProcesses?(procs: Process[]): void;
   renderPlayground?(host: HTMLElement, scoreboardHost?: HTMLElement): void;
+  /** Extra handles merged into window.__lesson for the gate and manual probing. */
+  debugHooks?(): Record<string, unknown>;
 }
 
 // src/core/types.ts — §3.1 authoritative contract
@@ -70,6 +73,15 @@ export interface Lesson<I = unknown, S = unknown> {
   morphReason?: string;
   /** Optional bulleted mapping between analogy and mechanism */
   analogyMapping?: string[];
+  /**
+   * A lesson that needs behaviour beyond its base engine declares the subclass
+   * HERE. Never call registerEngine() from a lesson: the registry is global, so
+   * re-registering an engine silently changes it for every other lesson that
+   * shares it, and what a learner sees then depends on navigation order.
+   */
+  engineClass?: new (container: HTMLElement, input: I) => AnimationEngine<I, S> & PlaygroundCapable;
+  /** Optional lens-button labels. Data, not DOM poking (§2.2). */
+  lensLabels?: { analogy: string; mechanism: string; analogyTitle?: string; mechanismTitle?: string };
   /** engine-specific input */
   input: I;
 }

@@ -272,6 +272,78 @@ async function gateLesson(page, lesson) {
   }
   await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
 
+  // ── 7b. At least one playground control actually changes the outcome.
+  // §3C.4: "Every lesson ships with at least one control that changes the
+  // outcome. A lesson with only play/pause is not finished." Driving the
+  // controls also catches handlers that throw — a class of break that every
+  // other check here passes over, because nothing else clicks anything.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(200);
+  const errorsBeforeDrive = consoleErrors.length;
+
+  const snapshot = () =>
+    page.evaluate(() => {
+      const sb = document.querySelector('.lesson-scoreboard');
+      const cap = document.querySelector('.caption-banner');
+      const steps = window.__lesson?.engine?.getSteps?.().length ?? -1;
+      const svg = document.querySelector('.lesson-player svg, #anim-viewport svg');
+      return [
+        steps,
+        sb ? sb.innerText.replace(/\s+/g, ' ') : '',
+        cap ? cap.textContent : '',
+        svg ? svg.innerHTML.length : 0
+      ].join('|');
+    });
+
+  const controlCount = await page.evaluate(() => {
+    const host =
+      document.querySelector('[data-primary-control]')?.closest('section, div') ??
+      document.querySelector('.lesson-playground-control, .playground, #playground');
+    if (!host) return 0;
+    const els = host.matches('input, button, select')
+      ? [host]
+      : [...host.querySelectorAll('input[type=range], button, select')];
+    window.__gateControls = els;
+    return els.length;
+  });
+
+  check(controlCount > 0, `${tag} playground has a control`, 'no drivable control in the playground');
+
+  let anyChanged = false;
+  for (let i = 0; i < Math.min(controlCount, 6) && !anyChanged; i++) {
+    const before = await snapshot();
+    await page.evaluate((idx) => {
+      const el = window.__gateControls?.[idx];
+      if (!el) return;
+      if (el.tagName === 'INPUT' && el.type === 'range') {
+        const min = Number(el.min || 0);
+        const max = Number(el.max || 100);
+        const cur = Number(el.value);
+        el.value = String(Math.abs(max - cur) >= Math.abs(cur - min) ? max : min);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        el.click();
+      }
+    }, i);
+    await page.waitForTimeout(600);
+    if ((await snapshot()) !== before) anyChanged = true;
+  }
+
+  if (controlCount > 0) {
+    check(
+      anyChanged,
+      `${tag} a control changes the outcome`,
+      `drove ${Math.min(controlCount, 6)} control(s); steps, scoreboard, caption and ` +
+        `drawing were all unchanged — play/pause alone is not a finished lesson (§3C.4)`
+    );
+  }
+  check(
+    consoleErrors.length === errorsBeforeDrive,
+    `${tag} controls do not throw`,
+    consoleErrors.slice(errorsBeforeDrive, errorsBeforeDrive + 3).join(' | ')
+  );
+
   // ── 8. Nothing threw while we were driving it
   check(consoleErrors.length === 0, `${tag} console`, consoleErrors.slice(0, 3).join(' | '));
 }

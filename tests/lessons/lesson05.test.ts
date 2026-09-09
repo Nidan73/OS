@@ -24,7 +24,7 @@ describe('Lesson 5: Priority Scheduling, Starvation & Aging (§3C)', () => {
     expect(lesson05.analogy.domain).toBe('travel');
     expect(lesson05.analogy.text).toContain('Airport boarding groups');
     expect(lesson05.morphReveals).toBe(
-      'In airport boarding, Group 1 boards ahead of Group 9 regardless of arrival. In priority scheduling, lower-priority jobs starve indefinitely unless aging incrementally increases their priority over time.'
+      'At the gate your group number decides where you stand, and standing still costs you nothing. On the timeline that same position becomes when you start — so every new Group 1 arrival slides a Group 9 passenger further right, and starvation is simply a bar that never gets reached. Aging moves them up the line as they wait.'
     );
     expect(lesson05.morphMode).toBe('morph');
     expect(lesson05.concept).toContain('Priority scheduling');

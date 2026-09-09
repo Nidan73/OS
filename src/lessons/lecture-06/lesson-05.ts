@@ -1,7 +1,6 @@
-import type { Lesson } from '../../core/types.js';
-import type { GanttInput } from '../../engines/gantt.js';
+import type { Lesson, PlaygroundCapable } from '../../core/types.js';
+import type { GanttInput, GanttState } from '../../engines/gantt.js';
 import { GanttEngine } from '../../engines/gantt.js';
-import { LessonPlayer } from '../../components/LessonPlayer.js';
 import type { Process } from '../../algorithms/scheduling.js';
 
 export const BASELINE_PROCESSES: Process[] = [
@@ -20,100 +19,86 @@ export const AGED_PROCESSES: Process[] = [
   { id: 'P3', arrival: 0, burst: 2, priority: 4 }
 ];
 
-export const lesson05: Lesson<GanttInput> = {
-  id: 5,
-  lecture: 6,
-  slug: 'lesson-05',
-  title: 'Priority Scheduling, Starvation & Aging',
-  absorbsUnits: [14],
-  slides: 'slides 20–22',
-  engine: 'gantt',
-  analogy: {
-    domain: 'travel',
-    text: 'Airport boarding groups. The Group 9 passenger who watches four flights board ahead of them is starving — aging is the gate agent quietly bumping them up per hour waited.'
-  },
-  concept: 'Priority scheduling assigns each process an integer priority rank where the CPU is allocated to the highest-priority job (lowest integer). However, low-priority processes can suffer from starvation (indefinite blocking) if higher-priority tasks continuously arrive. Aging solves starvation by gradually incrementing the priority of processes waiting in the ready queue, ensuring every job eventually executes.',
-  morphReveals: 'In airport boarding, Group 1 boards ahead of Group 9 regardless of arrival. In priority scheduling, lower-priority jobs starve indefinitely unless aging incrementally increases their priority over time.',
-  morphMode: 'morph',
-  analogyMapping: [
-    'Boarding Gate ➔ CPU Core',
-    'Gate Agent ➔ Scheduler Dispatcher',
-    'Boarding Group (1–9) ➔ Priority Rank (1 = Highest Priority)',
-    'Starving Group 9 Traveler ➔ Low-Priority Process (Starvation)',
-    'Priority Upgrade per Hour Waited ➔ Aging Mechanism'
-  ] as any,
-  input: {
-    processes: [
-      { id: 'P1', arrival: 0, burst: 10, priority: 3 },
-      { id: 'P2', arrival: 0, burst: 1, priority: 1 },
-      { id: 'P3', arrival: 0, burst: 2, priority: 4 },
-      { id: 'P4', arrival: 0, burst: 1, priority: 9 },
-      { id: 'P5', arrival: 0, burst: 5, priority: 2 }
-    ],
-    algorithm: 'priority',
-    analogy: {
-      domain: 'travel',
-      type: 'airport',
-      serviceLabel: 'Boarding Gate',
-      serviceSublabel: 'Gate Agent (Dispatcher)',
-      queueLabel: 'Boarding Queue',
-      items: {
-        P1: {
-          customerName: 'Business Traveler',
-          orderText: 'Group 3 · Priority 3 (10m)',
-          avatarColor: '#D97706'
-        },
-        P2: {
-          customerName: 'First Class',
-          orderText: 'Group 1 · Priority 1 (1m)',
-          avatarColor: '#0284C7'
-        },
-        P3: {
-          customerName: 'Main Cabin Select',
-          orderText: 'Group 4 · Priority 4 (2m)',
-          avatarColor: '#7C3AED'
-        },
-        P4: {
-          customerName: 'Group 9 Passenger',
-          orderText: 'Group 9 · Priority 9 (1m)',
-          avatarColor: '#DC2626'
-        },
-        P5: {
-          customerName: 'Sky Priority',
-          orderText: 'Group 2 · Priority 2 (5m)',
-          avatarColor: '#059669'
-        }
-      }
-    }
-  }
-};
 
 // Global state tracking for lesson 05 interactive playground
 let lesson05AgingActive = false;
 
-// Patch LessonPlayer prototype safely for Priority & Aging lesson
-const origRenderPlayground = (LessonPlayer.prototype as any).renderPlaygroundAndScoreboard;
-if (origRenderPlayground && !(LessonPlayer.prototype as any).__lesson05Patched) {
-  (LessonPlayer.prototype as any).__lesson05Patched = true;
 
-  (LessonPlayer.prototype as any).renderPlaygroundAndScoreboard = function () {
-    const engine: GanttEngine = (this as any).engine;
-    const input: GanttInput = (engine as any)?.input;
-    const isPriorityLesson = input?.algorithm === 'priority' || input?.analogy?.type === 'airport';
+/**
+ * Lesson 05's engine. A subclass, not a prototype patch: GanttEngine is shared
+ * with lessons 1-4, and wrapping its render() globally meant every other
+ * scheduling lesson carried this lesson's airport styling around with it.
+ */
+export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
+  /** Re-run the schedule for a new priority set and repaint the side panels. */
+  private applyProcesses(procs: Process[], playgroundSection: HTMLElement, scoreboardSection: HTMLElement): void {
+    this.reorderProcesses(procs);
+    this.renderPlayground(playgroundSection, scoreboardSection);
+  }
 
-    if (!isPriorityLesson) {
-      return origRenderPlayground.call(this);
+  public debugHooks(): Record<string, unknown> {
+    return {
+      isAging: () => lesson05AgingActive,
+      toggleAging: (forceVal?: boolean) => {
+        lesson05AgingActive = forceVal !== undefined ? forceVal : !lesson05AgingActive;
+        this.reorderProcesses(
+          (lesson05AgingActive ? AGED_PROCESSES : BASELINE_PROCESSES).map(p => ({ ...p }))
+        );
+      }
+    };
+  }
+
+  protected override render(state: GanttState, view: number = 0): void {
+    super.render(state, view);
+
+
+    const v = Math.max(0, Math.min(1, view));
+    const svg = this.svg;
+    if (!svg) return;
+
+    // Service station labels
+    const truckTitle = svg.querySelector('#truck-title');
+    if (truckTitle) truckTitle.textContent = 'GATE 42';
+
+    const truckState = svg.querySelector('#truck-state');
+    if (truckState) {
+      if (state.activeProcessId) {
+        truckState.textContent = `BOARDING ${state.activeProcessId}`;
+        truckState.setAttribute('fill', 'var(--travel)');
+      } else {
+        truckState.textContent = 'GATE READY';
+        truckState.setAttribute('fill', 'var(--muted)');
+      }
     }
 
-    // 1. Update Lens controller buttons for airport domain
-    if ((this as any).analogyBtn) {
-      (this as any).analogyBtn.textContent = '✈️ Airport Analogy';
-      (this as any).analogyBtn.title = 'View as airport boarding queue';
+    // Polish sprites and process labels for airport domain
+    for (const p of this.input.processes) {
+      const procGroup = svg.querySelector(`#proc-${p.id}`);
+      if (!procGroup) continue;
+
+      const prio = p.priority ?? 1;
+
+      // Update tray text in sprite to Boarding Group
+      const trayTxt = procGroup.querySelector(`#sprite-${p.id} text`);
+      if (trayTxt) {
+        trayTxt.textContent = `Grp ${prio}`;
+      }
+
+      // Update label
+      const label = procGroup.querySelector(`#label-${p.id}`) as SVGTextElement;
+      if (label) {
+        if (v < 0.5) {
+          label.textContent = `${p.id} · Grp ${prio} (${p.burst}m)`;
+        }
+      }
     }
-    if ((this as any).mechBtn) {
-      (this as any).mechBtn.textContent = '📊 Priority Timeline';
-      (this as any).mechBtn.title = 'View as priority scheduling timeline';
-    }
+  
+  }
+
+  public renderPlayground(playgroundSection: HTMLElement, scoreboardSection: HTMLElement): void {
+    const engine = this;
+
+
 
     const processes = engine.getProcesses();
     const schedule = engine.getScheduleResult();
@@ -123,7 +108,6 @@ if (origRenderPlayground && !(LessonPlayer.prototype as any).__lesson05Patched) 
     const p4Wait = schedule.metrics['P4']?.waiting ?? 0;
 
     // 2. Render Playground controls
-    const playgroundSection: HTMLElement = (this as any).playgroundSection;
     playgroundSection.removeAttribute('data-primary-control');
     playgroundSection.style.padding = '6px 10px';
     playgroundSection.style.gap = '3px';
@@ -186,7 +170,6 @@ if (origRenderPlayground && !(LessonPlayer.prototype as any).__lesson05Patched) 
     `;
 
     // 3. Render Scoreboard
-    const scoreboardSection: HTMLElement = (this as any).scoreboardSection;
     scoreboardSection.style.padding = '6px 10px';
     scoreboardSection.style.gap = '3px';
 
@@ -237,13 +220,13 @@ if (origRenderPlayground && !(LessonPlayer.prototype as any).__lesson05Patched) 
       const targetProcs = lesson05AgingActive
         ? AGED_PROCESSES.map(p => ({ ...p }))
         : BASELINE_PROCESSES.map(p => ({ ...p }));
-      (this as any).reorderTo(targetProcs);
+      this.applyProcesses(targetProcs, playgroundSection, scoreboardSection);
     });
 
     const resetBtn = playgroundSection.querySelector('#btn-starvation-preset');
     resetBtn?.addEventListener('click', () => {
       lesson05AgingActive = false;
-      (this as any).reorderTo(BASELINE_PROCESSES.map(p => ({ ...p })));
+      this.applyProcesses(BASELINE_PROCESSES.map(p => ({ ...p })), playgroundSection, scoreboardSection);
     });
 
     const boostButtons = playgroundSection.querySelectorAll('.btn-boost-prio, .btn-lower-prio');
@@ -257,77 +240,90 @@ if (origRenderPlayground && !(LessonPlayer.prototype as any).__lesson05Patched) 
         if (proc) {
           const newPrio = Math.max(1, Math.min(9, (proc.priority ?? 1) + delta));
           proc.priority = newPrio;
-          (this as any).reorderTo(currentProcs);
+          this.applyProcesses(currentProcs, playgroundSection, scoreboardSection);
         }
       });
     });
 
-    // Expose aging helpers on window.__lesson
-    if (typeof window !== 'undefined' && (window as any).__lesson) {
-      (window as any).__lesson.isAging = () => isP4Aged;
-      (window as any).__lesson.toggleAging = (forceVal?: boolean) => {
-        lesson05AgingActive = forceVal !== undefined ? forceVal : !lesson05AgingActive;
-        const targetProcs = lesson05AgingActive
-          ? AGED_PROCESSES.map(p => ({ ...p }))
-          : BASELINE_PROCESSES.map(p => ({ ...p }));
-        (this as any).reorderTo(targetProcs);
-      };
-    }
-  };
+  
+  }
 }
 
-// Enhance GanttEngine render for Airport Boarding domain without altering element IDs
-const origGanttRender = (GanttEngine.prototype as any).render;
-if (origGanttRender && !(GanttEngine.prototype as any).__lesson05GanttPatched) {
-  (GanttEngine.prototype as any).__lesson05GanttPatched = true;
 
-  (GanttEngine.prototype as any).render = function (state: any, view: number = 0) {
-    origGanttRender.call(this, state, view);
 
-    const isPriorityLesson = this.input?.algorithm === 'priority' || this.input?.analogy?.type === 'airport';
-    if (!isPriorityLesson) return;
-
-    const v = Math.max(0, Math.min(1, view));
-    const svg: SVGSVGElement = (this as any).svg;
-    if (!svg) return;
-
-    // Service station labels
-    const truckTitle = svg.querySelector('#truck-title');
-    if (truckTitle) truckTitle.textContent = 'GATE 42';
-
-    const truckState = svg.querySelector('#truck-state');
-    if (truckState) {
-      if (state.activeProcessId) {
-        truckState.textContent = `BOARDING ${state.activeProcessId}`;
-        truckState.setAttribute('fill', 'var(--travel)');
-      } else {
-        truckState.textContent = 'GATE READY';
-        truckState.setAttribute('fill', 'var(--muted)');
-      }
-    }
-
-    // Polish sprites and process labels for airport domain
-    for (const p of this.input.processes) {
-      const procGroup = svg.querySelector(`#proc-${p.id}`);
-      if (!procGroup) continue;
-
-      const prio = p.priority ?? 1;
-
-      // Update tray text in sprite to Boarding Group
-      const trayTxt = procGroup.querySelector(`#sprite-${p.id} text`);
-      if (trayTxt) {
-        trayTxt.textContent = `Grp ${prio}`;
-      }
-
-      // Update label
-      const label = procGroup.querySelector(`#label-${p.id}`) as SVGTextElement;
-      if (label) {
-        if (v < 0.5) {
-          label.textContent = `${p.id} · Grp ${prio} (${p.burst}m)`;
+export const lesson05: Lesson<GanttInput, GanttState> = {
+  id: 5,
+  lecture: 6,
+  slug: 'lesson-05',
+  title: 'Priority Scheduling, Starvation & Aging',
+  absorbsUnits: [14],
+  slides: 'slides 20–22',
+  engine: 'gantt',
+  engineClass: AgingGanttEngine,
+  lensLabels: {
+    analogy: '\u2708\ufe0f Airport Analogy',
+    mechanism: '\u{1F4CA} Priority Timeline',
+    analogyTitle: 'View as airport boarding queue',
+    mechanismTitle: 'View as priority scheduling timeline'
+  },
+  analogy: {
+    domain: 'travel',
+    text: 'Airport boarding groups. The Group 9 passenger who watches four flights board ahead of them is starving — aging is the gate agent quietly bumping them up per hour waited.'
+  },
+  concept: 'Priority scheduling assigns each process an integer priority rank where the CPU is allocated to the highest-priority job (lowest integer). However, low-priority processes can suffer from starvation (indefinite blocking) if higher-priority tasks continuously arrive. Aging solves starvation by gradually incrementing the priority of processes waiting in the ready queue, ensuring every job eventually executes.',
+  morphReveals: 'At the gate your group number decides where you stand, and standing still costs you nothing. On the timeline that same position becomes when you start — so every new Group 1 arrival slides a Group 9 passenger further right, and starvation is simply a bar that never gets reached. Aging moves them up the line as they wait.',
+  morphMode: 'morph',
+  analogyMapping: [
+    'Boarding Gate ➔ CPU Core',
+    'Gate Agent ➔ Scheduler Dispatcher',
+    'Boarding Group (1–9) ➔ Priority Rank (1 = Highest Priority)',
+    'Starving Group 9 Traveler ➔ Low-Priority Process (Starvation)',
+    'Priority Upgrade per Hour Waited ➔ Aging Mechanism'
+  ] as any,
+  input: {
+    processes: [
+      { id: 'P1', arrival: 0, burst: 10, priority: 3 },
+      { id: 'P2', arrival: 0, burst: 1, priority: 1 },
+      { id: 'P3', arrival: 0, burst: 2, priority: 4 },
+      { id: 'P4', arrival: 0, burst: 1, priority: 9 },
+      { id: 'P5', arrival: 0, burst: 5, priority: 2 }
+    ],
+    algorithm: 'priority',
+    analogy: {
+      domain: 'travel',
+      type: 'airport',
+      serviceLabel: 'Boarding Gate',
+      serviceSublabel: 'Gate Agent (Dispatcher)',
+      queueLabel: 'Boarding Queue',
+      items: {
+        P1: {
+          customerName: 'Business Traveler',
+          orderText: 'Group 3 · Priority 3 (10m)',
+          avatarColor: '#D97706'
+        },
+        P2: {
+          customerName: 'First Class',
+          orderText: 'Group 1 · Priority 1 (1m)',
+          avatarColor: '#0284C7'
+        },
+        P3: {
+          customerName: 'Main Cabin Select',
+          orderText: 'Group 4 · Priority 4 (2m)',
+          avatarColor: '#7C3AED'
+        },
+        P4: {
+          customerName: 'Group 9 Passenger',
+          orderText: 'Group 9 · Priority 9 (1m)',
+          avatarColor: '#DC2626'
+        },
+        P5: {
+          customerName: 'Sky Priority',
+          orderText: 'Group 2 · Priority 2 (5m)',
+          avatarColor: '#059669'
         }
       }
     }
-  };
-}
+  }
+};
 
 export default lesson05;

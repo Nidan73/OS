@@ -27,6 +27,7 @@ export class LessonPlayer {
   private unsubscribeStep: (() => void) | null = null;
   private unsubscribePlayState: (() => void) | null = null;
   private unsubscribeView: (() => void) | null = null;
+  private unsubscribeStepsRebuilt: (() => void) | null = null;
   private keydownHandler!: (e: KeyboardEvent) => void;
 
   constructor(
@@ -34,7 +35,8 @@ export class LessonPlayer {
     private engine: AnimationEngine<unknown, unknown> & PlaygroundCapable,
     animViewport?: HTMLElement,
     private morphReveals?: string,
-    private morphMode?: 'morph' | 'crossfade'
+    private morphMode?: 'morph' | 'crossfade',
+    private lensLabels?: { analogy: string; mechanism: string; analogyTitle?: string; mechanismTitle?: string }
   ) {
     this.container = document.createElement('div');
     this.container.className = 'lesson-player';
@@ -86,6 +88,14 @@ export class LessonPlayer {
     this.analogyBtn = pillBtn('🍔 Food Truck Analogy', 'View as physical queue');
     this.morphBtn = pillBtn('⟷ Morph View', 'Smoothly animate between analogy and mechanism');
     this.mechBtn = pillBtn('📊 FCFS Mechanism', 'View as CPU timeline');
+
+    // Lessons relabel the lenses through data, never by reaching into the DOM.
+    if (this.lensLabels) {
+      this.analogyBtn.textContent = this.lensLabels.analogy;
+      this.mechBtn.textContent = this.lensLabels.mechanism;
+      if (this.lensLabels.analogyTitle) this.analogyBtn.title = this.lensLabels.analogyTitle;
+      if (this.lensLabels.mechanismTitle) this.mechBtn.title = this.lensLabels.mechanismTitle;
+    }
 
     lensButtons.append(this.analogyBtn, this.morphBtn, this.mechBtn);
 
@@ -293,6 +303,7 @@ export class LessonPlayer {
         setView: (v: number) => this.setView(v),
         getView: () => this.engine.getView(),
         getProcesses: () => this.engine.getProcesses?.() ?? [],
+        ...(this.engine.debugHooks?.() ?? {}),
         reorderTo: (procs: Process[]) => this.reorderTo(procs),
         morphMode: this.morphMode ?? 'morph',
         engine: this.engine
@@ -520,6 +531,14 @@ export class LessonPlayer {
       this.updateCaption();
     });
 
+    this.unsubscribeStepsRebuilt = this.engine.onStepsRebuilt(() => {
+      const total = this.engine.getSteps().length;
+      this.scrubber.max = String(Math.max(0, total - 1));
+      this.scrubber.value = String(this.engine.getCurrentIndex());
+      this.stepIndicator.textContent = `${this.engine.getCurrentIndex() + 1} / ${total}`;
+      this.updateCaption();
+    });
+
     this.unsubscribePlayState = this.engine.onPlayStateChange((playing) => {
       this.playBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
     });
@@ -571,6 +590,7 @@ export class LessonPlayer {
     if (this.unsubscribeStep) this.unsubscribeStep();
     if (this.unsubscribePlayState) this.unsubscribePlayState();
     if (this.unsubscribeView) this.unsubscribeView();
+    if (this.unsubscribeStepsRebuilt) this.unsubscribeStepsRebuilt();
     this.engine.destroy();
     this.container.replaceChildren();
     this.container.remove();

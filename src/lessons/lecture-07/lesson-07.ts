@@ -1,59 +1,39 @@
-import type { Lesson } from "../../core/types.js";
+import type { Lesson, PlaygroundCapable } from "../../core/types.js";
 import { QueueEngine, type QueueInput, type QueueState } from "../../engines/queue.js";
-import { LessonPlayer } from "../../components/LessonPlayer.js";
 
-// Extend QueueEngine prototype to support LessonPlayer lifecycle and dynamic controls
-if (!(QueueEngine.prototype as any).__lesson07Patched) {
-  (QueueEngine.prototype as any).__lesson07Patched = true;
-
-  (QueueEngine.prototype as any).getProcesses = function () {
-    return (this.input?.items ?? []).map((it: any) => ({
-      id: it.id,
-      burst: it.burst ?? 12,
-      arrival: 0
-    }));
-  };
-
-  (QueueEngine.prototype as any).getScheduleResult = function () {
-    return {
-      avgWaiting: 0,
-      avgTurnaround: 12,
-      metrics: {
-        T1: { waiting: 0, turnaround: 12 },
-        T2: { waiting: 0, turnaround: 12 },
-        T3: { waiting: 0, turnaround: 12 },
-        T4: { waiting: 0, turnaround: 12 }
-      }
-    };
-  };
-
-  (QueueEngine.prototype as any).reorderProcesses = function () {
-    // no-op for queue engine
-  };
-
-  const origMount = (QueueEngine.prototype as any).mount;
-  (QueueEngine.prototype as any).mount = function () {
-    origMount.call(this);
+/**
+ * Lesson 07's engine. A subclass, not a prototype patch: the queue engine is
+ * shared with lessons 6 and 8, and patching it there made behaviour depend on
+ * which lesson the learner happened to open first.
+ */
+export class SMTQueueEngine extends QueueEngine implements PlaygroundCapable {
+  protected override mount(): void {
+    super.mount();
+    // Four or more logical CPUs need a taller canvas to stay legible.
     if (this.input?.cores && this.input.cores.length >= 4) {
       this.svg?.setAttribute("viewBox", "0 0 720 285");
     }
-  };
+  }
+
+  /** Rebuild the timeline from a new core/thread configuration. */
+  public reconfigure(cores: QueueInput["cores"], events: QueueInput["events"]): void {
+    this.input.cores = cores;
+    this.input.events = events;
+    this.setSteps(this.buildSteps(this.input));
+    this.seek(0);
+  }
+
+  public renderPlayground(host: HTMLElement, scoreboardHost: HTMLElement): void {
+    setupLesson07Playground(this, host, scoreboardHost);
+  }
 }
 
 // Custom Lesson 07 Interactive Playground: Hardware threads & core configuration
-function setupLesson07Playground(player: any): void {
-  const engine: QueueEngine = player.engine;
-  if (!engine || !player.playgroundSection || !player.scoreboardSection) return;
-
-  // Custom lens button labels matching Lesson 07 topic
-  if (player.analogyBtn) {
-    player.analogyBtn.textContent = "🍳 Kitchen Analogy";
-    player.analogyBtn.title = "View as kitchen order rail and chef prep station";
-  }
-  if (player.mechBtn) {
-    player.mechBtn.textContent = "⚡ Multiprocessor SMT";
-    player.mechBtn.title = "View as multicore hyperthreaded hardware pipeline";
-  }
+function setupLesson07Playground(
+  engine: SMTQueueEngine,
+  playgroundSection: HTMLElement,
+  scoreboardSection: HTMLElement
+): void {
 
   let coresCount = 2;
   let smtEnabled = true;
@@ -61,7 +41,7 @@ function setupLesson07Playground(player: any): void {
   const updatePlaygroundAndScoreboard = () => {
     const totalLogical = coresCount * (smtEnabled ? 2 : 1);
 
-    player.playgroundSection.innerHTML = `
+    playgroundSection.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
         <div>
           <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">
@@ -95,7 +75,7 @@ function setupLesson07Playground(player: any): void {
       </div>
     `;
 
-    player.scoreboardSection.innerHTML = `
+    scoreboardSection.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <div>
           <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Multiprocessor Architecture Scoreboard</h3>
@@ -136,26 +116,26 @@ function setupLesson07Playground(player: any): void {
     `;
 
     // Bind controls
-    const coreSlider = player.playgroundSection.querySelector("#core-count-slider") as HTMLInputElement;
+    const coreSlider = playgroundSection.querySelector("#core-count-slider") as HTMLInputElement;
     coreSlider?.addEventListener("input", (e: Event) => {
       coresCount = Number((e.target as HTMLInputElement).value);
       applyConfiguration();
     });
 
-    const toggleBtn = player.playgroundSection.querySelector("#btn-toggle-smt") as HTMLButtonElement;
+    const toggleBtn = playgroundSection.querySelector("#btn-toggle-smt") as HTMLButtonElement;
     toggleBtn?.addEventListener("click", () => {
       smtEnabled = !smtEnabled;
       applyConfiguration();
     });
 
-    const btnSingle = player.playgroundSection.querySelector("#btn-preset-single") as HTMLButtonElement;
+    const btnSingle = playgroundSection.querySelector("#btn-preset-single") as HTMLButtonElement;
     btnSingle?.addEventListener("click", () => {
       coresCount = 1;
       smtEnabled = false;
       applyConfiguration();
     });
 
-    const btnSmt = player.playgroundSection.querySelector("#btn-preset-smt") as HTMLButtonElement;
+    const btnSmt = playgroundSection.querySelector("#btn-preset-smt") as HTMLButtonElement;
     btnSmt?.addEventListener("click", () => {
       coresCount = 2;
       smtEnabled = true;
@@ -206,36 +186,11 @@ function setupLesson07Playground(player: any): void {
       );
     }
 
-    (engine as any).input.cores = cores;
-    (engine as any).input.events = events;
-    (engine as any).steps = (engine as any).buildSteps((engine as any).input);
-    engine.seek(0);
-
-    if (player.scrubber) {
-      player.scrubber.max = String(Math.max(0, engine.getSteps().length - 1));
-      player.scrubber.value = "0";
-    }
-    if (player.stepIndicator) {
-      player.stepIndicator.textContent = `1 / ${engine.getSteps().length}`;
-    }
-    player.updateCaption?.();
+    engine.reconfigure(cores, events);
     updatePlaygroundAndScoreboard();
   };
 
   updatePlaygroundAndScoreboard();
-}
-
-// Hook into LessonPlayer prototype to activate Lesson 07 playground for QueueEngine
-if (!(LessonPlayer.prototype as any).__lesson07Hooked) {
-  (LessonPlayer.prototype as any).__lesson07Hooked = true;
-  const origRenderPlayground = (LessonPlayer.prototype as any).renderPlaygroundAndScoreboard;
-  (LessonPlayer.prototype as any).renderPlaygroundAndScoreboard = function () {
-    if (this.engine instanceof QueueEngine || (this.engine as any)?.input?.cores) {
-      setupLesson07Playground(this);
-    } else if (origRenderPlayground) {
-      origRenderPlayground.call(this);
-    }
-  };
 }
 
 export const lesson07: Lesson<QueueInput, QueueState> = {
@@ -246,12 +201,19 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
   absorbsUnits: [19, 20, 21, 22, 23],
   slides: "slides 9–14",
   engine: "queue",
+  engineClass: SMTQueueEngine,
+  lensLabels: {
+    analogy: "\u{1F373} Kitchen Analogy",
+    mechanism: "\u26A1 Multiprocessor SMT",
+    analogyTitle: "View as kitchen order rail and chef prep station",
+    mechanismTitle: "View as multicore hyperthreaded hardware pipeline"
+  },
   analogy: {
     domain: "food",
     text: "One kitchen versus several; a chef idle at the pass waiting on the storeroom. With multiple pans (hardware threads), the chef turns to the other pan while the first simmers, absorbing the memory stall."
   },
   concept: "Multiprocessor architectures scale throughput by adding cores and hardware threads (chip multithreading / SMT). When a running task hits a memory stall waiting for a cache miss, the core hardware instantly switches to an alternate hardware thread, masking latency and keeping execution units saturated across two distinct levels of scheduling.",
-  morphReveals: "In a kitchen, one chef waiting for an ingredient stands idle. With multiple pans (hardware threads), the chef turns to the other pan while the first simmers, absorbing the memory stall.",
+  morphReveals: "In the kitchen a gap at the chef's station is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second hardware thread slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
   morphMode: "morph",
   analogyMapping: [
     "Chef Prep Stations ➔ Processor Cores",

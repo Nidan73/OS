@@ -288,7 +288,7 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
       return;
     }
 
-    activeLessonPlayer = new LessonPlayer(centerCol, engine, animMountTarget, lesson.morphReveals, lesson.morphMode);
+    activeLessonPlayer = new LessonPlayer(centerCol, engine, animMountTarget, lesson.morphReveals, lesson.morphMode, lesson.lensLabels);
 
     // Right sidebar: Concept explanation & physical analogy
     const rightSidebar = document.createElement('aside');

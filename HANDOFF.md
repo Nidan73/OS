@@ -68,7 +68,7 @@ npm run gate                # gate only, against a running preview on :4173
 npm run gate lesson-09      # one lesson
 ```
 
-27 checks per lesson: geometry genuinely interpolates between views, isomorphic element ids, no
+30 checks per lesson: geometry genuinely interpolates between views, isomorphic element ids, no
 text overflow at view 0/0.5/1, no internal vocabulary in student-facing copy, the primary control
 **fully** above the fold at 1440×900, no horizontal scroll at 360/800/1440, WCAG AA in both
 themes, no console errors. Screenshots land in `./screenshots/` (gitignored).
@@ -78,13 +78,45 @@ themes, no console errors. Screenshots land in `./screenshots/` (gitignored).
 Every new lesson must:
 - add itself to the `LESSONS` array at the top of `scripts/gate.mjs`
 - expose `[data-view-lens]` on the view slider and `[data-primary-control]` on the main interaction
+- ship a control that actually changes the outcome — the gate now drives your controls and fails
+  if the steps, scoreboard, caption and drawing all stay identical, or if any handler throws
 
 ---
 
+## How a lesson extends its engine — read this before writing one
+
+Wave 1 got this wrong four times and it was refactored out on 2026-09-09. The rules are now
+enforceable, so follow them rather than rediscovering them.
+
+**Never patch a prototype. Never call `registerEngine()` from a lesson.** Both are global: the
+engines are shared between lessons, so patching one changed what a *different* lesson did, and
+which version won depended on the order the learner happened to browse in. `grep -rn "prototype
+as any" src` must keep returning 0.
+
+Use these four seams instead:
+
+| You need to… | Use |
+|---|---|
+| give your lesson its own engine behaviour | `engineClass` on the lesson — a subclass of the base engine. `mountLesson` prefers it over the shared registry, so it stays scoped to you. |
+| draw your own playground / scoreboard | implement `renderPlayground(host, scoreboardHost)` from `PlaygroundCapable`. Do not touch `LessonPlayer`. |
+| relabel the analogy / mechanism lens buttons | `lensLabels` on the lesson. Data, not DOM poking. |
+| rebuild the timeline when a control changes an input | `this.setSteps(this.buildSteps(this.input))` — **never** assign `this.steps`. The player resyncs the scrubber, step indicator and caption through `onStepsRebuilt()`. |
+| expose a handle for the gate or for probing | `debugHooks()` — merged into `window.__lesson`. Do not assign `window.__lesson` yourself; `LessonPlayer` owns it. |
+
+`svg` is `protected` on all five engines, so a subclass can reach it in `mount()` or `render()`.
+Read `src/lessons/lecture-07/lesson-06.ts` (MLFQ) for the full pattern: subclass, computed
+metrics, own playground, no patching.
+
+**And compute your numbers.** Lesson 6 shipped showing an average turnaround of `26.3 ms` that
+someone had typed in. The real figure, once `mlfq()` computed it, was **38.7 ms** — the typed
+number was wrong by 47% and no test or gate check could see it. That is why §2.1 exists.
+
 ## Where things stand
 
-**Wave 1 complete and merged to `main`** — Lessons 1–8. 96 unit tests pass, 219 gate checks pass,
-`npm run build` clean.
+**Wave 1 complete and merged to `main`** — Lessons 1–8. **Wave 2's three engines
+(`trace`, `counter`, `diagram`) and `src/algorithms/synchronization.ts` are already built** on
+`phase1/engines-wave2`; do not rewrite them. Current verified state on that branch:
+**117 unit tests pass, 243 gate checks pass across 8 lessons, `tsc` and `npm run build` clean.**
 
 | Wave | Lessons | Engines | Status |
 |---|---|---|---|

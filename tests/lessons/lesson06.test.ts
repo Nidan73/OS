@@ -88,7 +88,7 @@ describe('Lesson 06 — Queues within queues (MLFQ)', () => {
     expect(lesson06.analogy.domain).toBe('travel');
     expect(lesson06.morphMode).toBe('morph');
     expect(lesson06.morphReveals).toBe(
-      'In class-based boarding, passengers remain in fixed lines. In MLFQ, a job moves down queues as its CPU burst exceeds the threshold, separating interactive jobs from batch jobs automatically.'
+      'At the airport, which lane you stand in is printed on your ticket — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.'
     );
   });
 

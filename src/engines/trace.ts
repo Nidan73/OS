@@ -37,7 +37,7 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> impleme
       (this.input as any).renderPlayground(host, scoreboardHost, this);
     }
   }
-  private svg!: SVGSVGElement;
+  protected svg!: SVGSVGElement;
   private columnsGroup!: SVGGElement;
   private memoryGroup!: SVGGElement;
   private cursorsGroup!: SVGGElement;

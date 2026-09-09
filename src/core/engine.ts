@@ -14,6 +14,7 @@ export abstract class AnimationEngine<I, S> {
   private onStepListeners: ((index: number, step: Step<S>) => void)[] = [];
   private onPlayStateListeners: ((isPlaying: boolean) => void)[] = [];
   private onViewListeners: ((view: number) => void)[] = [];
+  private onStepsRebuiltListeners: (() => void)[] = [];
 
   constructor(protected container: HTMLElement, protected input: I = undefined as I) {}
 
@@ -62,6 +63,26 @@ export abstract class AnimationEngine<I, S> {
     return () => {
       this.onPlayStateListeners = this.onPlayStateListeners.filter(l => l !== fn);
     };
+  }
+
+  /**
+   * Fires when the step array is replaced — a playground control changed an
+   * input and the timeline was recomputed. Transport UI resyncs from here
+   * instead of each lesson reaching into the DOM for the scrubber.
+   */
+  onStepsRebuilt(fn: () => void): () => void {
+    this.onStepsRebuiltListeners.push(fn);
+    return () => {
+      this.onStepsRebuiltListeners = this.onStepsRebuiltListeners.filter(l => l !== fn);
+    };
+  }
+
+  /** Replace the timeline and tell every observer. Use this, never `this.steps = …`. */
+  protected setSteps(steps: Step<S>[]): void {
+    this.steps = steps;
+    for (const fn of this.onStepsRebuiltListeners) {
+      fn();
+    }
   }
 
   onViewChange(fn: (view: number) => void): () => void {

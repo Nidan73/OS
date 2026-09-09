@@ -1,15 +1,14 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { QueueEngine } from '../../src/engines/queue.js';
-import { lesson08, SCENARIO_EVENTS } from '../../src/lessons/lecture-07/lesson-08.js';
+import { lesson08, SCENARIO_EVENTS, MigrationQueueEngine } from '../../src/lessons/lecture-07/lesson-08.js';
 
 describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', () => {
   let host: HTMLElement;
-  let engine: QueueEngine;
+  let engine: MigrationQueueEngine;
 
   beforeEach(() => {
     host = document.createElement('div');
     document.body.appendChild(host);
-    engine = new QueueEngine(host, JSON.parse(JSON.stringify(lesson08.input)));
+    engine = new MigrationQueueEngine(host, JSON.parse(JSON.stringify(lesson08.input)));
     engine.init(0); // Opens at view = 0 per §3C.3
   });
 
@@ -23,7 +22,7 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     expect(lesson08.analogy.domain).toBe('travel');
     expect(lesson08.concept).toContain('Multiprocessor scheduling');
     expect(lesson08.morphReveals).toBe(
-      'Waving a passenger to an empty counter balances line length instantly, but if the previous agent already knew their booking details, switching counters forces re-explaining everything — that is the cost of migrating across CPU caches.'
+      'In the terminal, walking to a shorter counter is free — sideways distance costs nothing but a few steps, so you always join the shortest line. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.'
     );
     expect(lesson08.morphMode).toBe('morph');
   });
@@ -105,12 +104,12 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
 
   test('playground scenarios reconfigure steps properly', () => {
     // Pull scenario
-    (engine as any).reconfigure(SCENARIO_EVENTS.pull);
+    engine.reconfigure(SCENARIO_EVENTS.pull);
     expect(engine.getSteps().length).toBe(5);
     expect(engine.getSteps()[2].caption).toContain('Pull migration');
 
     // Affinity scenario
-    (engine as any).reconfigure(SCENARIO_EVENTS.affinity);
+    engine.reconfigure(SCENARIO_EVENTS.affinity);
     expect(engine.getSteps().length).toBe(5);
     expect(engine.getSteps()[2].caption).toContain('Hard affinity');
   });

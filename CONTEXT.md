@@ -1,8 +1,9 @@
 # CONTEXT — session handoff
 
 **Purpose:** read this first in a new session and you have everything. No prior conversation needed.
-**Last updated:** 2026-09-09, 22:00. **Wave 1 complete and merged. Wave 2 engine layer in flight** on
-`phase1/engines-wave2`; the seven lesson subagents have not fanned out yet.
+**Last updated:** 2026-09-09, 23:10. **Wave 1 complete and merged. Wave 2 engine layer built and the
+five correction items are CLOSED** on `phase1/engines-wave2`. The seven lesson subagents have not
+fanned out yet — that is the next action.
 **Keep this current.** Update the State and Log sections at every phase gate.
 
 ---
@@ -165,32 +166,39 @@ persisted subagent definitions exist in `.agents/agents/` or `~/.gemini/config/a
 sessions define their own.
 
 **Still open, do not lose:**
-- **Findings from the 2026-09-09 senior review — the class the gate cannot catch.** A correction
-  block for all five was sent and the agent is working it; verify each before the wave merges.
-  1. **A hardcoded metric reaches the screen in L6.** The scoreboard rendered
-     `AVG TURNAROUND 26.3 ms` as a literal typed into `lesson-06.ts`, with no `mlfq()` anywhere
-     in `src/algorithms/`. Direct §2.1 violation, student-visible, gate-invisible. An `mlfq()`
-     has since been added to `scheduling.ts` — **confirm the displayed figure is now computed,
-     and if it does not come out at 26.3, take the computed value, not the typed one.**
-  2. **L6, L7 and L8 each monkey-patch `QueueEngine.prototype`** with three different
-     first-load-wins guards and three different invented metric sets; L7's guard is its own flag,
-     so it unconditionally clobbers the other two. Checked in a real browser: **there is no
-     visible leak**, because each lesson overwrites the scoreboard HTML itself. Latent, not live.
-     Root cause was mine — `LessonPlayer` was hard-coupled to the gantt API
-     (`getProcesses`/`getScheduleResult`/`reorderProcesses`) with no seam, so the lessons had
-     nowhere else to go. Fixed by a typed `PlaygroundCapable` interface in `core/types.ts` plus a
-     `renderPlayground()` hook; the patches are being deleted.
-  3. **`morphReveals` has been drifting since L3 and §3C.2a is quietly not being met.** L1–L3
-     name a geometric property whose *meaning* changes ("width becomes duration"). L4–L8 decayed
-     into topic summaries ("time quantum slices turns into preemptible execution windows"), which
-     name no carrying property. 27 checks pass either way. The required shape: *"In the analogy,
-     `<property>` means `<everyday thing>`. In the mechanism, the same `<property>` means
-     `<formal quantity>` — so `<consequence a student can act on>`."* L2 is the standard. L4–L8
-     need a one-line fix each.
-  4. **Stale things that propagate into all seven briefs.** `HANDOFF.md` pointed subagents at
-     `src/lessons/lesson-02.ts`; the real path is `src/lessons/lecture-06/lesson-02.ts`. And
-     lesson-02/03 carried `analogyMapping: [...] as any`, now unnecessary since the field is
-     typed — and lesson-02 is the file all seven are told to copy.
+- **Findings from the 2026-09-09 senior review — ALL FIVE NOW FIXED AND VERIFIED.**
+  Closed on `phase1/engines-wave2`. Kept here because the *reasons* still bind Wave 2.
+  1. **The hardcoded metric is gone.** Lesson 6 displayed `AVG TURNAROUND 26.3 ms` as a typed
+     literal. `mlfq()` now computes it: the true figure is **38.7 ms, avg wait 21.0 ms, 3
+     demotions** — the published 26.3 was wrong by 47%. Dragging the demotion threshold to 24
+     recomputes to 44.0 ms / 1 demotion, verified in a real browser.
+  2. **Every prototype patch is deleted** — `grep -rn "prototype as any" src` returns 0.
+     Lessons 5, 6, 7 and 8 had been patching `QueueEngine.prototype`, `GanttEngine.prototype`
+     (including `render()` itself) and `LessonPlayer.prototype`, each under a different
+     first-load-wins guard, so behaviour depended on which lesson the learner opened first.
+     Lessons 4 and 6 also called `registerEngine()`, which **globally replaced the shared engine
+     for every other lesson**. Replaced by four seams, all on `main`-bound code:
+     - `Lesson.engineClass` — a lesson declares its own engine subclass; `mountLesson` prefers
+       it over the registry. **Lessons must never call `registerEngine()`.**
+     - `PlaygroundCapable.renderPlayground(host, scoreboardHost)` — a lesson draws its own
+       playground and scoreboard from inside its engine.
+     - `Lesson.lensLabels` — lens-button copy as data, instead of reaching into the player's DOM.
+     - `AnimationEngine.setSteps()` + `onStepsRebuilt()` — replacing the timeline notifies the
+       player, which resyncs the scrubber, indicator and caption. **Never assign `this.steps`.**
+       `svg` is now `protected` on all five engines so subclasses can reach it.
+  3. **`morphReveals` rewritten for lessons 4–8** to name a geometric property whose meaning
+     changes, not to summarise the topic. Lesson 2 remains the standard.
+  4. **Stale references fixed** — `HANDOFF.md` now points at the real lesson-02 path, and the
+     `analogyMapping ... as any` casts are gone from every lesson.
+  5. **The gate gained three checks per lesson (219 → 243).** It drives up to six playground
+     controls and asserts that at least one changes the steps, scoreboard, caption or drawing,
+     and that none of them throw. This was added because the refactor introduced a real break
+     — an aging handler calling a method that no longer existed — that **all 219 existing checks
+     passed over, because nothing in the gate clicked anything.** Verified by re-injecting that
+     exact bug and confirming the gate fails on it.
+- **`as any` is down to 28 in `src`**, none of them prototype patches: 8 in lesson-05, 3 in
+  lesson-04, 5 in `registry.ts` (the engine-constructor map), 2 in `main.ts`, 1 in LessonPlayer,
+  plus `window as any` for the `__lesson` debug handle. Not blocking; worth a pass before done.
 - **L2 finding 5** — DESIGN.md Part 1 components were only partly applied: buttons are not
   `{rounded.pill}`, cards need `{rounded.lg}` on `{colors.hairline}`, and there is no tile rhythm.
   Cosmetic, not blocking, but it should land before the site is called done.
@@ -227,6 +235,13 @@ per wave, not all of them — that was the bottleneck that made L2 take three cy
 
 ## Log
 
+- **Sep 9, 23:10** — **Closed all five correction items myself** at the user's instruction, then
+  verified: 117 tests, `tsc` clean, build clean, **243 gate checks across 8 lessons**. The
+  refactor deleted every prototype patch and both `registerEngine()` calls from the lessons.
+  Two things worth carrying forward: the hardcoded MLFQ metric was wrong by 47%, not merely
+  hardcoded — so "compute it" was not pedantry; and the refactor introduced a real break that
+  219 gate checks passed over, which is why the gate now drives the controls. **A check that has
+  never been seen to fail is not yet a check** — the new one was proved by re-injecting the bug.
 - **Sep 9, 22:00** — **Senior review while Wave 2 was mid-flight.** Verified Wave 1 independently
   (96 tests, 219 gate checks, clean build) rather than trusting the file. Caught the agent writing
   the Wave 2 engine layer live and uncommitted on `main`; sent a five-item correction block —

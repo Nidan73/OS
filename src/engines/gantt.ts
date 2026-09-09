@@ -50,7 +50,7 @@ export interface GanttState {
 }
 
 export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
-  private svg!: SVGSVGElement;
+  protected svg!: SVGSVGElement;
   private barsGroup!: SVGGElement;
   private playheadGroup!: SVGGElement;
   private cursorLine!: SVGLineElement;
@@ -239,7 +239,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
    */
   reorderProcesses(newProcesses: Process[]): void {
     this.input.processes = newProcesses.map(p => ({ ...p }));
-    this.steps = this.buildSteps(this.input);
+    this.setSteps(this.buildSteps(this.input));
     const totalTime = Math.max(1, this.scheduleResult?.totalTime || 30);
     this.timeScale = this.chartWidth / totalTime;
     this.remountScaffolding();
