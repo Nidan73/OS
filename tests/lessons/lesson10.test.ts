@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { simulateRaceCondition } from '../../src/algorithms/synchronization.js';
+import { simulateRaceCondition, RACE_INSTRUCTIONS } from '../../src/algorithms/synchronization.js';
 import {
   raceSteps,
   actGeometry,
   actOrder,
   lesson10,
   lesson10Input,
+  ACT_TEXT,
   toThreadIds,
   ROW_BASE,
   ROW_H
@@ -131,6 +132,41 @@ describe('Lesson 10 · the morph is geometric, not cosmetic (§3C.2a)', () => {
 
   it('the same element set exists at both extremes', () => {
     expect(Object.keys(actGeometry(0, SLIDE_ORDER)).sort()).toEqual(Object.keys(actGeometry(1, SLIDE_ORDER)).sort());
+  });
+});
+
+describe('Lesson 10 · words agree with the mechanism', () => {
+  it('displayed instruction strings ARE the algorithm\'s instructions — no drift possible', () => {
+    expect(lesson10Input.threads[0].instructions).toEqual(RACE_INSTRUCTIONS.T1);
+    expect(lesson10Input.threads[1].instructions).toEqual(RACE_INSTRUCTIONS.T2);
+  });
+
+  it('each analogy act label points the same way as the sign in its instruction', () => {
+    (['T1', 'T2'] as const).forEach((t, tIdx) => {
+      const sign = lesson10Input.threads[tIdx].instructions[1].includes('+') ? 1 : -1;
+      const label = ACT_TEXT[t][1].toLowerCase();
+      if (sign > 0) {
+        expect(label).toMatch(/puts|add/);
+        expect(label).not.toMatch(/takes|removes/);
+      } else {
+        expect(label).toMatch(/takes|removes/);
+        expect(label).not.toMatch(/puts back|add/);
+      }
+    });
+  });
+
+  it('expectedCounter equals the initial count for the default input', () => {
+    const r = simulateRaceCondition(
+      lesson10Input.initial.counter,
+      toThreadIds(lesson10Input.interleaving)
+    );
+    expect(r.expectedCounter).toBe(lesson10Input.initial.counter);
+  });
+
+  it('no copy claims both friends make the same-direction edit', () => {
+    expect(lesson10.analogy.text.toLowerCase()).not.toMatch(/both (friends )?(take|write|put)/);
+    expect(lesson10.concept.toLowerCase()).not.toMatch(/both (friends )?(take one|write back "2")/);
+    expect(ACT_TEXT.T1[1].toLowerCase()).not.toBe(ACT_TEXT.T2[1].toLowerCase());
   });
 });
 

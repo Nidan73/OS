@@ -57,6 +57,16 @@ export interface RaceSimulationResult {
 }
 
 /**
+ * The register-level instruction sequences simulateRaceCondition actually
+ * executes, exported so a lesson's displayed instruction text is bound to
+ * the simulation — the two cannot drift.
+ */
+export const RACE_INSTRUCTIONS: { T1: string[]; T2: string[] } = {
+  T1: ["register1 = counter", "register1 = register1 + 1", "counter = register1"],
+  T2: ["register2 = counter", "register2 = register2 - 1", "counter = register2"]
+};
+
+/**
  * Simulates register-level interleaving of counter++ (T1) and counter-- (T2).
  * T1 instructions: [0: read R1=counter, 1: add R1=R1+1, 2: write counter=R1]
  * T2 instructions: [0: read R2=counter, 1: sub R2=R2-1, 2: write counter=R2]
@@ -72,16 +82,8 @@ export function simulateRaceCondition(
   let t1Ptr = 0;
   let t2Ptr = 0;
 
-  const t1Insts = [
-    "register1 = counter",
-    "register1 = register1 + 1",
-    "counter = register1"
-  ];
-  const t2Insts = [
-    "register2 = counter",
-    "register2 = register2 - 1",
-    "counter = register2"
-  ];
+  const t1Insts = RACE_INSTRUCTIONS.T1;
+  const t2Insts = RACE_INSTRUCTIONS.T2;
 
   const steps: RaceStep[] = [];
 

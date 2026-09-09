@@ -1,10 +1,14 @@
 /**
  * verify.mjs — build + preview + gate, with the preview server owned and
  * killed by this process (the old shell version leaked `vite preview`).
+ *
+ * Port: pass PORT or GATE_PORT to move the preview; the gate is pointed at
+ * it via GATE_BASE, so parallel gate runs on different ports never collide
+ * (vite preview --strictPort refuses an occupied port).
  */
 import { spawn, spawnSync } from 'node:child_process';
 
-const PORT = 4173;
+const PORT = Number(process.env.GATE_PORT ?? process.env.PORT ?? 4173);
 const URL = `http://localhost:${PORT}/`;
 const TIMEOUT_MS = 30_000;
 
@@ -12,22 +16,33 @@ const preview = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--stri
   stdio: 'inherit'
 });
 
-try {
+async function waitForPreview() {
   const deadline = Date.now() + TIMEOUT_MS;
-  let up = false;
   while (Date.now() < deadline) {
-    if (preview.exitCode !== null) break; // preview died before answering
+    if (preview.exitCode !== null) {
+      return `preview server exited with code ${preview.exitCode} before answering on :${PORT} — with --strictPort this usually means the port was already occupied. Pick another with GATE_PORT=<n>.`;
+    }
     try {
-      const res = await fetch(URL);
-      if (res.ok) { up = true; break; }
+      // A non-HTTP listener on the port accepts TCP but never answers, so the
+      // fetch itself must not be allowed to hang past one poll interval.
+      const res = await fetch(URL, { signal: AbortSignal.timeout(1000) });
+      if (res.ok) return null;
     } catch { /* not up yet */ }
     await new Promise((r) => setTimeout(r, 250));
   }
-  if (!up) {
-    console.error(`verify: preview server did not answer on :${PORT} within ${TIMEOUT_MS / 1000}s`);
+  return `preview server did not answer on :${PORT} within ${TIMEOUT_MS / 1000}s`;
+}
+
+try {
+  const failure = await waitForPreview();
+  if (failure) {
+    console.error(`verify: ${failure}`);
     process.exitCode = 1;
   } else {
-    const gate = spawnSync('node', ['scripts/gate.mjs', ...process.argv.slice(2)], { stdio: 'inherit' });
+    const gate = spawnSync('node', ['scripts/gate.mjs', ...process.argv.slice(2)], {
+      stdio: 'inherit',
+      env: { ...process.env, GATE_BASE: `http://localhost:${PORT}` }
+    });
     process.exitCode = gate.status ?? 1;
   }
 } finally {

@@ -52,7 +52,8 @@ latency budget until the deadline misses.
 ## Lecture 8 — The Critical-Section Problem (3 lessons)
 
 **L10 · The last slice** — units 34–37
-Analogy: two friends both read "3 slices left," both take one, both write "2."
+Analogy: one friend puts a slice back while the other takes one off — both read "3 slices left,"
+one writes "4," the other writes "2," and the second write wins.
 Morphs into register-level interleaving. Playground: drag the interleaving and find the orders
 that corrupt the count.
 
