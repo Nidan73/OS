@@ -20,6 +20,7 @@ const SHOTS = path.resolve(process.cwd(), 'screenshots');
 /** Lessons to gate. Add each new lesson here as it is built. */
 const LESSONS = [
   { slug: 'lesson-02', chapter: 'lecture-06', name: 'FCFS & the convoy' },
+  { slug: 'lesson-05', chapter: 'lecture-06', name: 'Priority, starvation & aging' },
 ];
 
 /** Internal vocabulary that must never reach a student. */
