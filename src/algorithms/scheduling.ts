@@ -249,3 +249,127 @@ export function priorityScheduling(processes: Process[]): ScheduleResult {
 
   return computeMetrics(processes, bars);
 }
+
+/** Multilevel Feedback Queue (MLFQ) Scheduling (§2.1) */
+export function mlfq(
+  processes: Process[],
+  q0Quantum = 8,
+  q1Quantum = 16
+): ScheduleResult {
+  if (processes.length === 0) {
+    return computeMetrics([], []);
+  }
+
+  interface JobState {
+    id: string;
+    arrival: number;
+    burst: number;
+    remaining: number;
+    queueLevel: number;
+  }
+
+  const jobs: JobState[] = processes.map(p => ({
+    id: p.id,
+    arrival: p.arrival,
+    burst: p.burst,
+    remaining: p.burst,
+    queueLevel: 0
+  })).sort((a, b) => a.arrival - b.arrival);
+
+  const q0: JobState[] = [];
+  const q1: JobState[] = [];
+  const q2: JobState[] = [];
+  const bars: GanttBar[] = [];
+
+  let currentTime = 0;
+  let unarrivedIndex = 0;
+
+  const enqueueArrivals = () => {
+    while (unarrivedIndex < jobs.length && jobs[unarrivedIndex].arrival <= currentTime) {
+      q0.push(jobs[unarrivedIndex]);
+      unarrivedIndex++;
+    }
+  };
+
+  enqueueArrivals();
+
+  while (unarrivedIndex < jobs.length || q0.length > 0 || q1.length > 0 || q2.length > 0) {
+    if (q0.length === 0 && q1.length === 0 && q2.length === 0) {
+      currentTime = jobs[unarrivedIndex].arrival;
+      enqueueArrivals();
+      continue;
+    }
+
+    if (q0.length > 0) {
+      const job = q0.shift()!;
+      const slice = Math.min(q0Quantum, job.remaining);
+      const start = currentTime;
+      const end = start + slice;
+      bars.push({ id: job.id, start, end });
+      currentTime = end;
+      job.remaining -= slice;
+      enqueueArrivals();
+
+      if (job.remaining > 0) {
+        job.queueLevel = 1;
+        q1.push(job);
+      }
+    } else if (q1.length > 0) {
+      const job = q1.shift()!;
+      let timeLimit = q1Quantum;
+      if (unarrivedIndex < jobs.length) {
+        const nextArr = jobs[unarrivedIndex].arrival;
+        if (nextArr < currentTime + Math.min(q1Quantum, job.remaining)) {
+          timeLimit = Math.max(1, nextArr - currentTime);
+        }
+      }
+      const slice = Math.min(timeLimit, Math.min(q1Quantum, job.remaining));
+      const start = currentTime;
+      const end = start + slice;
+      bars.push({ id: job.id, start, end });
+      currentTime = end;
+      job.remaining -= slice;
+      enqueueArrivals();
+
+      if (job.remaining > 0) {
+        if (slice >= q1Quantum) {
+          job.queueLevel = 2;
+          q2.push(job);
+        } else {
+          q1.push(job);
+        }
+      }
+    } else if (q2.length > 0) {
+      const job = q2.shift()!;
+      let slice = job.remaining;
+      if (unarrivedIndex < jobs.length) {
+        const nextArr = jobs[unarrivedIndex].arrival;
+        if (nextArr < currentTime + job.remaining) {
+          slice = Math.max(1, nextArr - currentTime);
+        }
+      }
+      const start = currentTime;
+      const end = start + slice;
+      bars.push({ id: job.id, start, end });
+      currentTime = end;
+      job.remaining -= slice;
+      enqueueArrivals();
+
+      if (job.remaining > 0) {
+        q2.push(job);
+      }
+    }
+  }
+
+  const mergedBars: GanttBar[] = [];
+  for (const bar of bars) {
+    const last = mergedBars[mergedBars.length - 1];
+    if (last && last.id === bar.id && last.end === bar.start) {
+      last.end = bar.end;
+    } else {
+      mergedBars.push({ ...bar });
+    }
+  }
+
+  return computeMetrics(processes, mergedBars);
+}

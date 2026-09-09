@@ -1,4 +1,5 @@
 import { AnimationEngine } from '../core/engine.js';
+import type { PlaygroundCapable } from '../core/types.js';
 import type { Step } from '../core/types.js';
 
 export interface CounterActor {
@@ -43,7 +44,12 @@ export interface CounterState {
   caption: string;
 }
 
-export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
+export class CounterEngine extends AnimationEngine<CounterInput, CounterState> implements PlaygroundCapable {
+  renderPlayground(host: HTMLElement, scoreboardHost?: HTMLElement): void {
+    if ((this.input as any).renderPlayground) {
+      (this.input as any).renderPlayground(host, scoreboardHost, this);
+    }
+  }
   private svg!: SVGSVGElement;
   private resourceGroup!: SVGGElement;
   private holdersGroup!: SVGGElement;

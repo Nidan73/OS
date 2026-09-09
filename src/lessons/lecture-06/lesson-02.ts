@@ -22,7 +22,7 @@ export const lesson02: Lesson<GanttInput> = {
     'Party Order (P1) ➔ CPU-bound job (burst 24)',
     'Quick Coffees (P2, P3) ➔ I/O-bound jobs (burst 3)',
     'Queue Order ➔ Ready Queue Arrival Sequence'
-  ] as any,
+  ],
   input: {
     processes: [
       { id: 'P1', arrival: 0, burst: 24 },

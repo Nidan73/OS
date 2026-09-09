@@ -37,7 +37,7 @@ export const lesson03: Lesson<GanttInput> = {
     'Express Lane Rule (Shortest First) ➔ SJF Scheduling',
     'Cashier Guessing Order Size ➔ Burst Prediction (Exponential Averaging)',
     'Customer Preemption Mid-Checkout ➔ SRTF (Preemptive SJF)'
-  ] as any,
+  ],
   input: {
     processes: [
       { id: 'P1', arrival: 0, burst: 6 },

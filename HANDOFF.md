@@ -56,7 +56,7 @@ It is a seductive failure because it is less work and passes structural checks. 
   one-line reason. An honest cross-fade beats a fake morph. **Expect roughly a quarter of lessons
   to land here — that is correct, not a failure.**
 
-Read `src/lessons/lesson-02.ts` as the reference implementation before building anything.
+Read `src/lessons/lecture-06/lesson-02.ts` as the reference implementation before building anything.
 
 ---
 
@@ -114,7 +114,7 @@ quoted in full rather than referenced:
 
 - the lesson's entry from `LESSONS.md`, verbatim
 - the `ATLAS.md` rows for the units it absorbs (id, title, slides, analogy domain, analogy text)
-- `src/lessons/lesson-02.ts` as the reference implementation
+- `src/lessons/lecture-06/lesson-02.ts` as the reference implementation
 - SPEC §3C.2a, §3C.2b and §3C.2c in full
 - the exact file paths it owns, and that it must touch nothing else
 - "add your lesson to the `LESSONS` array in `scripts/gate.mjs`"

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { fcfs, sjf, srtf, roundRobin, priorityScheduling } from '../../src/algorithms/scheduling.js';
+import { fcfs, sjf, srtf, roundRobin, priorityScheduling, mlfq } from '../../src/algorithms/scheduling.js';
 
 describe('CPU Scheduling Algorithms (§7 — verified against Lecture 6 slides)', () => {
   test('FCFS matches Lecture 6 slide 8', () => {
@@ -70,5 +70,17 @@ describe('CPU Scheduling Algorithms (§7 — verified against Lecture 6 slides)'
     ]);
     expect(r.waiting).toEqual({ P1: 6, P2: 0, P3: 16, P4: 18, P5: 1 });
     expect(r.avgWaiting).toBe(8.2);
+  });
+
+  test('MLFQ 3-queue scheduling (Q0 q=8, Q1 q=16, Q2 FCFS) matches Lecture 7 slides 5-6', () => {
+    const r = mlfq([
+      { id: 'P1', arrival: 0, burst: 30 },
+      { id: 'P2', arrival: 0, burst: 8 },
+      { id: 'P3', arrival: 0, burst: 15 }
+    ], 8, 16);
+    expect(r.waiting).toEqual({ P1: 23, P2: 8, P3: 32 });
+    expect(r.avgWaiting).toBe(21);
+    expect(r.turnaround).toEqual({ P1: 53, P2: 16, P3: 47 });
+    expect(r.avgTurnaround).toBe(38.67);
   });
 });

@@ -1,4 +1,5 @@
 import { AnimationEngine } from '../core/engine.js';
+import type { PlaygroundCapable } from '../core/types.js';
 import type { Step } from '../core/types.js';
 
 export interface TraceThread {
@@ -30,7 +31,12 @@ export interface TraceState {
   caption: string;
 }
 
-export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
+export class TraceEngine extends AnimationEngine<TraceInput, TraceState> implements PlaygroundCapable {
+  renderPlayground(host: HTMLElement, scoreboardHost?: HTMLElement): void {
+    if ((this.input as any).renderPlayground) {
+      (this.input as any).renderPlayground(host, scoreboardHost, this);
+    }
+  }
   private svg!: SVGSVGElement;
   private columnsGroup!: SVGGElement;
   private memoryGroup!: SVGGElement;

@@ -1,4 +1,5 @@
 import { AnimationEngine } from '../core/engine.js';
+import type { PlaygroundCapable } from '../core/types.js';
 import type { Process } from '../algorithms/scheduling.js';
 
 export class LessonPlayer {
@@ -30,7 +31,7 @@ export class LessonPlayer {
 
   constructor(
     parent: HTMLElement,
-    private engine: AnimationEngine<any, any>,
+    private engine: AnimationEngine<unknown, unknown> & PlaygroundCapable,
     animViewport?: HTMLElement,
     private morphReveals?: string,
     private morphMode?: 'morph' | 'crossfade'
@@ -291,7 +292,7 @@ export class LessonPlayer {
       (window as any).__lesson = {
         setView: (v: number) => this.setView(v),
         getView: () => this.engine.getView(),
-        getProcesses: () => (typeof (this.engine as any).getProcesses === 'function' ? (this.engine as any).getProcesses() : []),
+        getProcesses: () => this.engine.getProcesses?.() ?? [],
         reorderTo: (procs: Process[]) => this.reorderTo(procs),
         morphMode: this.morphMode ?? 'morph',
         engine: this.engine
@@ -306,12 +307,12 @@ export class LessonPlayer {
   }
 
   private renderPlaygroundAndScoreboard(): void {
-    if (typeof (this.engine as any).renderPlayground === 'function') {
-      (this.engine as any).renderPlayground(this.playgroundSection, this.scoreboardSection, this);
+    if (this.engine.renderPlayground) {
+      this.engine.renderPlayground(this.playgroundSection, this.scoreboardSection);
       return;
     }
-    const processes: Process[] = typeof (this.engine as any).getProcesses === 'function' ? (this.engine as any).getProcesses() : [];
-    const schedule = typeof (this.engine as any).getScheduleResult === 'function' ? (this.engine as any).getScheduleResult() : null;
+    const processes: Process[] = this.engine.getProcesses?.() ?? [];
+    const schedule = this.engine.getScheduleResult?.() ?? null;
     if (!schedule) {
       this.playgroundSection.innerHTML = `
         <div style="font-size: 0.92rem; font-weight: 600; color: var(--ink);">Interactive Controls</div>
@@ -424,7 +425,7 @@ export class LessonPlayer {
       btn.addEventListener('click', (e) => {
         const idx = Number((e.currentTarget as HTMLElement).getAttribute('data-idx'));
         if (idx > 0) {
-          const currentProcs: Process[] = (this.engine as any).getProcesses ? (this.engine as any).getProcesses() : [];
+          const currentProcs: Process[] = this.engine.getProcesses?.() ?? [];
           const temp = currentProcs[idx];
           currentProcs[idx] = currentProcs[idx - 1];
           currentProcs[idx - 1] = temp;
@@ -437,7 +438,7 @@ export class LessonPlayer {
     rightButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         const idx = Number((e.currentTarget as HTMLElement).getAttribute('data-idx'));
-        const currentProcs: Process[] = (this.engine as any).getProcesses ? (this.engine as any).getProcesses() : [];
+        const currentProcs: Process[] = this.engine.getProcesses?.() ?? [];
         if (idx < currentProcs.length - 1) {
           const temp = currentProcs[idx];
           currentProcs[idx] = currentProcs[idx + 1];
@@ -449,9 +450,7 @@ export class LessonPlayer {
   }
 
   private reorderTo(newProcs: Process[]): void {
-    if (typeof (this.engine as any).reorderProcesses === 'function') {
-      (this.engine as any).reorderProcesses(newProcs);
-    }
+    this.engine.reorderProcesses?.(newProcs);
     this.scrubber.max = String(Math.max(0, this.engine.getSteps().length - 1));
     this.scrubber.value = '0';
     this.stepIndicator.textContent = `1 / ${this.engine.getSteps().length}`;

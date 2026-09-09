@@ -1,4 +1,5 @@
 import { AnimationEngine } from '../core/engine.js';
+import type { PlaygroundCapable } from '../core/types.js';
 import type { Step } from '../core/types.js';
 
 export interface QueueItem {
@@ -61,7 +62,12 @@ export interface QueueState {
   itemLocations: Record<string, { queueId: string | null; coreId: string | null; progress: number }>;
 }
 
-export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
+export class QueueEngine extends AnimationEngine<QueueInput, QueueState> implements PlaygroundCapable {
+  renderPlayground(host: HTMLElement, scoreboardHost?: HTMLElement): void {
+    if ((this.input as any).renderPlayground) {
+      (this.input as any).renderPlayground(host, scoreboardHost, this);
+    }
+  }
   private svg!: SVGSVGElement;
   private lanesGroup!: SVGGElement;
   private coresGroup!: SVGGElement;

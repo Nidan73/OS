@@ -1,3 +1,12 @@
+import type { Process, ScheduleResult } from '../algorithms/scheduling.js';
+
+export interface PlaygroundCapable {
+  getProcesses?(): Process[];
+  getScheduleResult?(): ScheduleResult | null;
+  reorderProcesses?(procs: Process[]): void;
+  renderPlayground?(host: HTMLElement, scoreboardHost?: HTMLElement): void;
+}
+
 // src/core/types.ts — §3.1 authoritative contract
 
 export type Domain = 'travel' | 'food' | 'friends';
