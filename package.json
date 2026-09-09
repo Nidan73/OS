@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gate": "node scripts/gate.mjs",
+    "verify": "npm run build && (npm run preview & sleep 3) && npm run gate"
   },
   "dependencies": {
     "gsap": "3.15.0"
