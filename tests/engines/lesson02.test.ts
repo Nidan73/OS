@@ -127,4 +127,39 @@ describe('Lesson 2: FCFS and Convoy Effect (§3C)', () => {
     expect(coreBox.style.opacity).toBe('0');
     expect(truckBox.style.opacity).toBe('1');
   });
+
+  test('morph geometric interpolation (§3C.2): equal width at view=0, burst-proportional at view=1, intermediate at view=0.5', () => {
+    // 1. At view = 0: all three bar widths are equal within 1px (equal queue footprint)
+    engine.setView(0);
+    const b1_0 = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
+    const b2_0 = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
+    const b3_0 = parseFloat(host.querySelector('#bar-P3')!.getAttribute('width')!);
+
+    expect(Math.abs(b1_0 - b2_0)).toBeLessThanOrEqual(1);
+    expect(Math.abs(b2_0 - b3_0)).toBeLessThanOrEqual(1);
+
+    // 2. At view = 1: proportional to burst (P1 burst 24, P2 & P3 burst 3 => 8x)
+    engine.setView(1);
+    const b1_1 = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
+    const b2_1 = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
+    const b3_1 = parseFloat(host.querySelector('#bar-P3')!.getAttribute('width')!);
+
+    expect(b1_1 / b2_1).toBeCloseTo(8, 1);
+    expect(b2_1).toBeCloseTo(b3_1, 1);
+
+    // 3. At view = 0.5: each width is strictly between its own two endpoints
+    engine.setView(0.5);
+    const b1_half = parseFloat(host.querySelector('#bar-P1')!.getAttribute('width')!);
+    const b2_half = parseFloat(host.querySelector('#bar-P2')!.getAttribute('width')!);
+    const b3_half = parseFloat(host.querySelector('#bar-P3')!.getAttribute('width')!);
+
+    expect(b1_half).toBeGreaterThan(Math.min(b1_0, b1_1));
+    expect(b1_half).toBeLessThan(Math.max(b1_0, b1_1));
+
+    expect(b2_half).toBeGreaterThan(Math.min(b2_0, b2_1));
+    expect(b2_half).toBeLessThan(Math.max(b2_0, b2_1));
+
+    expect(b3_half).toBeGreaterThan(Math.min(b3_0, b3_1));
+    expect(b3_half).toBeLessThan(Math.max(b3_0, b3_1));
+  });
 });

@@ -530,7 +530,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     // 2. Track Guide (Axis ticks vs pavement markers)
     const ticksGroup = this.svg.querySelector('#ticks-group') as SVGGElement;
     if (ticksGroup) {
-      ticksGroup.style.opacity = String(0.3 + 0.7 * v);
+      ticksGroup.style.opacity = String(v);
     }
 
     // 3. Render isomorphic process bars & customer sprites
@@ -544,9 +544,16 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
       const start = bar ? bar.start : p.arrival;
       const end = bar ? bar.end : p.arrival + p.burst;
       const burst = end - start;
+      // Equal space in queue (view = 0) vs burst-proportional in mechanism (view = 1) (§3C.2)
+      const eqW = this.chartWidth / this.input.processes.length;
+      const queueIndex = this.input.processes.findIndex(proc => proc.id === p.id);
+      const eqX = this.leftMargin + (queueIndex >= 0 ? queueIndex : 0) * eqW;
 
-      const x = this.leftMargin + start * this.timeScale;
-      const width = Math.max(16, burst * this.timeScale);
+      const mechW = burst * this.timeScale;
+      const mechX = this.leftMargin + start * this.timeScale;
+
+      const width = eqW + (mechW - eqW) * v;
+      const x = eqX + (mechX - eqX) * v;
       const y = this.topMargin + 10;
       const height = 110;
 
@@ -582,7 +589,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
         sprite.style.opacity = String(1 - v);
         sprite.replaceChildren();
 
-        const cx = x + Math.min(32, width / 2);
+        const cx = x + width / 2;
         const cy = y + 42;
         const itemInfo = analogyItems[p.id];
         const avatarCol = itemInfo?.avatarColor || (p.burst > 10 ? '#D97706' : '#0284C7');
@@ -715,19 +722,34 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
       }
     }
 
-    // 4. Playhead cursor positioning
-    const cursorX = this.leftMargin + state.playheadTime * this.timeScale;
+    // 4. Playhead cursor positioning with interpolation between queue progress and mechanism time
+    const mechCursorX = this.leftMargin + state.playheadTime * this.timeScale;
+    let eqCursorX = this.leftMargin;
+    const eqW = this.chartWidth / this.input.processes.length;
+    const currentBar = this.scheduleResult.bars.find(b => state.playheadTime >= b.start && state.playheadTime <= b.end);
+    if (currentBar) {
+      const qIdx = this.input.processes.findIndex(pr => pr.id === currentBar.id);
+      const frac = currentBar.end > currentBar.start ? (state.playheadTime - currentBar.start) / (currentBar.end - currentBar.start) : 0;
+      eqCursorX = this.leftMargin + Math.max(0, qIdx) * eqW + frac * eqW;
+    } else if (state.playheadTime >= this.scheduleResult.totalTime) {
+      eqCursorX = this.leftMargin + this.chartWidth;
+    }
+    const cursorX = eqCursorX + (mechCursorX - eqCursorX) * v;
+
     this.cursorLine.setAttribute('x1', String(cursorX));
     this.cursorLine.setAttribute('x2', String(cursorX));
 
-    const labelWidth = 60;
+    const labelText = v >= 0.5
+      ? `T=${state.playheadTime.toFixed(0)}ms`
+      : (state.activeProcessId ? `Serving ${state.activeProcessId}` : 'Now Serving');
+    const labelWidth = Math.max(68, labelText.length * 7.5 + 16);
     this.cursorBg.setAttribute('x', String(cursorX - labelWidth / 2));
     this.cursorBg.setAttribute('y', String(this.topMargin - 15));
     this.cursorBg.setAttribute('width', String(labelWidth));
 
     this.cursorLabel.setAttribute('x', String(cursorX));
     this.cursorLabel.setAttribute('y', String(this.topMargin - 3));
-    this.cursorLabel.textContent = v >= 0.5 ? `T=${state.playheadTime.toFixed(0)}ms` : `⏱ ${state.playheadTime.toFixed(0)}m`;
+    this.cursorLabel.textContent = labelText;
 
     // 5. Live Metrics Table
     this.metricsTable.innerHTML = `
