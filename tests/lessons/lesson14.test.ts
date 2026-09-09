@@ -1,0 +1,141 @@
+import { describe, it, expect } from 'vitest';
+import { evaluateLockCost } from '../../src/algorithms/synchronization.js';
+import { CounterEngine } from '../../src/engines/counter.js';
+import {
+  DEFAULT_LOCK,
+  LOCK_RANGES,
+  lesson14,
+  lesson14Input,
+  lockCosts,
+  lockLessonInput,
+  lockSteps
+} from '../../src/lessons/lecture-09/lesson-14.js';
+
+describe('Lesson 14 · every displayed number is computed', () => {
+  it('the cost model IS evaluateLockCost, never re-derived', () => {
+    const cases = [
+      { ...DEFAULT_LOCK },
+      { csDurationUs: 1, contextSwitchCostUs: 40, cpuFreqGHz: 1, mode: 'spin' as const },
+      { csDurationUs: 40, contextSwitchCostUs: 1, cpuFreqGHz: 5, mode: 'block' as const }
+    ];
+    for (const p of cases) {
+      expect(lockCosts(p)).toStrictEqual(
+        evaluateLockCost(p.csDurationUs, p.contextSwitchCostUs, p.cpuFreqGHz)
+      );
+    }
+  });
+
+  it('mapped steps carry the model 1:1 — stay, prices, verdict', () => {
+    const steps = lockSteps(DEFAULT_LOCK);
+    const m = evaluateLockCost(
+      DEFAULT_LOCK.csDurationUs, DEFAULT_LOCK.contextSwitchCostUs, DEFAULT_LOCK.cpuFreqGHz
+    );
+    expect(steps.length).toBe(5);
+    expect(steps[1].caption).toContain(`${m.csDurationUs}µs`);
+    const verdict = steps[3].caption;
+    expect(verdict).toContain(`${m.spinWastedCycles}`);
+    expect(verdict).toContain(`${m.contextSwitchWastedCycles}`);
+    for (const s of steps) expect(s.caption.length).toBeLessThanOrEqual(120);
+  });
+
+  it('sliders reach both sides of the crossover', () => {
+    const lo = lockCosts({ ...DEFAULT_LOCK, csDurationUs: LOCK_RANGES.csDurationUs.min });
+    const hi = lockCosts({ ...DEFAULT_LOCK, csDurationUs: LOCK_RANGES.csDurationUs.max });
+    expect(lo.preferSpinlock).toBe(true);
+    expect(hi.preferSpinlock).toBe(false);
+    expect(lo.crossoverThresholdUs).toBe(DEFAULT_LOCK.contextSwitchCostUs);
+    expect(hi.crossoverThresholdUs).toBe(DEFAULT_LOCK.contextSwitchCostUs);
+    // the switch cost itself is a slider: moving it moves the crossover
+    const moved = lockCosts({ ...DEFAULT_LOCK, contextSwitchCostUs: 30 });
+    expect(moved.crossoverThresholdUs).toBe(30);
+    expect(moved.preferSpinlock).toBe(true);
+  });
+
+  it('the switch cost and clock are inputs, never invisible defaults', () => {
+    const a = lockCosts({ ...DEFAULT_LOCK, cpuFreqGHz: 1 });
+    const b = lockCosts({ ...DEFAULT_LOCK, cpuFreqGHz: 5 });
+    expect(a.spinWastedCycles).not.toBe(b.spinWastedCycles);
+    expect(a.contextSwitchWastedCycles).not.toBe(b.contextSwitchWastedCycles);
+  });
+});
+
+describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
+  it('analogy tokens are native: guests at the door, equal footprints', () => {
+    const input = lockLessonInput(DEFAULT_LOCK);
+    expect(input.actors.map((a) => a.analogyName)).toEqual(['Guest A', 'Guest B', 'Guest C']);
+    expect(input.analogy?.waitingLabel).toContain('DOOR');
+  });
+
+  it('mechanism encodes the price: the stay moves the verdict, the queue does not', () => {
+    const short = lockSteps({ ...DEFAULT_LOCK, csDurationUs: 2 });
+    const long = lockSteps({ ...DEFAULT_LOCK, csDurationUs: 30 });
+    expect(short[3].state.holders).toStrictEqual(long[3].state.holders);
+    expect(short[3].caption).not.toBe(long[3].caption);
+    expect(short[3].caption).toMatch(/Short stay/);
+    expect(long[3].caption).toMatch(/Long stay/);
+  });
+
+  it('handoff, not hang-back: the key goes to the first waiter', () => {
+    const steps = lockSteps(DEFAULT_LOCK);
+    const last = steps[steps.length - 1];
+    expect(last.state.holders).toStrictEqual(['T2']);
+    expect(last.state.waiting).toStrictEqual(['T3']);
+  });
+
+  it('spin and block price the same stay differently', () => {
+    const spin = lockSteps({ ...DEFAULT_LOCK, mode: 'spin' });
+    const block = lockSteps({ ...DEFAULT_LOCK, mode: 'block' });
+    expect(spin[2].caption).not.toBe(block[2].caption);
+    expect(spin[2].caption).toMatch(/jiggle/i);
+    expect(block[2].caption).toMatch(/sit down/i);
+  });
+});
+
+describe('Lesson 14 · copy agrees with the mechanism', () => {
+  it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
+    const strip = (s: string): string => s.replace(/slides?\s*\d[\d–-]*/gi, '');
+    const digits = (s: string): string[] => [...strip(s).matchAll(/\d+/g)].map((m) => m[0]);
+    expect(digits(lesson14.analogy.text)).toEqual([]);
+    expect(digits(lesson14.concept)).toEqual([]);
+    expect(digits(lesson14.morphReveals)).toEqual([]);
+  });
+
+  it('the analogy conditions the verdict on the stay — never asserts one winner', () => {
+    expect(lesson14.analogy.text).toMatch(/depends|however long|how long/i);
+    expect(lesson14.concept).toMatch(/crossover|wakeup price/i);
+  });
+
+  it('the provenance is stated: the deck never gives the constants', () => {
+    expect(lesson14.concept + lesson14.morphReveals).not.toMatch(/10\s*µs|3\.0\s*GHz/);
+  });
+
+  it('no internal vocabulary reaches the student', () => {
+    const copy = [
+      lesson14.analogy.text,
+      lesson14.concept,
+      lesson14.morphReveals,
+      ...(lesson14.analogyMapping ?? []),
+      ...lockSteps(DEFAULT_LOCK).map((s) => s.caption)
+    ].join('\n');
+    for (const rx of [/\bAtlas unit/i, /\bisomorph/i, /\bSPEC\.md\b/i, /\bview\s*=\s*[01]\b/i, /\bmorphMode\b/, /\bengine\b(?!ering)/i, /§\s*\d/]) {
+      expect(copy).not.toMatch(rx);
+    }
+  });
+});
+
+describe('Lesson 14 · lesson wiring', () => {
+  it('declares the counter engine it really extends, and absorbs units 56–57', () => {
+    expect(lesson14.engine).toBe('counter');
+    expect(lesson14.engineClass).toBeDefined();
+    expect(lesson14.engineClass?.prototype instanceof CounterEngine).toBe(true);
+    expect(lesson14.absorbsUnits).toEqual([56, 57]);
+    expect(lesson14.id).toBe(14);
+    expect(lesson14.slug).toBe('lesson-14');
+  });
+
+  it('opens on a short stay where spinning wins, one drag from flipping', () => {
+    expect(lesson14Input.params).toStrictEqual(DEFAULT_LOCK);
+    expect(lockCosts(lesson14Input.params).preferSpinlock).toBe(true);
+    expect(lesson14.input.events.length).toBeGreaterThan(0);
+  });
+});
