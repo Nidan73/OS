@@ -168,6 +168,18 @@ describe('Lesson 10 · words agree with the mechanism', () => {
     expect(lesson10.concept.toLowerCase()).not.toMatch(/both (friends )?(take one|write back "2")/);
     expect(ACT_TEXT.T1[1].toLowerCase()).not.toBe(ACT_TEXT.T2[1].toLowerCase());
   });
+
+  it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
+    // Every digit the playground can put on screen lives in the scenarios:
+    // initial 3/800/14/5 and the outcomes initial-1/initial/initial+1. Copy
+    // must state the mechanism conditionally, never one run's result — so
+    // after removing identifier tokens (register1, R2, …), no digits remain.
+    const stripIdentifiers = (s: string) => s.replace(/register\d|R\d/gi, '');
+    const digits = (s: string) => [...stripIdentifiers(s).matchAll(/\d+/g)].map(m => m[0]);
+    expect(digits(lesson10.analogy.text)).toEqual([]);
+    expect(digits(lesson10.concept)).toEqual([]);
+    expect(digits(lesson10.morphReveals)).toEqual([]);
+  });
 });
 
 describe('Lesson 10 · lesson wiring', () => {
