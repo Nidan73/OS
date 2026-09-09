@@ -37,7 +37,8 @@ const LESSONS_META: LessonMeta[] = [
   { id: 6, slug: 'lesson-06', chapterSlug: 'lecture-07', title: 'Queues within queues (MLFQ)', blurb: 'Airport lanes by class, then a restaurant that demotes you for dithering. Tune feedback thresholds.' },
   { id: 7, slug: 'lesson-07', chapterSlug: 'lecture-07', title: 'More cores, more problems', blurb: 'One kitchen versus several; a chef idle at the pass waiting on the storeroom.' },
   { id: 8, slug: 'lesson-08', chapterSlug: 'lecture-07', title: 'Keeping Every Core Busy', blurb: 'The staffer waving people to an empty desk; your regular waiter who knows your order.' },
-  { id: 10, slug: 'lesson-10', chapterSlug: 'lecture-08', title: 'The Last Slice', blurb: 'Two friends both read "3 slices left," both take one, both write "2." Reorder the interleaving and find the orders that corrupt the count.' },
+  { id: 10, slug: 'lesson-10', chapterSlug: 'lecture-08', title: 'The Last Slice', blurb: 'One friend puts a slice back while the other takes one off — both read the same count, one update never lands. Reorder the interleaving and find the orders that corrupt the count.' },
+  { id: 11, slug: 'lesson-11', chapterSlug: 'lecture-08', title: 'What a Correct Solution Must Promise', blurb: 'The single toilet on a long-haul coach. Break mutual exclusion, progress or bounded waiting and watch the exact failure each one permits.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;

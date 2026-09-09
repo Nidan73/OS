@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: 'happy-dom',
-    globals: true
+    globals: true,
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.wt/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**']
   }
 });

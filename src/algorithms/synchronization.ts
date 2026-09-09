@@ -517,3 +517,185 @@ export function simulateSemaphoreOps(
     deadlocked: deadlocked || (waitingQueue.length > 0 && holders.length === 0)
   };
 }
+
+// ── 7. Critical-Section Requirements Simulator (L11, Units 38–42) ──
+
+export type CSGuarantee = "none" | "mutex" | "progress" | "bounded";
+export type CSPhase = "entry" | "critical" | "exit" | "remainder";
+
+export interface CSStep {
+  step: number;
+  movedId: string | null;
+  phases: Record<string, CSPhase>;
+  inside: string[];
+  waiting: string[];
+  entries: Record<string, number>;
+  lockCount: number;
+  mutexViolated: boolean;
+  progressViolated: boolean;
+  starved: string[];
+  queueJumps: number;
+  caption: string;
+  history: Record<string, CSPhase>[];
+}
+
+export interface CSResult {
+  steps: CSStep[];
+  maxOccupancy: number;
+  entries: Record<string, number>;
+  mutexViolated: boolean;
+  progressViolated: boolean;
+  starved: string[];
+  queueJumps: number;
+  stuck: boolean;
+}
+
+const CS_PROCS = ["P1", "P2", "P3"];
+
+/**
+ * Simulates three processes taking turns through entry / critical / exit /
+ * remainder under one protocol with exactly one guarantee disabled.
+ * 'none'    — intact protocol: one occupant, empty room admits, FIFO order.
+ * 'mutex'   — entry never checks the lock, so occupants overlap.
+ * 'progress'— exit leaves the lock engaged: empty room, queue waits forever.
+ * 'bounded' — the process that just exited may re-enter ahead of the queue.
+ * Every violation flag is computed from the trace, never asserted.
+ */
+export function simulateCriticalSection(broken: CSGuarantee = "none"): CSResult {
+  const target: Record<string, number> =
+    broken === "bounded" ? { P1: 4, P2: 4, P3: 4 } : { P1: 2, P2: 2, P3: 2 };
+
+  const phases: Record<string, CSPhase> = { P1: "remainder", P2: "remainder", P3: "remainder" };
+  const entries: Record<string, number> = { P1: 0, P2: 0, P3: 0 };
+  const tickets: string[] = [];
+  const starved = new Set<string>();
+  const history: Record<string, CSPhase>[] = [];
+  let lockCount = 0;
+  let mutexViolated = false;
+  let progressViolated = false;
+  let queueJumps = 0;
+  let rr = 0;
+  const steps: CSStep[] = [];
+
+  const inside = () => CS_PROCS.filter(p => phases[p] === "critical");
+  const waiting = () => CS_PROCS.filter(p => phases[p] === "entry");
+
+  const canMove = (p: string): boolean => {
+    switch (phases[p]) {
+      case "remainder":
+        return entries[p] < target[p];
+      case "entry":
+        if (broken === "mutex") return true;
+        if (lockCount > 0) return false;
+        if (broken === "bounded") {
+          const queue = waiting();
+          if (queue.length > 1) {
+            const most = Math.max(...queue.map(q => entries[q]));
+            const least = Math.min(...queue.map(q => entries[q]));
+            if (most > least) {
+              return p === queue.find(q => entries[q] === most);
+            }
+          }
+          return tickets[0] === p;
+        }
+        return tickets[0] === p;
+      default:
+        return true;
+    }
+  };
+
+  const move = (p: string): string => {
+    switch (phases[p]) {
+      case "remainder":
+        phases[p] = "entry";
+        tickets.push(p);
+        return `${p} walks to the door and asks for the room.`;
+      case "entry": {
+        const jumped = tickets[0] !== p;
+        tickets.splice(tickets.indexOf(p), 1);
+        if (jumped) queueJumps++;
+        phases[p] = "critical";
+        entries[p]++;
+        lockCount++;
+        if (broken === "mutex") {
+          return inside().length > 1
+            ? `${p} walks in without checking the lock — ${inside().length} inside at once!`
+            : `${p} walks in without checking the lock.`;
+        }
+        return `${p} enters — the room was free.`;
+      }
+      case "critical":
+        phases[p] = "exit";
+        return `${p} is done and slides the lock back on the way out.`;
+      case "exit":
+        phases[p] = "remainder";
+        if (broken === "progress") {
+          return `${p} returns to their seat — but leaves the lock engaged!`;
+        }
+        lockCount = Math.max(0, lockCount - 1);
+        return `${p} releases the room and returns to their seat.`;
+    }
+  };
+
+  const pushStep = (movedId: string | null, caption: string) => {
+    if (inside().length > 1) mutexViolated = true;
+    const exiting = CS_PROCS.some(p => phases[p] === "exit");
+    if (inside().length === 0 && waiting().length > 0 && lockCount > 0 && !exiting) {
+      progressViolated = true;
+    }
+    for (const w of waiting()) {
+      for (const q of CS_PROCS) {
+        if (q !== w && entries[q] >= entries[w] + 2) starved.add(w);
+      }
+    }
+    history.push({ ...phases });
+    steps.push({
+      step: steps.length,
+      movedId,
+      phases: { ...phases },
+      inside: inside(),
+      waiting: waiting(),
+      entries: { ...entries },
+      lockCount,
+      mutexViolated,
+      progressViolated,
+      starved: [...starved],
+      queueJumps,
+      caption,
+      history: history.map(h => ({ ...h }))
+    });
+  };
+
+  pushStep(null, "Everyone is seated. All three want the room; nobody has moved yet.");
+
+  let stuck = false;
+  while (steps.length <= 26) {
+    let mover: string | null = null;
+    for (let i = 0; i < CS_PROCS.length; i++) {
+      const p = CS_PROCS[(rr + i) % CS_PROCS.length];
+      if (canMove(p)) {
+        mover = p;
+        rr = (rr + i + 1) % CS_PROCS.length;
+        break;
+      }
+    }
+    if (!mover) {
+      stuck = true;
+      break;
+    }
+    const caption = move(mover);
+    pushStep(mover, caption);
+    if (CS_PROCS.every(p => entries[p] >= target[p] && (phases[p] === "remainder" || phases[p] === "exit"))) break;
+  }
+
+  return {
+    steps,
+    maxOccupancy: steps.reduce((m, s) => Math.max(m, s.inside.length), 0),
+    entries,
+    mutexViolated,
+    progressViolated,
+    starved: [...starved],
+    queueJumps,
+    stuck
+  };
+}

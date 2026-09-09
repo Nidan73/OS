@@ -5,7 +5,8 @@ import {
   simulatePeterson,
   simulateTestAndSetLock,
   evaluateLockCost,
-  simulateSemaphoreOps
+  simulateSemaphoreOps,
+  simulateCriticalSection
 } from "../../src/algorithms/synchronization.js";
 
 describe("Wave 2 Pure Algorithms (§2.1)", () => {
@@ -136,5 +137,63 @@ describe("Wave 2 Pure Algorithms (§2.1)", () => {
       const res = simulateSemaphoreOps(1, ops);
       expect(res.deadlocked).toBe(true);
     });
+  });
+});
+
+describe("Critical-Section Requirements Simulator (L11)", () => {
+  it("intact protocol: one occupant, empty room admits, everyone served, FIFO kept", () => {
+    const r = simulateCriticalSection("none");
+    expect(r.maxOccupancy).toBe(1);
+    expect(r.mutexViolated).toBe(false);
+    expect(r.progressViolated).toBe(false);
+    expect(r.starved).toEqual([]);
+    expect(r.queueJumps).toBe(0);
+    expect(r.stuck).toBe(false);
+    expect(r.entries.P1).toBe(2);
+    expect(r.entries.P2).toBe(2);
+    expect(r.entries.P3).toBe(2);
+  });
+
+  it("mutual exclusion broken: occupancy exceeds one and the flag fires", () => {
+    const r = simulateCriticalSection("mutex");
+    expect(r.mutexViolated).toBe(true);
+    expect(r.maxOccupancy).toBeGreaterThan(1);
+    const overlap = r.steps.some(s => s.inside.length > 1);
+    expect(overlap).toBe(true);
+  });
+
+  it("progress broken: engaged lock over an empty room with the queue still waiting", () => {
+    const r = simulateCriticalSection("progress");
+    expect(r.progressViolated).toBe(true);
+    expect(r.stuck).toBe(true);
+    const last = r.steps[r.steps.length - 1];
+    expect(last.inside).toEqual([]);
+    expect(last.waiting.length).toBeGreaterThan(0);
+    expect(last.lockCount).toBeGreaterThan(0);
+    const served = r.entries.P1 + r.entries.P2 + r.entries.P3;
+    const stalled = last.waiting.length;
+    expect(served).toBeLessThan(6); // nobody completes their second visit
+    expect(stalled).toBeGreaterThanOrEqual(2);
+  });
+
+  it("bounded waiting broken: the frequent occupant keeps jumping the FIFO queue", () => {
+    const r = simulateCriticalSection("bounded");
+    expect(r.queueJumps).toBeGreaterThanOrEqual(2);
+    expect(r.starved.length).toBeGreaterThan(0);
+    for (const victim of r.starved) {
+      const strongest = Math.max(r.entries.P1, r.entries.P2, r.entries.P3);
+      expect(strongest).toBeGreaterThanOrEqual(r.entries[victim] + 2);
+    }
+    expect(r.mutexViolated).toBe(false); // exclusion itself still holds
+    expect(r.progressViolated).toBe(false);
+  });
+
+  it("the four modes produce four distinct traces", () => {
+    const sig = (b: "none" | "mutex" | "progress" | "bounded") => {
+      const r = simulateCriticalSection(b);
+      return JSON.stringify([r.maxOccupancy, r.mutexViolated, r.progressViolated, r.queueJumps, r.stuck]);
+    };
+    const sigs = new Set((["none", "mutex", "progress", "bounded"] as const).map(sig));
+    expect(sigs.size).toBe(4);
   });
 });
