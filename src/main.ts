@@ -39,6 +39,7 @@ const LESSONS_META: LessonMeta[] = [
   { id: 8, slug: 'lesson-08', chapterSlug: 'lecture-07', title: 'Keeping Every Core Busy', blurb: 'The staffer waving people to an empty desk; your regular waiter who knows your order.' },
   { id: 10, slug: 'lesson-10', chapterSlug: 'lecture-08', title: 'The Last Slice', blurb: 'One friend puts a slice back while the other takes one off — both read the same count, one update never lands. Reorder the interleaving and find the orders that corrupt the count.' },
   { id: 11, slug: 'lesson-11', chapterSlug: 'lecture-08', title: 'What a Correct Solution Must Promise', blurb: 'The single toilet on a long-haul coach. Break mutual exclusion, progress or bounded waiting and watch the exact failure each one permits.' },
+  { id: 12, slug: 'lesson-12', chapterSlug: 'lecture-08', title: 'Peterson’s Solution, and Why Hardware Breaks It', blurb: 'Two friends at a door, each waving the other through. Toggle hardware reordering and watch the printed output flip.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;

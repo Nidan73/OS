@@ -699,3 +699,68 @@ export function simulateCriticalSection(broken: CSGuarantee = "none"): CSResult 
     stuck
   };
 }
+
+// ── 8. Instruction Reordering & the Print-Out Flip (L12, Unit 46) ──
+
+export interface PublicationStep {
+  step: number;
+  actorId: string;
+  action: string;
+  x: number;
+  flag: boolean;
+  printed: number | null;
+  caption: string;
+}
+
+export interface PublicationResult {
+  steps: PublicationStep[];
+  output: number | null;
+  expectedOutput: number | null;
+  flipped: boolean;
+}
+
+/**
+ * The lecture slide's print test: two threads share `boolean flag = false`
+ * and `int x = 0`. Thread 1 spins on the flag then prints x; Thread 2 sets
+ * x = 100 then raises the flag. With sequential consistency the output is
+ * 100. If hardware reorders Thread 2's independent operations (flag first,
+ * then x), the print can run before the store lands and the output is 0.
+ * Both numbers are computed from the trace; expectedOutput is the intact
+ * run's output, never a constant.
+ */
+export function simulateReorderingOutput(reordered = false): PublicationResult {
+  let x = 0;
+  let flag = false;
+  let printed: number | null = null;
+  const steps: PublicationStep[] = [];
+
+  const push = (actorId: string, action: string, caption: string) => {
+    steps.push({ step: steps.length + 1, actorId, action, x, flag, printed, caption });
+  };
+
+  if (reordered) {
+    flag = true;
+    push("T2", "flag = true", "T2 raises the flag first — the store to x is still in flight.");
+    push("T1", "while (!flag); passes", "T1 sees the flag and leaves the spin loop.");
+    printed = x;
+    push("T1", "print x", `T1 prints x — it is still ${x}. The announcement ran ahead of the fact.`);
+    x = 100;
+    push("T2", "x = 100", "T2 finally stores 100 into x — too late for the print.");
+  } else {
+    x = 100;
+    push("T2", "x = 100", "T2 stores 100 into x.");
+    flag = true;
+    push("T2", "flag = true", "T2 raises the flag — after the fact it announces.");
+    push("T1", "while (!flag); passes", "T1 sees the flag and leaves the spin loop.");
+    printed = x;
+    push("T1", "print x", `T1 prints x — the store had already landed: ${printed}.`);
+  }
+
+  const intact = reordered ? simulateReorderingOutput(false) : null;
+  return {
+    steps,
+    output: printed,
+    expectedOutput: intact ? intact.output : printed,
+    flipped: (intact?.output ?? printed) !== printed
+  };
+}
