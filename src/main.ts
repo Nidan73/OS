@@ -43,6 +43,7 @@ const LESSONS_META: LessonMeta[] = [
   { id: 12, slug: 'lesson-12', chapterSlug: 'lecture-08', title: 'Peterson’s Solution, and Why Hardware Breaks It', blurb: 'Two friends at a door, each waving the other through. Toggle hardware reordering and watch the printed output flip.' },
   { id: 13, slug: 'lesson-13', chapterSlug: 'lecture-09', title: 'One Indivisible Motion', blurb: 'The restroom key on a hook — run the same race split and fused, then compare_and_swap.' },
   { id: 14, slug: 'lesson-14', chapterSlug: 'lecture-09', title: 'Locks, and the Cost of Waiting at the Door', blurb: 'One hotel key — drag the stay length until jiggling the handle stops paying.' },
+  { id: 15, slug: 'lesson-15', chapterSlug: 'lecture-09', title: 'Semaphores', blurb: 'Five charging ports and a live count — then forget a signal and deadlock the room.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;

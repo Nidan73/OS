@@ -19,6 +19,7 @@ import { lesson11 } from '../src/lessons/lecture-08/lesson-11.js';
 import { lesson12 } from '../src/lessons/lecture-08/lesson-12.js';
 import { lesson13 } from '../src/lessons/lecture-09/lesson-13.js';
 import { lesson14 } from '../src/lessons/lecture-09/lesson-14.js';
+import { lesson15 } from '../src/lessons/lecture-09/lesson-15.js';
 
 const SHARED: Record<Exclude<EngineId, 'standalone' | 'graph' | 'matrix'>, unknown> = {
   gantt: GanttEngine,
@@ -37,14 +38,14 @@ describe('engine taxonomy: declared engine id matches the real inheritance', () 
   const lessons: Lesson<any, any>[] = [
     lesson01, lesson02, lesson03, lesson04, lesson05,
     lesson06, lesson07, lesson08, lesson09,
-    lesson10, lesson11, lesson12, lesson13, lesson14
+    lesson10, lesson11, lesson12, lesson13, lesson14, lesson15
   ];
 
   it('covers every shipped lesson', () => {
     expect(lessons.map(l => l.slug).sort()).toEqual([
       'lesson-01', 'lesson-02', 'lesson-03', 'lesson-04', 'lesson-05',
       'lesson-06', 'lesson-07', 'lesson-08', 'lesson-09',
-      'lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14'
+      'lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14', 'lesson-15'
     ]);
   });
 

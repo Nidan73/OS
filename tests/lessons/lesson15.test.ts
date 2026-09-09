@@ -1,0 +1,160 @@
+import { describe, it, expect } from 'vitest';
+import { simulateSemaphoreOps } from '../../src/algorithms/synchronization.js';
+import { CounterEngine } from '../../src/engines/counter.js';
+import {
+  DEFAULT_SEM,
+  SEM_RANGES,
+  lesson15,
+  lesson15Input,
+  semaphoreLessonInput,
+  semaphoreOps,
+  semaphoreRun,
+  semaphoreSteps
+} from '../../src/lessons/lecture-09/lesson-15.js';
+
+describe('Lesson 15 · every displayed outcome is computed', () => {
+  it('the run IS simulateSemaphoreOps over the staged script', () => {
+    const scripts = [
+      { ...DEFAULT_SEM },
+      { ...DEFAULT_SEM, initial: 1 },
+      { ...DEFAULT_SEM, mistake: 'swap' as const },
+      { ...DEFAULT_SEM, mistake: 'double' as const },
+      { ...DEFAULT_SEM, mistake: 'omit' as const }
+    ];
+    for (const p of scripts) {
+      expect(semaphoreRun(p)).toStrictEqual(simulateSemaphoreOps(p.initial, semaphoreOps(p)));
+    }
+  });
+
+  it('the sign change carries meaning: negative count equals seated waiters', () => {
+    const run = semaphoreRun(DEFAULT_SEM);
+    for (const s of run.steps) {
+      if (s.value < 0) {
+        expect(Math.abs(s.value)).toBe(s.waitingQueue.length);
+      }
+    }
+    const last = run.steps[run.steps.length - 1];
+    // one release wakes one waiter; one traveller is still seated, so the
+    // count stays negative — the sign keeps meaning "waiters here"
+    expect(last.value).toBeLessThan(0);
+    expect(last.waitingQueue.length).toBeGreaterThan(0);
+  });
+
+  it('mapped steps carry the simulation 1:1 — count, holders, seated queue', () => {
+    const run = semaphoreRun(DEFAULT_SEM);
+    const steps = semaphoreSteps(DEFAULT_SEM);
+    expect(steps.length).toBe(run.steps.length + 1);
+    run.steps.forEach((s, i) => {
+      const st = steps[i + 1].state;
+      expect(st.value).toBe(s.value);
+      expect(st.holders).toStrictEqual(s.holders);
+      expect(st.waiting).toStrictEqual(s.waitingQueue);
+      expect(steps[i + 1].caption.length).toBeLessThanOrEqual(120);
+    });
+  });
+
+  it('the intact run wakes in order; the dock slider reaches the binary lock', () => {
+    const run = semaphoreRun(DEFAULT_SEM);
+    expect(run.deadlocked).toBe(false);
+    const binary = semaphoreRun({ ...DEFAULT_SEM, initial: SEM_RANGES.initial.min });
+    expect(binary.steps[0].holders).toStrictEqual(['T1']);
+    const five = semaphoreRun({ ...DEFAULT_SEM, initial: SEM_RANGES.initial.max });
+    // five ports absorb five takes before anyone seats themselves
+    expect(five.steps[4].waitingQueue).toStrictEqual([]);
+    expect(five.steps[5].waitingQueue.length).toBeGreaterThan(0);
+  });
+
+  it('each of slide 22\'s three failures is its own reachable, computed state', () => {
+    const swap = semaphoreRun({ ...DEFAULT_SEM, mistake: 'swap' });
+    const double = semaphoreRun({ ...DEFAULT_SEM, mistake: 'double' });
+    const omit = semaphoreRun({ ...DEFAULT_SEM, mistake: 'omit' });
+    const intact = semaphoreRun(DEFAULT_SEM);
+    // all three differ from the intact run — none is a canned animation.
+    // (swap lands on the same final number by a different road: one phantom
+    // release, one extra take — so compare traces, not just finals)
+    expect(swap.steps.map((s) => s.action)).not.toStrictEqual(intact.steps.map((s) => s.action));
+    expect(swap.steps[0].value).toBe(DEFAULT_SEM.initial + 1);
+    expect(omit.deadlocked).toBe(true);
+    expect(intact.deadlocked).toBe(false);
+    // double holds two ports on one traveller — the room disagrees with the
+    // board even where the final numbers coincide
+    expect(double.steps.some((s) => s.holders.filter((h) => h === 'T1').length > 1)).toBe(true);
+  });
+});
+
+describe('Lesson 15 · the morph is geometric, not cosmetic (§3C.2a)', () => {
+  it('analogy tokens are native: travellers at a dock, equal footprints', () => {
+    const input = semaphoreLessonInput(DEFAULT_SEM);
+    expect(input.actors.length).toBe(7);
+    expect(input.actors[0].analogyName).toBe('Traveller A');
+    expect(input.analogy?.resourceLabel).toContain('BOARD');
+  });
+
+  it('mechanism encodes the count: the dock size moves the seating point', () => {
+    const five = semaphoreSteps({ ...DEFAULT_SEM, initial: 5 });
+    const one = semaphoreSteps({ ...DEFAULT_SEM, initial: 1 });
+    const firstSeated = (steps: ReturnType<typeof semaphoreSteps>): number =>
+      steps.findIndex((s) => s.state.waiting.length > 0);
+    expect(firstSeated(five)).toBeGreaterThan(firstSeated(one));
+  });
+
+  it('spin and block label the queue differently for the same simulation', () => {
+    const spin = semaphoreLessonInput({ ...DEFAULT_SEM, mode: 'spin' });
+    const block = semaphoreLessonInput({ ...DEFAULT_SEM, mode: 'block' });
+    expect(spin.analogy?.waitingLabel).toMatch(/HOVER/);
+    expect(block.analogy?.waitingLabel).toMatch(/SEATED/);
+    expect(semaphoreRun(spin.params).finalValue).toBe(semaphoreRun(block.params).finalValue);
+  });
+});
+
+describe('Lesson 15 · copy agrees with the mechanism', () => {
+  it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
+    const strip = (s: string): string => s.replace(/slides?\s*\d[\d–-]*/gi, '');
+    const digits = (s: string): string[] => [...strip(s).matchAll(/\d+/g)].map((m) => m[0]);
+    // the dock size (five/one) is the lesson's fixed subject, stated as words
+    // plus the two numerals the brief itself names — everything else must hold
+    // in every reachable state
+    for (const copy of [lesson15.analogy.text, lesson15.concept, lesson15.morphReveals]) {
+      for (const d of digits(copy)) {
+        expect(['5', '22', '1'].includes(d)).toBe(true);
+      }
+    }
+  });
+
+  it('the negative-count claim is conditional on overflow — true in every state', () => {
+    expect(lesson15.analogy.text).toMatch(/When every port is taken|past zero/i);
+    expect(lesson15.concept).toMatch(/negative|seated|ticket/i);
+  });
+
+  it('no internal vocabulary reaches the student', () => {
+    const copy = [
+      lesson15.analogy.text,
+      lesson15.concept,
+      lesson15.morphReveals,
+      ...(lesson15.analogyMapping ?? []),
+      ...semaphoreSteps(DEFAULT_SEM).map((s) => s.caption)
+    ].join('\n');
+    for (const rx of [/\bAtlas unit/i, /\bisomorph/i, /\bSPEC\.md\b/i, /\bview\s*=\s*[01]\b/i, /\bmorphMode\b/, /\bengine\b(?!ering)/i, /§\s*\d/]) {
+      expect(copy).not.toMatch(rx);
+    }
+  });
+});
+
+describe('Lesson 15 · lesson wiring', () => {
+  it('declares the counter engine it really extends, and absorbs units 58–62', () => {
+    expect(lesson15.engine).toBe('counter');
+    expect(lesson15.engineClass).toBeDefined();
+    expect(lesson15.engineClass?.prototype instanceof CounterEngine).toBe(true);
+    expect(lesson15.absorbsUnits).toEqual([58, 59, 60, 61, 62]);
+    expect(lesson15.id).toBe(15);
+    expect(lesson15.slug).toBe('lesson-15');
+  });
+
+  it('opens on five ports with seven contenders — overflow is one run away', () => {
+    expect(lesson15Input.params).toStrictEqual(DEFAULT_SEM);
+    expect(DEFAULT_SEM.initial).toBe(5);
+    const run = semaphoreRun(lesson15Input.params);
+    expect(run.steps.some((s) => s.value < 0)).toBe(true);
+    expect(lesson15.input.events.length).toBeGreaterThan(0);
+  });
+});
