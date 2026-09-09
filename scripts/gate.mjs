@@ -27,6 +27,7 @@ const LESSONS = [
   { slug: 'lesson-06', chapter: 'lecture-07', name: 'Queues within queues (MLFQ)' },
   { slug: 'lesson-07', chapter: 'lecture-07', name: 'More cores, more problems' },
   { slug: 'lesson-08', chapter: 'lecture-07', name: 'Load balancing & affinity' },
+  { slug: 'lesson-10', chapter: 'lecture-08', name: 'The last slice' },
 ];
 
 /** Internal vocabulary that must never reach a student. */
