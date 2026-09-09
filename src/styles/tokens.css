@@ -5,6 +5,12 @@
   --surface-alt: #f5f5f7;               /* Parchment alternating tile */
   --canvas-parchment: #f5f5f7;
 
+  /* Text (DESIGN.md Part 1) */
+  --ink: #1d1d1f;                       /* Near-Black Ink: every headline and body */
+  --ink-2: #333333;                     /* Ink Muted 80 */
+  --muted: #7a7a7a;                     /* Ink Muted 48 */
+  --faint: #d2d2d7;                     /* Translucent Chip Gray */
+
   /* Hairlines & Borders (DESIGN.md Part 1) */
   --hairline: rgba(0, 0, 0, 0.08);      /* Subtle hairline for cards & utility borders */
   --divider-soft: rgba(0, 0, 0, 0.04);
@@ -54,6 +60,9 @@
     --faint: #4B5966;
 
     --rule: #24303D;
+    --hairline: rgba(255, 255, 255, 0.08);
+    --divider-soft: rgba(255, 255, 255, 0.04);
+    --canvas-parchment: #181f28;
 
     --accent: #2997ff;                  /* Sky Link Blue on dark surfaces */
     --accent-focus: #0071e3;

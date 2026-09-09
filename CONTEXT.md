@@ -189,7 +189,16 @@ per wave, not all of them — that was the bottleneck that made L2 take three cy
 
 1. **Immediate:** agent resolves the three gantt findings above, especially #1 (real
    interpolation). Re-review before anything fans out.
-2. Then fan out the remaining six engines on `phase1/engine-<name>` branches.
+2. **Fan out in three waves of seven**, grouped so each wave introduces at most two new engines:
+   - **Wave 1** — L1, L3, L4, L5 (`gantt`, engine already proven by L2) + L6, L7, L8 (`queue`).
+     Lowest risk by design: validates the parallel-subagent process itself on lessons whose engine
+     already works, rather than discovering process problems on Banker's.
+   - **Wave 2** — L9 (`diagram`) + L10, L11, L12 (`trace`) + L13, L14, L15 (`counter`).
+   - **Wave 3** — L16, L17, L18, L19 (`graph`) + L20, L21 (`matrix`) + L22 (`diagram`).
+     The hardest chapter, run when the patterns are most established.
+   Every lesson must pass `npm run gate` before it is reported. A wave is not done until all
+   seven pass. Spot-check two per wave, not seven.
+3. Then fan out the remaining six engines on `phase1/engine-<name>` branches.
 5. Phase 2: five agents, one per lecture, `phase2/lecture-<nn>`.
 6. **Run `design-taste-frontend` and review the design language it produces against the six §5.0
    constraints BEFORE it is applied across all units.** Applying a bad direction to 89 units is

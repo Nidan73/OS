@@ -105,6 +105,7 @@ export class LessonPlayer {
     this.viewSlider.value = String(engine.getView());
     this.viewSlider.id = 'view-lens';
     this.viewSlider.setAttribute('data-view', 'true');
+    this.viewSlider.setAttribute('data-view-lens', 'true');
     this.viewSlider.setAttribute('aria-label', 'View axis blend between analogy and mechanism');
     this.viewSlider.style.width = '120px';
     this.viewSlider.style.cursor = 'pointer';

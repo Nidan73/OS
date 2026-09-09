@@ -1,6 +1,6 @@
-# LESSONS.md — the 20-lesson structure
+# LESSONS.md — the 22-lesson structure
 
-Replaces the 89-unit model. `ATLAS.md` remains the source inventory; the `units` column below
+Replaces the 89-unit model. 22 lessons + a reference layer; all 89 Atlas units accounted for. `ATLAS.md` remains the source inventory; the `units` column below
 maps each lesson to the Atlas ids it absorbs.
 
 **Shape of a lesson:** open in the analogy → morph into the mechanism → hand the learner the
@@ -79,7 +79,7 @@ Playground: drag the critical-section length and watch spinning flip from optima
 Analogy: five airport charging ports and a live count. Playground: set the count, add contenders,
 switch between spin and block/wakeup — then forget a signal and deadlock the room.
 
-## Lecture 10 — Deadlocks (5 lessons)
+## Lecture 10 — Deadlocks (7 lessons)
 
 **L16 · Two friends, two chopsticks** — units 63–68
 The founding scene. Morphs from the dinner table into the four necessary conditions, each
@@ -94,14 +94,27 @@ including the cycle that is *not* a deadlock because spare instances exist.
 Analogy: numbering the chopsticks so one person reaches right instead of left.
 Playground: apply each prevention strategy and watch the ring fail to close.
 
-**L19 · The banker** — units 76–83
-Analogy: a group treasurer deciding whether a loan still leaves everyone able to finish the trip.
-Morphs into Available/Max/Allocation/Need. Playground: make a request and watch the safety sweep
-run cell by cell, then get refused.
+**L19 · Safe, unsafe, and stuck** — units 76–79
+Analogy: a group treasurer checking whether there is still *some* order in which everyone can
+finish the trip and pay back. Morphs into the safe/unsafe/deadlock regions and the claim-edge
+graph. Playground: grant a request and watch the safe region shrink — unsafe is not stuck yet,
+but the guarantee is gone.
 
-**L20 · Finding it and getting out** — units 84–89
-Analogy: a traffic officer tracing a gridlocked roundabout, then towing one car.
-Playground: tune detection frequency, pick a victim, watch rollback and then starvation.
+**L20 · The banker's algorithm** — units 80–83
+Analogy: the treasurer's actual ledger — cash on hand, each person's declared ceiling, what they
+have drawn, what they could still ask for. Morphs into Available / Max / Allocation / Need.
+Playground: make P1's request (1,0,2), watch the safety sweep run cell by cell, then push it
+until it is refused.
+
+**L21 · Spotting a deadlock** — units 84–87
+Analogy: a traffic officer collapsing the map down to "who is blocking whom" and looking for a
+closed loop. Playground: run the detection sweep on the slide-39 snapshot, then add P2's request
+for one more C and watch the same system tip into deadlock.
+
+**L22 · Getting out** — units 88, 89
+Analogy: choosing whose trip to cancel, or towing one car back to the last junction it was safe
+at. Playground: pick a victim by different criteria and watch the cost — then pick the same one
+repeatedly and watch it starve.
 
 ---
 

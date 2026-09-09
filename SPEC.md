@@ -398,7 +398,7 @@ exactly the failure mode you are trying to avoid.
 those units landed on the `diagram` engine — annotated stills with reveals — which is a
 PowerPoint with fades, and is the thing this project exists to escape.
 
-`LESSONS.md` now defines **20 lessons** plus a **reference layer**. `ATLAS.md` stays as the source
+`LESSONS.md` now defines **22 lessons** plus a **reference layer**. `ATLAS.md` stays as the source
 inventory; each lesson names the Atlas ids it absorbs. Nothing researched is lost — the material
 is regrouped around ideas instead of slides.
 
