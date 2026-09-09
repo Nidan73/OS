@@ -257,8 +257,8 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
       <div style="margin-top: var(--step); padding: 14px; font-size: 0.85rem; background: var(--canvas-parchment, #f5f5f7); border-radius: var(--rounded-lg, 18px); border: 1px solid var(--hairline); color: var(--ink-2); line-height: 1.45;">
         <strong style="color: var(--ink);">Interactive Lenses</strong><br>
         <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--muted);">
-          <div>• Food Truck Queue (Physical queue)</div>
-          <div>• FCFS Gantt Chart (CPU timeline)</div>
+          <div>• Physical Analogy (${lesson.analogy.domain})</div>
+          <div>• OS Mechanism Timeline</div>
           <div>• Drag or scrub to morph between them</div>
         </div>
       </div>
@@ -289,7 +289,7 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
       return;
     }
 
-    activeLessonPlayer = new LessonPlayer(centerCol, engine as GanttEngine, animMountTarget, lesson.morphReveals);
+    activeLessonPlayer = new LessonPlayer(centerCol, engine as GanttEngine, animMountTarget, lesson.morphReveals, lesson.morphMode);
 
     // Right sidebar: Concept explanation & physical analogy
     const rightSidebar = document.createElement('aside');
@@ -320,14 +320,11 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
         <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: ${analogyDomainColor}; border: 1px solid currentColor; padding: 2px 8px; border-radius: var(--rounded-pill, 9999px);">${lesson.analogy.domain}</span>
       </div>
       <p style="font-family: var(--font-ui); font-style: italic; font-size: 15.5px; line-height: 1.45; letter-spacing: -0.3px; color: var(--ink-2);">${lesson.analogy.text}</p>
+      ${(lesson as any).analogyMapping && (lesson as any).analogyMapping.length > 0 ? `
       <div style="margin-top: calc(var(--step) * 1.5); font-size: 0.88rem; line-height: 1.5; color: var(--muted); border-top: 1px solid var(--hairline); padding-top: var(--step);">
         <strong style="color: var(--ink);">How the Analogy Maps to the OS:</strong><br>
-        • Food Truck Window ➔ CPU Core<br>
-        • Single Cook ➔ Uniprocessor Core<br>
-        • Party Order (P1) ➔ CPU-bound job (burst 24)<br>
-        • Quick Coffees (P2, P3) ➔ I/O-bound jobs (burst 3)<br>
-        • Queue Order ➔ Ready Queue Arrival Sequence
-      </div>
+        ${(lesson as any).analogyMapping.map((m: string) => `• ${m}`).join('<br>')}
+      </div>` : ''}
     `;
 
     rightSidebar.append(conceptCard, analogyCard);

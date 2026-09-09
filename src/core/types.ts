@@ -59,6 +59,8 @@ export interface Lesson<I = unknown, S = unknown> {
   morphMode?: 'morph' | 'crossfade';
   /** Required if morphMode is 'crossfade' per §3C.2b */
   morphReason?: string;
+  /** Optional bulleted mapping between analogy and mechanism */
+  analogyMapping?: string[];
   /** engine-specific input */
   input: I;
 }

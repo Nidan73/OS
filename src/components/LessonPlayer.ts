@@ -32,7 +32,8 @@ export class LessonPlayer {
     parent: HTMLElement,
     private engine: GanttEngine,
     animViewport?: HTMLElement,
-    private morphReveals?: string
+    private morphReveals?: string,
+    private morphMode?: 'morph' | 'crossfade'
   ) {
     this.container = document.createElement('div');
     this.container.className = 'lesson-player';
@@ -291,7 +292,8 @@ export class LessonPlayer {
         setView: (v: number) => this.setView(v),
         getView: () => this.engine.getView(),
         getProcesses: () => this.engine.getProcesses(),
-        reorderTo: (procs: Process[]) => this.reorderTo(procs)
+        reorderTo: (procs: Process[]) => this.reorderTo(procs),
+        morphMode: this.morphMode ?? 'morph'
       };
     }
   }

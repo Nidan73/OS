@@ -123,39 +123,44 @@ async function gateLesson(page, lesson) {
   check(svgCount > 0, `${tag} canvas`, 'no SVG on the page');
 
   // ── 2. The morph is real: geometry must interpolate (SPEC §3C.2a, §3C.2c)
-  const g0 = await geometryAt(page, 0);
-  const g5 = await geometryAt(page, 0.5);
-  const g1 = await geometryAt(page, 1);
+  const isCrossfade = await page.evaluate(() => window.__lesson?.morphMode === 'crossfade');
+  if (isCrossfade) {
+    check(true, `${tag} morph`, 'crossfade declared honestly (§3C.2b)');
+  } else {
+    const g0 = await geometryAt(page, 0);
+    const g5 = await geometryAt(page, 0.5);
+    const g1 = await geometryAt(page, 1);
 
-  const ids = Object.keys(g0);
-  check(ids.length > 0, `${tag} morph`, 'no [id^="bar-"] entities found');
+    const ids = Object.keys(g0);
+    check(ids.length > 0, `${tag} morph`, 'no [id^="bar-"] entities found');
 
-  // same element set at both extremes
-  check(
-    JSON.stringify(Object.keys(g0).sort()) === JSON.stringify(Object.keys(g1).sort()),
-    `${tag} isomorphism`,
-    'element ids differ between view 0 and view 1'
-  );
-
-  // at least one entity must change geometry — else it is a reskin
-  const anyGeometryMoved = ids.some(
-    (id) => Math.abs(g0[id].width - g1[id].width) > 1 || Math.abs(g0[id].x - g1[id].x) > 1
-  );
-  check(
-    anyGeometryMoved,
-    `${tag} morph is real`,
-    'geometry identical at view 0 and 1 — this is a reskin, not a morph (§3C.2a)'
-  );
-
-  // mid-morph must be strictly between the endpoints
-  for (const id of ids) {
-    const [a, m, b] = [g0[id].width, g5[id].width, g1[id].width];
-    if (Math.abs(a - b) < 1) continue; // this entity legitimately does not resize
+    // same element set at both extremes
     check(
-      m > Math.min(a, b) - 0.5 && m < Math.max(a, b) + 0.5,
-      `${tag} interpolation ${id}`,
-      `view0=${a.toFixed(1)} mid=${m.toFixed(1)} view1=${b.toFixed(1)} — not between`
+      JSON.stringify(Object.keys(g0).sort()) === JSON.stringify(Object.keys(g1).sort()),
+      `${tag} isomorphism`,
+      'element ids differ between view 0 and view 1'
     );
+
+    // at least one entity must change geometry — else it is a reskin
+    const anyGeometryMoved = ids.some(
+      (id) => Math.abs(g0[id].width - g1[id].width) > 1 || Math.abs(g0[id].x - g1[id].x) > 1
+    );
+    check(
+      anyGeometryMoved,
+      `${tag} morph is real`,
+      'geometry identical at view 0 and 1 — this is a reskin, not a morph (§3C.2a)'
+    );
+
+    // mid-morph must be strictly between the endpoints
+    for (const id of ids) {
+      const [a, m, b] = [g0[id].width, g5[id].width, g1[id].width];
+      if (Math.abs(a - b) < 1) continue; // this entity legitimately does not resize
+      check(
+        m > Math.min(a, b) - 0.5 && m < Math.max(a, b) + 0.5,
+        `${tag} interpolation ${id}`,
+        `view0=${a.toFixed(1)} mid=${m.toFixed(1)} view1=${b.toFixed(1)} — not between`
+      );
+    }
   }
 
   // ── 3. No text clipped or overflowing its container at any view
