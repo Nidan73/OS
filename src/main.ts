@@ -19,6 +19,26 @@ const CHAPTERS: ChapterMeta[] = [
   { id: 10, slug: 'lecture-10', title: 'L10 Deadlocks', topic: 'Deadlocks', unitCount: 27 },
 ];
 
+interface LessonMeta {
+  id: number;
+  slug: string;
+  chapterSlug: string;
+  title: string;
+  blurb: string;
+}
+
+/** One row per lesson. Adding a lesson means adding a row here — nothing else. */
+const LESSONS_META: LessonMeta[] = [
+  { id: 1, slug: 'lesson-01', chapterSlug: 'lecture-06', title: 'Why a scheduler exists at all', blurb: 'A café where you eat first, then wait for the next course — watch the CPU go idle between bursts.' },
+  { id: 2, slug: 'lesson-02', chapterSlug: 'lecture-06', title: 'First-Come, First-Served — and the Convoy', blurb: 'Food truck queue analogy · Smooth Gantt morph · Interactive reorder playground' },
+  { id: 3, slug: 'lesson-03', chapterSlug: 'lecture-06', title: "Shortest Job First — and Why You Can't Have It", blurb: 'The express lane. Morphs into SJF, then SRTF when a smaller order walks up mid-service.' },
+  { id: 4, slug: 'lesson-04', chapterSlug: 'lecture-06', title: 'Round Robin and the Cost of Fairness', blurb: 'Karaoke night with a timer. Drag the quantum and watch turnaround bottom out, then climb.' },
+  { id: 5, slug: 'lesson-05', chapterSlug: 'lecture-06', title: 'Priority Scheduling, Starvation & Aging', blurb: 'Airport boarding groups. Watch a Group 9 passenger never board, then switch aging on.' },
+  { id: 6, slug: 'lesson-06', chapterSlug: 'lecture-07', title: 'Queues within queues (MLFQ)', blurb: 'Airport lanes by class, then a restaurant that demotes you for dithering. Tune feedback thresholds.' },
+  { id: 7, slug: 'lesson-07', chapterSlug: 'lecture-07', title: 'More cores, more problems', blurb: 'One kitchen versus several; a chef idle at the pass waiting on the storeroom.' },
+  { id: 8, slug: 'lesson-08', chapterSlug: 'lecture-07', title: 'Keeping Every Core Busy', blurb: 'The staffer waving people to an empty desk; your regular waiter who knows your order.' },
+];
+
 let activePlayer: UnitPlayer | null = null;
 let activeLessonPlayer: LessonPlayer | null = null;
 
@@ -109,16 +129,17 @@ function renderIndex(): HTMLElement {
   header.append(title, subtitle);
 
   // Featured Lesson Card
-  const featured = document.createElement('div');
-  featured.style.marginBottom = 'calc(var(--step) * 4)';
-  featured.innerHTML = `
-    <a href="#/lecture-06/lesson-02" style="display: block; padding: calc(var(--step) * 3); background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rounded-lg, 18px); text-decoration: none; color: inherit;">
+  const featured = LESSONS_META[1]; // Lesson 2 — first shipped interactive lesson
+  const featuredCard = document.createElement('div');
+  featuredCard.style.marginBottom = 'calc(var(--step) * 4)';
+  featuredCard.innerHTML = `
+    <a href="#/${featured.chapterSlug}/${featured.slug}" style="display: block; padding: calc(var(--step) * 3); background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rounded-lg, 18px); text-decoration: none; color: inherit;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--step); flex-wrap: wrap; gap: var(--step);">
         <span style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Featured Interactive Lesson</span>
       </div>
-      <h2 style="font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--step); color: var(--ink);">Lesson 2: First-Come, First-Served — and the Convoy</h2>
+      <h2 style="font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--step); color: var(--ink);">Lesson ${featured.id}: ${featured.title}</h2>
       <p style="font-size: 17px; line-height: 1.47; letter-spacing: -0.374px; color: var(--muted); margin-bottom: var(--step);">
-        Explore the single-file food truck queue analogy, smoothly morph into the FCFS Gantt chart, and drag to reorder the queue to watch average waiting time collapse from 17 ms to 3 ms!
+        ${featured.blurb}
       </p>
       <div style="font-weight: 600; color: var(--accent); font-size: 0.95rem;">Launch Interactive Lesson &rarr;</div>
     </a>
@@ -155,13 +176,14 @@ function renderIndex(): HTMLElement {
     const count = document.createElement('p');
     count.style.fontSize = '0.9rem';
     count.style.color = 'var(--muted)';
-    count.textContent = ch.id === 6 ? '5 interactive lessons' : `${ch.unitCount} animated units`;
+    const lessonCount = LESSONS_META.filter(l => l.chapterSlug === ch.slug).length;
+    count.textContent = lessonCount > 0 ? `${lessonCount} interactive lessons` : `${ch.unitCount} animated units`;
 
     card.append(num, h2, count);
     grid.appendChild(card);
   });
 
-  container.append(header, featured, grid);
+  container.append(header, featuredCard, grid);
   return container;
 }
 
@@ -192,21 +214,23 @@ function renderChapter(chSlug: string): HTMLElement {
   list.style.flexDirection = 'column';
   list.style.gap = 'calc(var(--step) * 1.5)';
 
-  if (ch.id === 6) {
-    // Lesson 2
+  const chapterLessons = LESSONS_META.filter(l => l.chapterSlug === chSlug);
+  chapterLessons.forEach(lesson => {
     const lessonItem = document.createElement('li');
     lessonItem.innerHTML = `
-      <a href="#/lecture-06/lesson-02" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rounded-lg, 18px);">
+      <a href="#/${lesson.chapterSlug}/${lesson.slug}" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2); background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rounded-lg, 18px);">
         <div>
-          <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent); text-transform: uppercase;">Lesson 2</span>
-          <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-top: 2px;">First-Come, First-Served — and the Convoy</div>
-          <div style="font-size: 0.88rem; color: var(--muted); margin-top: 2px;">Food truck queue analogy · Smooth Gantt morph · Interactive reorder playground</div>
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent); text-transform: uppercase;">Lesson ${lesson.id}</span>
+          <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-top: 2px;">${lesson.title}</div>
+          <div style="font-size: 0.88rem; color: var(--muted); margin-top: 2px;">${lesson.blurb}</div>
         </div>
         <span style="color: var(--accent); font-weight: 600; font-size: 0.9rem; padding: 6px 14px; border-radius: var(--rounded-pill, 9999px); background: rgba(0, 102, 204, 0.08);">Launch &rarr;</span>
       </a>
     `;
     list.appendChild(lessonItem);
+  });
 
+  if (ch.id === 6) {
     // Unit 7
     const unit7Item = document.createElement('li');
     unit7Item.innerHTML = `

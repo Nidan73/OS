@@ -1,5 +1,4 @@
 import { AnimationEngine } from '../core/engine.js';
-import type { PlaygroundCapable } from '../core/types.js';
 import type { Step } from '../core/types.js';
 
 export interface DiagramNode {
@@ -59,12 +58,7 @@ export interface DiagramState {
   caption: string;
 }
 
-export class DiagramEngine extends AnimationEngine<DiagramInput, DiagramState> implements PlaygroundCapable {
-  renderPlayground(host: HTMLElement, scoreboardHost?: HTMLElement): void {
-    if ((this.input as any).renderPlayground) {
-      (this.input as any).renderPlayground(host, scoreboardHost, this);
-    }
-  }
+export class DiagramEngine extends AnimationEngine<DiagramInput, DiagramState> {
   protected svg!: SVGSVGElement;
   private connectionsGroup!: SVGGElement;
   private nodesGroup!: SVGGElement;

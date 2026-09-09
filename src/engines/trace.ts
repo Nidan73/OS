@@ -1,5 +1,4 @@
 import { AnimationEngine } from '../core/engine.js';
-import type { PlaygroundCapable } from '../core/types.js';
 import type { Step } from '../core/types.js';
 
 export interface TraceThread {
@@ -11,6 +10,12 @@ export interface TraceThread {
 }
 
 export interface TraceInput {
+  /**
+   * Register assignment is POSITIONAL, not textual: thread index i always
+   * writes register R{i+1}, whatever register name the instruction string
+   * names. A thread 2 instruction reading "R1 = R1 + 1" silently updates
+   * R2. Instruction text names memory variables, not registers.
+   */
   threads: TraceThread[];
   interleaving: number[]; // index of thread to execute next instruction at each step
   initial: Record<string, number>;
@@ -31,12 +36,7 @@ export interface TraceState {
   caption: string;
 }
 
-export class TraceEngine extends AnimationEngine<TraceInput, TraceState> implements PlaygroundCapable {
-  renderPlayground(host: HTMLElement, scoreboardHost?: HTMLElement): void {
-    if ((this.input as any).renderPlayground) {
-      (this.input as any).renderPlayground(host, scoreboardHost, this);
-    }
-  }
+export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
   protected svg!: SVGSVGElement;
   private columnsGroup!: SVGGElement;
   private memoryGroup!: SVGGElement;
@@ -120,6 +120,14 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> impleme
           lastMod = target;
           stepCaption = `${thread.name}: writes ${target} = ${val} to memory.`;
         }
+      } else {
+        // An instruction matching no known pattern would otherwise become a
+        // step that advances the pointer and changes nothing — a silently
+        // wrong trace. Fail loudly instead.
+        throw new Error(
+          `TraceEngine: unparsed instruction "${inst}" in thread "${thread.name}" — ` +
+          `no load, store or arithmetic pattern matched.`
+        );
       }
 
       steps.push({

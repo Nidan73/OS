@@ -79,6 +79,7 @@ export abstract class AnimationEngine<I, S> {
 
   /** Replace the timeline and tell every observer. Use this, never `this.steps = …`. */
   protected setSteps(steps: Step<S>[]): void {
+    if (this.disposed) return;
     this.steps = steps;
     for (const fn of this.onStepsRebuiltListeners) {
       fn();
@@ -276,6 +277,7 @@ export abstract class AnimationEngine<I, S> {
     this.onStepListeners = [];
     this.onPlayStateListeners = [];
     this.onViewListeners = [];
+    this.onStepsRebuiltListeners = [];
     this.disposed = true;
   }
 }
