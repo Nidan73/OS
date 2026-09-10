@@ -93,6 +93,20 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
         throw new Error(`GanttEngine: unknown algorithm "${(input as any).algorithm}"`);
     }
 
+    /**
+     * The same beat in the scene's words. Every gantt lesson already names its
+     * people and their orders in `analogy.items`, so the analogy caption is
+     * built from those rather than written twice per lesson. Falls back to the
+     * process id when a lesson supplies no items, which keeps it honest rather
+     * than inventing a name.
+     */
+    const who = (id: string): string => input.analogy?.items?.[id]?.customerName ?? id;
+    const what = (id: string): string => {
+      const t = input.analogy?.items?.[id]?.orderText;
+      return t ? ` (${t})` : '';
+    };
+    const service = input.analogy?.serviceLabel ?? 'the counter';
+
     const { bars, totalTime, metrics, avgWaiting, avgTurnaround, avgResponse } = this.scheduleResult;
     const steps: Step<GanttState>[] = [];
     let currentTimeSec = 0;
@@ -103,6 +117,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     steps.push({
       t: 0,
       caption: `T=0: Queue arrives [${initialReady.join(', ')}]. ${input.processes[0]?.id} (burst ${input.processes[0]?.burst}) at front of line.`,
+      analogyCaption: `Everyone is here and nobody has been served yet. ${who(input.processes[0]?.id ?? '')}${what(input.processes[0]?.id ?? '')} is first in line at ${service}.`,
       state: {
         playheadTime: 0,
         activeProcessId: null,
@@ -131,6 +146,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
       steps.push({
         t: Number(currentTimeSec.toFixed(2)),
         caption: `T=${bar.start}: Dispatch ${bar.id} (${bar.start} → ${bar.end}). Remaining queue waits.`,
+        analogyCaption: `${who(bar.id)} is being served now${what(bar.id)}. It takes ${bar.end - bar.start} minutes, and everyone else waits while it happens.`,
         state: {
           playheadTime: bar.start,
           activeProcessId: bar.id,
@@ -151,10 +167,14 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
       const completionCaption = isLastBarForProcess
         ? `T=${bar.end}: ${bar.id} completes! Total turnaround: ${bar.end - arrival}.`
         : `T=${bar.end}: ${bar.id} segment ends at T=${bar.end}.`;
+      const completionAnalogy = isLastBarForProcess
+        ? `${who(bar.id)} is finished and done with, ${bar.end - arrival} minutes after arriving.`
+        : `${who(bar.id)} has had their turn for now and goes back to the end of the line, still not finished.`;
 
       steps.push({
         t: Number(currentTimeSec.toFixed(2)),
         caption: completionCaption,
+        analogyCaption: completionAnalogy,
         state: {
           playheadTime: bar.end,
           activeProcessId: null,
@@ -174,6 +194,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     steps.push({
       t: Number(currentTimeSec.toFixed(2)),
       caption: `Done at T=${totalTime}. Avg Wait: ${avgWaiting} ms, Avg Turnaround: ${avgTurnaround} ms.`,
+      analogyCaption: `Everyone has been served. It took ${totalTime} minutes altogether, and the average person spent ${avgWaiting} minutes waiting before their turn started.`,
       state: {
         playheadTime: totalTime,
         activeProcessId: null,

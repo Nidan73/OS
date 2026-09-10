@@ -72,10 +72,38 @@ describe("Lesson 7: More cores, more problems (§3C)", () => {
 
   test("mechanism layout encodes the quantity (§3C.2c)", () => {
     engine.setView(1);
-    const wT1 = parseFloat(host.querySelector("#bar-T1 rect")!.getAttribute("width")!);
-    // Mechanism layout encodes burst duration (burst 12 -> 60)
-    expect(wT1).toBe(60);
-    expect(wT1).toBeGreaterThan(50);
+    const w = (id: string) =>
+      parseFloat(host.querySelector(`#bar-${id} rect`)!.getAttribute("width")!);
+    const box = (id: string) => {
+      const r = host.querySelector(`#bar-${id} rect`)!;
+      return { x: parseFloat(r.getAttribute("x")!), w: parseFloat(r.getAttribute("width")!) };
+    };
+
+    // This used to assert an exact 60px for burst 12. That pinned an
+    // implementation detail rather than the property, and it hid a real bug:
+    // nothing checked that the row of burst-proportional items fits inside
+    // its lane, so a long queue ran off the right edge and sat on top of the
+    // core boxes. The engine now scales a row to fit, which is correct and
+    // changes the pixel while preserving what the pixel was there to prove.
+    const bursts: Record<string, number> = { T1: 12, T2: 8, T3: 16 };
+    const ids = Object.keys(bursts);
+
+    // width still encodes burst: the ratio between any two matches their bursts
+    for (const a of ids) {
+      for (const b of ids) {
+        if (a === b) continue;
+        expect(w(a) / w(b)).toBeCloseTo(bursts[a] / bursts[b], 2);
+      }
+    }
+    // and a longer burst is still visibly wider than the equal-footprint slot
+    expect(w("T3")).toBeGreaterThan(w("T1"));
+
+    // the property whose absence caused the bug: every item stays in its lane
+    const laneRight = 16 + 440;
+    for (const id of ids) {
+      const bx = box(id);
+      expect(bx.x + bx.w, `${id} runs past the lane`).toBeLessThanOrEqual(laneRight);
+    }
   });
 
   test("geometry interpolates, the morph is real (§3C.2c)", () => {
