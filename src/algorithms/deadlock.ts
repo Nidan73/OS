@@ -385,3 +385,59 @@ export function waitForGraph(graph: RagGraph): Map<string, string[]> {
   }
   return out;
 }
+
+// ── 7. Detection cadence — when and how often to run it (L21, unit 87) ──
+
+export interface CadenceCost {
+  /** Minutes between detection sweeps. */
+  everyMinutes: number;
+  /** Sweeps run per hour at this cadence. */
+  sweepsPerHour: number;
+  /** O(m x n^2) operations per sweep, per deck slide 38. */
+  opsPerSweep: number;
+  /** Detection work per hour, in operations. */
+  detectionOpsPerHour: number;
+  /**
+   * Mean minutes a deadlock sits undetected. A deadlock is equally likely to
+   * form at any point between two sweeps, so on average it waits half a gap.
+   */
+  meanUndetectedMinutes: number;
+  /** Process-minutes lost while the deadlock sits undetected. */
+  blockedProcessMinutes: number;
+  /** True while sweeping costs more than the blocking it prevents. */
+  sweepDominates: boolean;
+}
+
+/**
+ * Deck slide 41: "when, and how often, to invoke depends on how often a
+ * deadlock is likely to occur, and how many processes will need to be rolled
+ * back." Both sides are computed here so the learner can move the cadence and
+ * watch the two costs cross, rather than read that a trade-off exists.
+ *
+ * opsPerSweep is the deck's own O(m x n^2) bound from slide 38.
+ * costPerOp converts operations into the same process-minute unit as the
+ * blocking side, so the two are comparable on one axis.
+ */
+export function evaluateDetectionCadence(
+  everyMinutes: number,
+  resourceTypes: number,
+  processCount: number,
+  deadlockedCount: number,
+  costPerOp = 0.002
+): CadenceCost {
+  const every = Math.max(1, everyMinutes);
+  const sweepsPerHour = 60 / every;
+  const opsPerSweep = resourceTypes * processCount * processCount;
+  const detectionOpsPerHour = Math.round(sweepsPerHour * opsPerSweep);
+  const meanUndetectedMinutes = every / 2;
+  const blockedProcessMinutes = meanUndetectedMinutes * deadlockedCount;
+  return {
+    everyMinutes: every,
+    sweepsPerHour,
+    opsPerSweep,
+    detectionOpsPerHour,
+    meanUndetectedMinutes,
+    blockedProcessMinutes,
+    sweepDominates: detectionOpsPerHour * costPerOp > blockedProcessMinutes
+  };
+}

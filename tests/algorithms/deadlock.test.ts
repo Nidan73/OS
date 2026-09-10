@@ -7,7 +7,8 @@ import {
   detectionAlgorithm,
   waitForGraph,
   needMatrix,
-  type RagGraph
+  type RagGraph,
+  evaluateDetectionCadence
 } from '../../src/algorithms/deadlock.js';
 
 // ── Deck fixtures, transcribed once, asserted many times ──
@@ -303,5 +304,29 @@ describe('deadlock · wait-for collapse (slide 35)', () => {
     expect(wfg.get('T2')).toEqual(['T3']);
     expect(wfg.get('T1')).toEqual(['T2']);
     expect(wfg.has('T3')).toBe(false);
+  });
+});
+
+describe('evaluateDetectionCadence — deck slide 41, the cost of checking', () => {
+  it('opsPerSweep is the deck\'s O(m x n^2) bound from slide 38', () => {
+    expect(evaluateDetectionCadence(10, 3, 5, 4).opsPerSweep).toBe(3 * 5 * 5);
+  });
+
+  it('the two costs move in opposite directions as the cadence loosens', () => {
+    const tight = evaluateDetectionCadence(2, 3, 5, 4);
+    const loose = evaluateDetectionCadence(30, 3, 5, 4);
+    expect(tight.detectionOpsPerHour).toBeGreaterThan(loose.detectionOpsPerHour);
+    expect(tight.blockedProcessMinutes).toBeLessThan(loose.blockedProcessMinutes);
+  });
+
+  it('a deadlock waits half a gap on average, and blocking scales with how many are stuck', () => {
+    const c = evaluateDetectionCadence(30, 3, 5, 4);
+    expect(c.meanUndetectedMinutes).toBe(15);
+    expect(c.blockedProcessMinutes).toBe(15 * 4);
+    expect(evaluateDetectionCadence(30, 3, 5, 2).blockedProcessMinutes).toBe(15 * 2);
+  });
+
+  it('everyMinutes is clamped to at least one minute', () => {
+    expect(evaluateDetectionCadence(0, 3, 5, 4).everyMinutes).toBe(1);
   });
 });
