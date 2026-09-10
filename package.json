@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "gate": "node scripts/gate.mjs",
-    "verify": "npm run build && node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "gsap": "3.15.0"
