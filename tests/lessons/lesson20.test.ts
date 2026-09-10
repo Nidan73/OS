@@ -33,7 +33,7 @@ describe('Lesson 20 · every number is computed', () => {
     ]);
   });
 
-  it('the sweep arc shows a compressed probe replay — 10 beats for 15 probes', () => {
+  it('the sweep arc shows one beat per probe — 15 beats for 15 probes', () => {
     const sweep = safetyAlgorithm(L20_AVAILABLE, L20_MAX, L20_ALLOCATION);
     expect(sweep.sequence).toEqual([1, 3, 4, 0, 2]);
     const host = document.createElement('div');
@@ -41,18 +41,23 @@ describe('Lesson 20 · every number is computed', () => {
     const engine = new Lesson20MatrixEngine(host, modeInput('sweep'));
     engine.init(0);
     const steps = engine.getSteps();
-    // The mounted sweep compresses the 15-probe log to 10 wait/fund beats:
-    // repeated examinations that fail identically (Scan-4/5 P0 waits, Scan-5
-    // P2 waits) share one beat — see the DENSITY comment in lesson-20.ts.
-    // The replay is still 1:1 in order: funded rows appear exactly when the
-    // probe satisfies, in deck order P1,P3,P4,P0,P2.
+    // One beat per Task B probe: a different Work vector is a different
+    // event, so every examination gets its own caption quoting its own
+    // Need-vs-Work comparison — see the DENSITY comment in lesson-20.ts.
+    // Funded rows appear exactly when the probe satisfies, in deck order.
     const probeSteps = steps.filter(
       (s) => s.caption.includes('fits [') || s.caption.includes('waits —')
     );
     expect(sweep.steps.length).toBe(15);
-    expect(probeSteps.length).toBe(10);
+    expect(probeSteps.length).toBe(15);
+    // And the beat order replays the probe log: P0's two waits quote
+    // different Work vectors before its funding beat.
+    const p0waits = probeSteps.filter((s) => s.caption.startsWith('P0 waits'));
+    expect(p0waits.length).toBe(2);
+    expect(p0waits[0].caption).toContain('holds 3');
+    expect(p0waits[1].caption).toContain('holds 5');
     const funded = probeSteps
-      .filter((s) => s.caption.includes('fits ['))
+      .filter((s) => s.caption.includes('fund, collect back'))
       .map((s) => s.caption.slice(0, 2));
     expect(funded).toEqual(['P1', 'P3', 'P4', 'P0', 'P2']);
     // And the wrap beat sits exactly where the scan passes P0 unfunded.
@@ -92,9 +97,19 @@ describe('Lesson 20 · every number is computed', () => {
     expect(events[events.length - 1].caption).toMatch(/working, not failing/);
   });
 
-  it('mode scripts are complete event sets — sweep 17, request 15, refuse 4', () => {
-    expect(sweepEvents().length).toBe(17);
-    expect(requestEvents().length).toBe(15);
+  it('loser beats name the selection discipline — P4 beats P0 in pass 3', () => {
+    const steps = sweepEvents();
+    const losers = steps.filter((s) => s.caption.includes('came first in this pass'));
+    // Pass 1: P3 loses to P1. Pass 2: P4 loses to P3. Pass 3: P0 and P2
+    // lose to P4 — the two examinations a restart-from-P0 scan would have
+    // taken instead. Pass 4: P2 loses to P0.
+    expect(losers.map((s) => s.caption.slice(0, 2))).toEqual(['P3', 'P4', 'P0', 'P2', 'P2']);
+    expect(losers[2].caption).toMatch(/P4 came first/);
+  });
+
+  it('mode scripts are complete event sets — sweep 22, request 19, refuse 4', () => {
+    expect(sweepEvents().length).toBe(22);
+    expect(requestEvents().length).toBe(19);
     expect(refuseEvents().length).toBe(4);
   });
 });

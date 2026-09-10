@@ -63,30 +63,29 @@ import {
 // claims, so funded rows visibly narrow to nothing as the sweep reclaims.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// DENSITY (Task A rule, applied from the start): the sweep arc shows a
-// compressed replay of the Task B probe log — 10 wait/fund beats against 15
-// probes — and the compression points are named here so the next reader does
-// not mistake them for missing events. Concretely: Scan-4's P0 wait repeats
-// Scan-3's verbatim ([7,4,3] vs [5,3,2] fails on the same three cells), its
-// P2 wait repeats Scan-3's (A alone short in both), Scan-5's P0 wait repeats
-// that same examination a third time, and Scan-5's first P2 wait repeats
-// Scan-4's reclaim. What remains is one beat per DISTINCT examination plus
-// the verdict: the five Need derivations, Scan-1's five probes, Scan-2's P3
-// fund and the P4 reclaim it unlocks, the single wrap beat (the scan
-// continues after the last winner instead of restarting at the top — the
-// deck order depends on it, so it earns one beat), and the final P0 and P2
-// fundings. Order fidelity is asserted in lesson20.test.ts (funded order
-// P1,P3,P4,P0,P2, the wrap position, the 15-probe log length); the stages
-// verify visually: at step 7 P4's bar is still wide while P1's has narrowed
-// to nothing — funded and live rows coexist in one frame.
+// DENSITY (Task A rule, applied from the start): the sweep arc shows one
+// beat per Task B probe — 15 probes, 15 wait/fund beats — because a different
+// Work vector is a different event. P0 fails at [3,3,2], fails again at
+// [5,3,2], then passes at [7,4,3]: the Work row is the thing that moves, and
+// collapsing those examinations would hide the growth that makes the pass
+// possible. Every examination gets its beat: 15 probes plus the satisfied
+// losers a full pass scans past (P3 yields to P1, P4 to P3, P0 and P2 to P4,
+// P2 to P0 — the losers narrate the first-satisfiable-wins discipline behind
+// the deck's order, on screen). With the 5 Need derivations, the single wrap
+// beat (the scan continues after the last winner instead of restarting at
+// the top — the deck order depends on it, so it earns one beat), and the
+// computed verdict, the sweep arc is 22 steps. Order fidelity is asserted in lesson20.test.ts
+// (funded order P1,P3,P4,P0,P2, the wrap position, the 15-probe log length);
+// the stages verify visually: at step 7 P4's bar is still wide while P1's
+// has narrowed to nothing — funded and live rows coexist in one frame.
 // The P1-request arc adds its three checks (ceiling, cash, sweep) and the
 // P4-refusal arc is declared correct at 5 steps (4 events + idle): its four
 // real events are the ceiling check, the cash check, the stall probe, and
 // the verdict. The pretended P4 sweep really is five failing probes
 // ([0,0,2] fits no Need row), compressed to one beat because every probe
-// fails identically and the full probe-by-probe sweep is already shown in
-// the sweep and request arcs. No beat repeats a state with new words: each
-// derives, probes, reclaims, or names the computed verdict.
+// fails identically, Work never moves, and the full probe-by-probe sweep is
+// already shown in the sweep and request arcs. No beat repeats a state with
+// new words: each derives, probes, reclaims, or names the computed verdict.
 
 // The deck's T0 ledger (slides 30–31), transcribed once.
 export const L20_RESOURCES = ['A', 'B', 'C'];
@@ -128,6 +127,12 @@ function needBeats(): MatrixEvent[] {
  * the circular scan passes P0 (the restart point of the plausible wrong
  * implementation), so the learner sees the one cursor motion that decides
  * the deck's order.
+ *
+ * A pass can satisfy several processes but funds only its first, so a
+ * satisfied probe is not always a funding: the pass assignment below replays
+ * the scan positions (never the comparisons) to mark each probe as winner,
+ * loser, or wait. A pid mismatch throws — the narration must fail loudly
+ * rather than silently diverge from the algorithm's scan order.
  */
 function sweepBeats(
   available: number[],
@@ -141,7 +146,50 @@ function sweepBeats(
   let prevWork = [...available];
   let prevPid = -1;
 
-  for (const probe of sweep.steps) {
+  const isWinner = new Array<boolean>(sweep.steps.length).fill(false);
+  const passWinnerOf = new Array<number>(sweep.steps.length).fill(-1);
+  {
+    const n = max.length;
+    const funded = new Set<number>(finished);
+    let cursor = 0;
+    let k = 0;
+    for (;;) {
+      const pass: number[] = [];
+      let passWinner = -1;
+      for (let t = 0; t < n; t++) {
+        const i = (cursor + t) % n;
+        if (funded.has(i)) continue;
+        const probe = sweep.steps[k];
+        if (!probe || probe.pid !== i) {
+          throw new Error(
+            `L20: probe log diverged from circular scan — expected P${i} at probe ${k}`
+          );
+        }
+        pass.push(k);
+        if (probe.satisfied && passWinner < 0) passWinner = i;
+        k++;
+      }
+      if (passWinner < 0) {
+        if (k !== sweep.steps.length) {
+          throw new Error(
+            `L20: ${sweep.steps.length - k} probe(s) beyond the final pass — scan replay diverged`
+          );
+        }
+        break;
+      }
+      const winnerProbe = pass.find((idx) => sweep.steps[idx].satisfied);
+      if (winnerProbe === undefined) {
+        throw new Error('L20: pass winner has no satisfied probe — scan replay diverged');
+      }
+      isWinner[winnerProbe] = true;
+      for (const idx of pass) passWinnerOf[idx] = passWinner;
+      funded.add(passWinner);
+      cursor = (passWinner + 1) % n;
+    }
+  }
+
+  for (let si = 0; si < sweep.steps.length; si++) {
+    const probe = sweep.steps[si];
     const cells = probe.need.map((_, j) => [probe.pid, j] as [number, number]);
     // Genuine wrap only, once per pass: the circular scan passed P0 coming
     // from a higher row. A restart-from-P0 scan would examine P0 here instead
@@ -165,7 +213,7 @@ function sweepBeats(
       });
     }
     prevPid = probe.pid;
-    if (probe.satisfied && !done.includes(probe.pid)) {
+    if (isWinner[si]) {
       done.push(probe.pid);
       prevWork = prevWork.map((v, j) => v + allocation[probe.pid][j]);
       const funded = `P${probe.pid} fits [${probe.need.join(', ')}] — fund, collect back.`;
@@ -176,7 +224,21 @@ function sweepBeats(
         work: [...prevWork],
         activeRow: probe.pid
       });
-    } else if (!done.includes(probe.pid)) {
+    } else if (probe.satisfied) {
+      // Fits, but the scan already took this pass's winner: the first
+      // satisfiable process in circular order wins, so P4 beats P0 in pass
+      // 3 — the selection discipline behind the deck's order, on screen.
+      events.push({
+        caption: `P${probe.pid} fits [${probe.need.join(', ')}] too — P${passWinnerOf[si]} came first in this pass.`.slice(0, 120),
+        probeCells: cells,
+        finishedRows: [...done],
+        work: [...prevWork],
+        activeRow: probe.pid
+      });
+    } else {
+      // Every probe earns its beat — a different Work vector is a different
+      // event. P0 fails at [3,3,2], fails again at [5,3,2], then passes at
+      // [7,4,3]: that progression is the mechanism, not a repeat of it.
       const lacking = probe.cellOk
         .map((ok, j) => (ok ? null : `${L20_RESOURCES[j]} needs ${probe.need[j]}, holds ${probe.work[j]}`))
         .filter(Boolean)
