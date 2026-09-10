@@ -21,7 +21,7 @@ describe('Lesson 06 — Queues within queues (MLFQ)', () => {
       return parseFloat(rect?.getAttribute('width') ?? '0');
     });
 
-    // In a physical line, each passenger/token occupies equal footprint
+    // In the restaurant, each guest's seat occupies equal footprint
     expect(widths).toEqual([50, 50, 50]);
     expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1);
     engine.destroy();
@@ -85,10 +85,10 @@ describe('Lesson 06 — Queues within queues (MLFQ)', () => {
     expect(lesson06.absorbsUnits).toEqual([15, 16]);
     expect(lesson06.slides).toBe('slides 3–6');
     expect(lesson06.engine).toBe('queue');
-    expect(lesson06.analogy.domain).toBe('travel');
+    expect(lesson06.analogy.domain).toBe('food');
     expect(lesson06.morphMode).toBe('morph');
     expect(lesson06.morphReveals).toBe(
-      'At the airport, which lane you stand in is printed on your ticket — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.'
+      'At the restaurant, which tier you sit at is printed on your booking — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.'
     );
   });
 

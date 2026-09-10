@@ -10,8 +10,8 @@ import {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layout (pure) — the carrying property of the morph is VERTICAL POSITION.
-// In the room, where friend B's two acts sit — the text message high, the
-// suitcase low — is furniture; nothing about order can be read off it, and
+// In the kitchen, where father's two acts sit — the call high, the dish low —
+// is furniture; nothing about order can be read off it, and
 // the furniture does not move when the hardware reorders. In the machine,
 // vertical position is execution order: toggling the reorder physically
 // swaps the two rows, and the printed number flips with them.
@@ -98,7 +98,7 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
   const pub = simulateReorderingOutput(input.reordered);
   const open: Step<PublicationState> = {
     t: 0,
-    caption: 'Two friends share one doorway: one packs while announcing, the other waits to print.',
+    caption: 'Mother and father share one kitchen doorway: father calls while cooking, mother waits to serve.',
     highlight: ['T1', 'T2'],
     state: { ...pub.steps[0], step: 0, printed: null, caption: 'The room before the test.' , bothInside }
   };
@@ -202,7 +202,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
     door.appendChild(this.text(geometry.door.x + geometry.door.w / 2, geometry.door.y + geometry.door.h / 2 + 3, doorLabel, 10, state.bothInside ? 'var(--waiting)' : 'var(--ink)'));
     scene.appendChild(door);
 
-    // The two friends → the two thread headers.
+    // The two parents → the two thread headers.
     (['T1', 'T2'] as const).forEach((tid, tIdx) => {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('id', `bar-${tid}`);
@@ -210,7 +210,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       const active = state.actorId === tid;
       g.appendChild(this.rectAt(box, 10, active ? 'rgba(0, 102, 204, 0.12)' : 'var(--surface-alt)', active ? 'var(--accent)' : 'var(--hairline)', active ? 2 : 1));
       const label = v < 0.5
-        ? (tIdx === 0 ? 'Friend A · at the door' : 'Friend B · packing')
+        ? (tIdx === 0 ? 'Mother · at the door' : 'Father · cooking')
         : tid === 'T1'
           ? 'T1 · spins, then prints'
           : 'T2 · stores, then raises flag';
@@ -218,11 +218,11 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       scene.appendChild(g);
     });
 
-    // Friend B's two acts → T2's two instruction rows. The toggle swaps them.
+    // Father's two acts → T2's two instruction rows. The toggle swaps them.
     const rows = actRows(this.input.reordered);
     const acts: Array<{ key: 'msg' | 'pack'; row: number; analogy: string; mech: string }> = [
-      { key: 'msg', row: rows.msg, analogy: 'the text: "I\u2019m packed!"', mech: 'flag = true' },
-      { key: 'pack', row: rows.pack, analogy: 'the suitcase, still open', mech: 'x = 100' }
+      { key: 'msg', row: rows.msg, analogy: 'the call: "Food is ready!"', mech: 'flag = true' },
+      { key: 'pack', row: rows.pack, analogy: 'the dish, still on the flame', mech: 'x = 100' }
     ];
     for (const act of acts) {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -234,11 +234,11 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       scene.appendChild(g);
     }
 
-    // Friend A's side (paint): the spin, the print, the exit.
+    // Mother's side (paint): the spin, the print, the exit.
     const t1RowY = 44 + rows.print * 34;
     if (v < 0.5) {
-      scene.appendChild(this.text(geometry.T1.x + geometry.T1.w / 2, geometry.T1.y + geometry.T1.h + 14, 'waiting for the flag', 9, 'var(--muted)'));
-      scene.appendChild(this.text(geometry.T1.x + geometry.T1.w / 2, geometry.T1.y + geometry.T1.h + 28, 'prints what was announced', 9, 'var(--muted)'));
+      scene.appendChild(this.text(geometry.T1.x + geometry.T1.w / 2, geometry.T1.y + geometry.T1.h + 14, 'waiting for the call', 9, 'var(--muted)'));
+      scene.appendChild(this.text(geometry.T1.x + geometry.T1.w / 2, geometry.T1.y + geometry.T1.h + 28, 'serves what was announced', 9, 'var(--muted)'));
     } else {
       const printing = state.action === 'print x';
       scene.appendChild(this.text(MECH_COL.T1 + 100, 60, t1WaitText(this.input.reordered), 9, 'var(--muted)'));
@@ -286,8 +286,8 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">The print test</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-          <button type="button" class="l12-mode" data-reordered="false" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${!this.input.reordered ? 'var(--accent)' : 'var(--hairline)'}; color: ${!this.input.reordered ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">🟢 Announced after packing</button>
-          <button type="button" class="l12-mode" data-reordered="true" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${this.input.reordered ? 'var(--accent)' : 'var(--hairline)'}; color: ${this.input.reordered ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">⚠️ Hardware reorders the announcements</button>
+          <button type="button" class="l12-mode" data-reordered="false" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${!this.input.reordered ? 'var(--accent)' : 'var(--hairline)'}; color: ${!this.input.reordered ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">🟢 Called after cooking</button>
+          <button type="button" class="l12-mode" data-reordered="true" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${this.input.reordered ? 'var(--accent)' : 'var(--hairline)'}; color: ${this.input.reordered ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">⚠️ Hardware reorders the call</button>
         </div>
       </div>
     `;
@@ -324,7 +324,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
         </div>
         <div style="padding: 5px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">The doorway protocol</div>
-          <div style="padding: 2px 0; font-size: 0.72rem; font-weight: 600; color: ${peterson.mutualExclusionViolated ? 'var(--waiting)' : 'var(--running)'};">${peterson.mutualExclusionViolated ? '⚠️ Both friends inside at once' : '🛡️ One friend at a time'}</div>
+          <div style="padding: 2px 0; font-size: 0.72rem; font-weight: 600; color: ${peterson.mutualExclusionViolated ? 'var(--waiting)' : 'var(--running)'};">${peterson.mutualExclusionViolated ? '⚠️ Both parents inside at once' : '🛡️ One parent at a time'}</div>
           <div style="font-size: 0.68rem; color: var(--muted); margin-top: 2px; line-height: 1.3;">Under sequential consistency the three promises hold — the slide traces every interleaving. Reordering is what breaks it.</div>
         </div>
       </div>
@@ -346,23 +346,23 @@ export const lesson12: Lesson<PetersonInput, PublicationState> = {
   engine: 'standalone',
   engineClass: PetersonEngine,
   lensLabels: {
-    analogy: '🚪 Two friends at a door',
+    analogy: '🚪 Mother and father at the door',
     mechanism: '⚙️ Flags, turn and the print test',
-    analogyTitle: 'View as two friends waving each other through',
+    analogyTitle: 'View as mother and father waving each other through',
     mechanismTitle: 'View as the flag and turn protocol over time'
   },
   analogy: {
     domain: 'friends',
-    text: 'Two friends at one doorway, each waving the other through: a raised flag meaning "I want in," then "you first." Before the trip, one of them texts "I\u2019m packed!" while the suitcase is still open on the floor — and the friend at the door acts on the announcement, not the fact.'
+    text: 'Mother and father meet at the narrow kitchen doorway, each waving the other through: a raised hand meaning "I want in," then "you first." Before dinner, father calls out "Food is ready!" while the dish is still on the flame — and mother acts on the announcement, not the fact.'
   },
   concept: 'Peterson\u2019s solution lets two processes share a doorway with one shared flag each and a single turn variable: announce "I want in" (flag[i] = true), then defer (turn = j), then wait while the other wants in and it is their turn. Walking every interleaving proves all three promises hold — mutual exclusion, progress and bounded waiting. The proof assumes stores land in the order written. Processors and compilers reorder independent operations: in a single thread the result is always the same, but across threads the announcement can overtake the act, and the door stands open for both. The print test shows it: the flag rises before the store lands, and what gets printed flips.',
-  morphReveals: 'In the room, where the two acts sit — the text high, the suitcase low — is furniture; no order can be read off it, and it does not move when the hardware reorders. In the machine, vertical position is execution order: flip to reordered and the two rows physically swap, the announcement now precedes the packing, and the printed number flips with them.',
+  morphReveals: 'In the kitchen, where the two acts sit — the call high, the dish low — is furniture; no order can be read off it, and it does not move when the hardware reorders. In the machine, vertical position is execution order: flip to reordered and the two rows physically swap, the call now precedes the cooking, and the printed number flips with them.',
   morphMode: 'morph',
   analogyMapping: [
-    'Friend A waiting at the door ➔ thread 1 spinning on flag[1] and turn',
-    'Friend B, and the two acts of packing ➔ thread 2\u2019s two stores: x = 100, then flag = true',
-    'The text "I\u2019m packed!" ➔ flag = true (the announcement)',
-    'The open suitcase ➔ x = 100 (the fact, still in flight when reordered)',
+    'Mother waiting at the door ➔ thread 1 spinning on flag[1] and turn',
+    'Father, and the two acts of cooking ➔ thread 2\u2019s two stores: x = 100, then flag = true',
+    'The call "Food is ready!" ➔ flag = true (the announcement)',
+    'The dish still on the flame ➔ x = 100 (the fact, still in flight when reordered)',
     'Waving the other through ➔ turn = j',
     'Both inside the doorway ➔ mutual exclusion violated by reordering'
   ],

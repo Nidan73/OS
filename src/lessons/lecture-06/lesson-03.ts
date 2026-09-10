@@ -33,18 +33,18 @@ export const lesson03: Lesson<GanttInput> = {
   engine: 'gantt',
   analogy: {
     domain: 'food',
-    text: 'The supermarket express checkout lane — "10 items or fewer." Shoppers with full carts wait while customers with small baskets check out in seconds. Prioritizing shorter jobs minimizes overall waiting time, but the cashier cannot know the exact basket size in advance without inspecting every cart.'
+    text: 'The kitchen sends quick plates to the table before the big order is ready. Guests waiting on one small side dish are served in minutes while the full dinner keeps cooking — but the cook cannot know how long each dish will take without starting it.'
   },
   concept: "Shortest-Job-First (SJF) associates each process with the length of its next CPU burst, scheduling the shortest job first to provably minimize average waiting time. Because the operating system cannot know future burst lengths in advance, systems approximate SJF using exponential averaging to predict bursts from past behavior, or use preemptive Shortest-Remaining-Time-First (SRTF) when new jobs arrive. Note on Lecture Slide 11: Although the slide table mentions staggered arrivals 0, 2, 4, and 5, the published 7 ms average wait time mathematically requires all processes to be present at t=0; this lesson displays the true 7 ms schedule without showing misleading arrival offsets that the algorithm would ignore.",
-  morphReveals: 'In the supermarket line each shopper has one cart. On a schedule width is item count and service time — letting 1-item baskets go first minimizes overall line waiting.',
+  morphReveals: 'At the table each guest holds one plate. On a schedule width is cooking time — sending the quick plates first minimizes the whole table wait.',
   morphMode: 'morph',
   analogyMapping: [
-    'Supermarket Express Register ➔ CPU Core',
-    'Basket Item Count ➔ CPU Burst Length',
-    'Customer Queue ➔ Ready Queue',
-    'Express Lane Rule (Shortest First) ➔ SJF Scheduling',
-    'Cashier Guessing Order Size ➔ Burst Prediction (Exponential Averaging)',
-    'Customer Preemption Mid-Checkout ➔ SRTF (Preemptive SJF)'
+    'Restaurant Kitchen ➔ CPU Core',
+    'Plate Cooking Time ➔ CPU Burst Length',
+    'Orders Waiting ➔ Ready Queue',
+    'Quick Plates First ➔ SJF Scheduling',
+    'Cook Guessing Dish Time ➔ Burst Prediction (Exponential Averaging)',
+    'New Quick Plate Arriving Mid-Cook ➔ SRTF (Preemptive SJF)'
   ],
   input: {
     processes: [
@@ -56,32 +56,32 @@ export const lesson03: Lesson<GanttInput> = {
     algorithm: 'sjf',
     analogy: {
       domain: 'food',
-      type: 'express-lane',
-      serviceLabel: 'Express Register',
-      serviceSublabel: 'Checkout Scanner (Single Core)',
-      queueLabel: 'Express Checkout Queue',
+      type: 'kitchen',
+      serviceLabel: 'Family Kitchen',
+      serviceSublabel: 'One Cook (Single Core)',
+      queueLabel: 'Dishes Waiting',
       items: {
         P1: {
-          customerName: 'Shopper P1',
-          orderText: '6 items (6 min)',
+          customerName: 'P1 · Curry Pot',
+          orderText: '6 min on the flame',
           orderIcon: 'meal',
           avatarColor: '#1565C0'
         },
         P2: {
-          customerName: 'Shopper P2',
-          orderText: '8 items (8 min)',
+          customerName: 'P2 · Roast Platter',
+          orderText: '8 min on the flame',
           orderIcon: 'party-burger',
           avatarColor: '#E65100'
         },
         P3: {
-          customerName: 'Shopper P3',
-          orderText: '7 items (7 min)',
+          customerName: 'P3 · Rice Pot',
+          orderText: '7 min on the flame',
           orderIcon: 'party-burger',
           avatarColor: '#7B1FA2'
         },
         P4: {
-          customerName: 'Shopper P4',
-          orderText: '3 items (3 min)',
+          customerName: 'P4 · Omelette',
+          orderText: '3 min on the flame',
           orderIcon: 'coffee',
           avatarColor: '#2E7D32'
         }

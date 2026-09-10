@@ -19,10 +19,10 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     expect(lesson08.absorbsUnits).toEqual([24, 25, 26]);
     expect(lesson08.slides).toBe('slides 15–17');
     expect(lesson08.engine).toBe('queue');
-    expect(lesson08.analogy.domain).toBe('travel');
+    expect(lesson08.analogy.domain).toBe('food');
     expect(lesson08.concept).toContain('Multiprocessor scheduling');
     expect(lesson08.morphReveals).toBe(
-      'In the terminal, walking to a shorter counter is free — sideways distance costs nothing but a few steps, so you always join the shortest line. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.'
+      'In the restaurant, walking to a busier section is free — sideways distance costs nothing but a few steps, so the host always evens the sections. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.'
     );
     expect(lesson08.morphMode).toBe('morph');
   });

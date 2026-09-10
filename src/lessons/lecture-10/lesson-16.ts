@@ -14,14 +14,14 @@ import {
 } from '../../algorithms/deadlock.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// L16 · Two friends, two chopsticks (ATLAS units 63–68, slides 3–7)
+// L16 · Family dinner, two people and too few serving spoons (units 63–68, slides 3–7)
 //
-// LESSONS.md (verbatim): "**L16 · Two friends, two chopsticks** — units 63–68.
+// LESSONS.md: L16 — units 63–68. Family dinner, two people and too few serving spoons.
 // The founding scene. Morphs from the dinner table into the four necessary
 // conditions, each highlighted on the same picture. Playground: remove any one
 // condition and watch deadlock become impossible."
 //
-// ATLAS rows (verbatim):
+// ATLAS rows (deck wording, kept for provenance):
 // | 63 | `diagram` | System Model — request, use, release | slide 3 | food |
 // |    |           | Ask for the salt, use the salt, put the salt back. Every |
 // |    |           | resource interaction in the course is these three steps. |
@@ -54,9 +54,9 @@ import {
 // picture", so one engine serves all six units honestly.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position).
-// Around the table every friend and every chopstick takes the same space —
+// Around the table every parent and every spoon takes the same space —
 // position is just where they sat. On the map width stops meaning a body and
-// starts meaning holdings: a mutex is as wide as its instances, a friend as
+// starts meaning holdings: a mutex is as wide as its instances, a parent as
 // wide as what they grip.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -73,15 +73,15 @@ import {
 export type Lesson16Mode = 'story' | 'share' | 'atomic' | 'preempt' | 'ordered';
 
 const FRIENDS: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Friend A' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Friend B' }
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Mother' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Father' }
 ];
 
 function chopsticks(instances: number): GraphNodeInput[] {
   const tag = instances > 1 ? `${instances}` : '1';
   return [
-    { id: 'M1', kind: 'resource', instances, label: `M1 · ${tag}`, analogyLabel: 'Chopstick 1' },
-    { id: 'M2', kind: 'resource', instances, label: `M2 · ${tag}`, analogyLabel: 'Chopstick 2' }
+    { id: 'M1', kind: 'resource', instances, label: `M1 · ${tag}`, analogyLabel: 'Spoon 1' },
+    { id: 'M2', kind: 'resource', instances, label: `M2 · ${tag}`, analogyLabel: 'Spoon 2' }
   ];
 }
 
@@ -156,13 +156,13 @@ export function storyEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    ask('Friend A asks for chopstick M1 — every use starts as a request.', {
+    ask('Mother asks for spoon M1 — every use starts as a request.', {
       from: 'T1',
       to: 'M1',
       kind: 'request'
     })
   ];
-  const use = takeEdge("M1 lands in A's hand — the ask becomes a hold.", { from: 'T1', to: 'M1' });
+  const use = takeEdge("M1 lands in mother's hand — the ask becomes a hold.", { from: 'T1', to: 'M1' });
   edges.splice(edges.findIndex((e) => e.from === 'T1' && e.to === 'M1'), 1);
   edges.push({ from: 'M1', to: 'T1', kind: 'assignment' });
   out.push(use);
@@ -173,10 +173,10 @@ export function storyEvents(): GraphEvent[] {
     removeEdge: { ...rel }
   });
   out.push(
-    ask('A grips chopstick M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
-    ask('B grips chopstick M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
-    ask('A asks for M2 — B is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
-    ask('B asks for M1 — A is holding it. The ring closes.', {
+    ask('Mother grips spoon M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
+    ask('Father grips spoon M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
+    ask('Mother asks for M2 — father is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
+    ask('Father asks for M1 — mother is holding it. The ring closes.', {
       from: 'T2',
       to: 'M1',
       kind: 'request'
@@ -186,7 +186,7 @@ export function storyEvents(): GraphEvent[] {
   out.push({ caption: ringCaption('story', edges), setCycle: ringCycle('story', edges) });
   out.push(
     {
-      caption: 'Mutual exclusion — one chopstick feeds one friend; neither splits.'.slice(0, 120),
+      caption: 'Mutual exclusion — one spoon serves one person; neither splits.'.slice(0, 120),
       activeNodes: ['M1', 'M2'],
       clearCycle: true
     },
@@ -195,11 +195,11 @@ export function storyEvents(): GraphEvent[] {
       activeNodes: ['T1', 'T2']
     },
     {
-      caption: "No preemption — A's grip breaks only when A lets go.".slice(0, 120),
+      caption: "No preemption — mother's grip breaks only when she lets go.".slice(0, 120),
       activeNodes: ['T1', 'M1']
     },
     {
-      caption: 'Circular wait — A waits on B waits on A; the ring closes.'.slice(0, 120),
+      caption: 'Circular wait — mother waits on father waits on mother; the ring closes.'.slice(0, 120),
       setCycle: ringCycle('story', edges)
     }
   );
@@ -207,7 +207,7 @@ export function storyEvents(): GraphEvent[] {
   return out;
 }
 
-/** Without mutual exclusion: chopsticks that split — nobody ever waits. */
+/** Without mutual exclusion: spoons that split — nobody ever waits. */
 export function shareEvents(): GraphEvent[] {
   const edges: RagEdge[] = [];
   const take = (caption: string, edge: RagEdge): GraphEvent => {
@@ -318,7 +318,7 @@ export function preemptEvents(): GraphEvent[] {
 }
 
 /**
- * Without circular wait: the chopsticks are numbered — both reach for M1
+ * Without circular wait: the spoons are numbered — both reach for M1
  * first, so T2 waits holding nothing and the ring never closes.
  */
 export function orderedEvents(): GraphEvent[] {
@@ -532,31 +532,31 @@ export const lesson16: Lesson<GraphInput, GraphState> = {
   id: 16,
   lecture: 10,
   slug: 'lesson-16',
-  title: 'Two friends, two chopsticks',
+  title: 'Family dinner, two spoons short',
   absorbsUnits: [63, 64, 65, 66, 67, 68],
   slides: 'slides 3–7',
   engine: 'graph',
   engineClass: Lesson16GraphEngine,
   lensLabels: {
-    analogy: '🥢 Dinner table',
+    analogy: '🥄 Dinner table',
     mechanism: '🕸️ Grip-and-ask map',
-    analogyTitle: 'View as two friends sharing chopsticks',
+    analogyTitle: 'View as mother and father sharing serving spoons',
     mechanismTitle: 'View as the hold-and-wait graph'
   },
   analogy: {
     domain: 'food',
-    text: 'Two friends share two chopsticks. Each grips one and waits on the other — both are polite, both are patient, and neither will ever eat.'
+    text: 'Mother and father share two serving spoons at family dinner. Each grips one and waits on the other — both are polite, both are patient, and neither will ever eat.'
   },
   concept:
-    'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each chopstick feeds one friend, each friend grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one — split the chopsticks, take both or wait empty-handed, allow snatching, number the order — and the same scene ends fed. Each removal below is computed, not staged.',
+    'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each spoon serves one person, each parent grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one — bring extra spoons, take both or wait empty-handed, allow snatching, number the order — and the same scene ends fed. Each removal below is computed, not staged.',
   morphReveals:
-    'Around the table every friend and every chopstick takes the same space — position is just where they sat. On the map width stops meaning a body and starts meaning holdings: a mutex is as wide as its instances, a friend as wide as what they grip — so the stuck ring reads wide all round while a freed friend narrows.',
+    'Around the table every parent and every spoon takes the same space — position is just where they sat. On the map width stops meaning a body and starts meaning holdings: a mutex is as wide as its instances, a parent as wide as what they grip — so the stuck ring reads wide all round while a freed parent narrows.',
   morphMode: 'morph',
   analogyMapping: [
-    'Friend ➔ thread',
-    'Chopstick ➔ mutex, one dot per holder',
-    'Asking for a chopstick ➔ request edge, friend to chopstick',
-    'Gripping a chopstick ➔ assignment edge, chopstick to friend',
+    'Parent ➔ thread',
+    'Serving spoon ➔ mutex, one dot per holder',
+    'Asking for a spoon ➔ request edge, parent to spoon',
+    'Gripping a spoon ➔ assignment edge, spoon to parent',
     'Ask, use, give back ➔ the edge lifecycle: request, hold, release',
     'Everyone waiting in a ring ➔ deadlock — and removing any condition breaks it'
   ],

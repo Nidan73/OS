@@ -50,13 +50,14 @@ export class RoundRobinGanttEngine extends GanttEngine {
     }
 
     if (truckTitle && truckState) {
-      truckTitle.textContent = 'STAGE MIC';
+      truckTitle.textContent = 'FAMILY CAR';
       truckTitle.setAttribute('fill', 'var(--friends)');
       if (state.activeProcessId) {
-        truckState.textContent = `Singing: ${state.activeProcessId}`;
+        const who = this.input.analogy?.items?.[state.activeProcessId]?.customerName ?? state.activeProcessId;
+        truckState.textContent = `Driving: ${who}`;
         truckState.setAttribute('fill', 'var(--friends)');
       } else {
-        truckState.textContent = 'ROTATION';
+        truckState.textContent = 'KEY LINE';
         truckState.setAttribute('fill', 'var(--muted)');
       }
     }
@@ -70,7 +71,7 @@ export class RoundRobinGanttEngine extends GanttEngine {
       }
     }
 
-    // Customize process sprites for karaoke analogy
+    // Family members waiting on the car in the analogy view.
     for (const p of this.input.processes) {
       const procGroup = svg.querySelector(`#proc-${p.id}`) as SVGGElement | null;
       if (!procGroup) continue;
@@ -79,13 +80,13 @@ export class RoundRobinGanttEngine extends GanttEngine {
       if (sprite && v < 0.5) {
         const trayTxt = sprite.querySelector('text');
         if (trayTxt) {
-          trayTxt.textContent = p.burst >= 20 ? '🎤 24m Song' : '🎤 3m Song';
+          trayTxt.textContent = p.burst >= 20 ? '🚗 long drive' : '🚗 short drive';
         }
       }
 
       const label = procGroup.querySelector(`#label-${p.id}`) as SVGTextElement | null;
       if (label && v < 0.5) {
-        label.textContent = `${p.id} (${p.burst}m song)`;
+        label.textContent = `${p.id} (${p.burst}m turn)`;
       }
     }
   }
@@ -101,7 +102,7 @@ export class RoundRobinGanttEngine extends GanttEngine {
     }
     const truckTitle = svg.querySelector('#truck-title') as SVGTextElement | null;
     if (truckTitle) {
-      truckTitle.textContent = 'STAGE MIC';
+      truckTitle.textContent = 'FAMILY CAR';
       truckTitle.setAttribute('fill', 'var(--friends)');
     }
   }
@@ -122,8 +123,8 @@ export class RoundRobinGanttEngine extends GanttEngine {
 
       // Update lens button labels
       if (lensBtns.length >= 3) {
-        lensBtns[0].textContent = '🎤 Karaoke Analogy';
-        lensBtns[0].setAttribute('title', 'View as karaoke singing circle with timer');
+        lensBtns[0].textContent = '🚗 Family Car Analogy';
+        lensBtns[0].setAttribute('title', 'View as family members sharing the car in fixed turns');
         lensBtns[2].textContent = '📊 Round Robin Mechanism';
         lensBtns[2].setAttribute('title', 'View as preemptive CPU timeline');
       }
@@ -228,7 +229,7 @@ export class RoundRobinGanttEngine extends GanttEngine {
           style="width: 100%; height: 28px; cursor: pointer;"
         />
         <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">
-          <span>q=1 (Mic-swapping eats night)</span>
+          <span>q=1 (Handovers eat the drive)</span>
           <span style="color: var(--running); font-weight: 600;">q=4 (Optimal turnaround)</span>
           <span>q=30 (Convoy returns)</span>
         </div>
@@ -253,7 +254,7 @@ export class RoundRobinGanttEngine extends GanttEngine {
     const maxWaitGuarantee = (n - 1) * q;
 
     const badgeText = q <= 2
-      ? '⚠️ Context-Switch Penalty Active — frequent swapping eats the night'
+      ? '⚠️ Context-Switch Penalty Active — handovers eat the drive'
       : stats.bottomedOut
       ? '⚡ Turnaround Bottomed Out — optimal balance of responsiveness & overhead'
       : '⚠️ Large Quantum — degenerating into First-Come First-Served convoy';
@@ -311,18 +312,18 @@ export const lesson04: Lesson<GanttInput, GanttState> = {
   engineClass: RoundRobinGanttEngine,
   analogy: {
     domain: 'friends',
-    text: 'Karaoke night with friends and a timer. Everyone gets a hard turn with the microphone before passing it to the next friend in the circle. Nobody hogs the mic, ensuring everyone sings within (n−1)q time. But drop the timer to ten seconds and the whole night becomes swapping microphones and browsing the track list — switching overhead eats the entire evening.'
+    text: 'Turns with the family car, each person driving a fixed slot before handing the keys to the next in line. Nobody keeps the car all evening, so everyone drives within (n−1)q time. But cut each turn to seconds and the whole evening becomes parking, keys and seatbelts — handover overhead eats the drive.'
   },
   concept: 'Round Robin (RR) allocates the CPU using fixed time slices called time quanta (q). Each process executes for at most q units before being preempted to the back of the ready queue, ensuring no process waits more than (n−1)q time units. However, when q is too small, context-switch overhead dominates execution time, causing turnaround time to spike. When q is too large, Round Robin degenerates into First-Come First-Served (FCFS). Tuning q balances responsiveness against switching costs.',
-  morphReveals: 'At karaoke every turn is the same length, so fairness is just taking your place in the circle. On the timeline that same equal width becomes the quantum — and a long song now needs many separate turns, so shrinking the slice to feel fairer multiplies the handovers until the night is spent passing the microphone.',
+  morphReveals: 'Taking turns with the car, every slot is the same length, so fairness is just holding your place in the key line. On the timeline that same equal width becomes the quantum — and a long drive now needs many separate turns, so shrinking the slot to feel fairer multiplies the handovers until the evening is spent passing the keys.',
   morphMode: 'morph',
   analogyMapping: [
-    'Karaoke Stage & Mic ➔ CPU Core & Dispatcher',
-    'Singers in Circle ➔ Processes in Ready Queue',
-    'Song Durations (P1: 24 min, P2: 3 min, P3: 3 min) ➔ CPU Burst Times',
-    'Timer Limit (q = 4 min) ➔ Time Quantum Slice',
-    'Passing Mic & Cueing Songs ➔ Context-Switch Overhead',
-    'Rotation Order ➔ Round Robin Preemptive Schedule'
+    'Family Car & Keys ➔ CPU Core & Dispatcher',
+    'Family Members in Line ➔ Processes in Ready Queue',
+    'Trip Lengths (P1: 24 min, P2: 3 min, P3: 3 min) ➔ CPU Burst Times',
+    'Fixed Driving Slot (q = 4 min) ➔ Time Quantum Slice',
+    'Parking, Keys & Seatbelts ➔ Context-Switch Overhead',
+    'Key Line Order ➔ Round Robin Preemptive Schedule'
   ],
   input: {
     processes: [
@@ -334,26 +335,26 @@ export const lesson04: Lesson<GanttInput, GanttState> = {
     quantum: 4,
     analogy: {
       domain: 'friends',
-      type: 'karaoke',
-      serviceLabel: 'Karaoke Stage Mic',
-      serviceSublabel: 'Singer at the Mic (CPU Core)',
-      queueLabel: 'Singing Circle Rotation',
+      type: 'car',
+      serviceLabel: 'Family Car',
+      serviceSublabel: 'Driver at the Wheel (CPU Core)',
+      queueLabel: 'Key Line Turns',
       items: {
         P1: {
-          customerName: 'Rock Star Friend',
-          orderText: '24-min Epic Rock Ballad',
+          customerName: 'Father',
+          orderText: 'Drive to the Market (24 min)',
           orderIcon: 'meal',
           avatarColor: '#E65100'
         },
         P2: {
-          customerName: 'Pop Singer Friend',
-          orderText: '3-min Pop Chorus',
+          customerName: 'Mother',
+          orderText: 'Drive Nearby (3 min)',
           orderIcon: 'coffee',
           avatarColor: '#1565C0'
         },
         P3: {
-          customerName: 'Acoustic Friend',
-          orderText: '3-min Indie Track',
+          customerName: 'Elder Sister',
+          orderText: 'Drive Nearby (3 min)',
           orderIcon: 'coffee',
           avatarColor: '#2E7D32'
         }

@@ -91,14 +91,14 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
 });
 
 describe('Lesson 15 · the morph is geometric, not cosmetic (§3C.2a)', () => {
-  it('analogy tokens are native: travellers at a dock, equal footprints', () => {
+  it('analogy tokens are native: family at the lot, equal footprints', () => {
     const input = semaphoreLessonInput(DEFAULT_SEM);
     expect(input.actors.length).toBe(7);
-    expect(input.actors[0].analogyName).toBe('Traveller A');
+    expect(input.actors[0].analogyName).toBe('Father');
     expect(input.analogy?.resourceLabel).toContain('BOARD');
   });
 
-  it('mechanism encodes the count: the dock size moves the seating point', () => {
+  it('mechanism encodes the count: the lot size moves the waiting point', () => {
     const five = semaphoreSteps({ ...DEFAULT_SEM, initial: 5 });
     const one = semaphoreSteps({ ...DEFAULT_SEM, initial: 1 });
     const firstSeated = (steps: ReturnType<typeof semaphoreSteps>): number =>
@@ -110,7 +110,7 @@ describe('Lesson 15 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     const spin = semaphoreLessonInput({ ...DEFAULT_SEM, mode: 'spin' });
     const block = semaphoreLessonInput({ ...DEFAULT_SEM, mode: 'block' });
     expect(spin.analogy?.waitingLabel).toMatch(/HOVER/);
-    expect(block.analogy?.waitingLabel).toMatch(/SEATED/);
+    expect(block.analogy?.waitingLabel).toMatch(/BENCH/);
     expect(semaphoreRun(spin.params).finalValue).toBe(semaphoreRun(block.params).finalValue);
   });
 });
@@ -119,7 +119,7 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
   it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
     const strip = (s: string): string => s.replace(/slides?\s*\d[\d–-]*/gi, '');
     const digits = (s: string): string[] => [...strip(s).matchAll(/\d+/g)].map((m) => m[0]);
-    // the analogy names no count at all — the dock slider owns the number
+    // the analogy names no count at all — the lot slider owns the number
     expect(digits(lesson15.analogy.text)).toEqual([]);
     // concept/morph name only the slider endpoints (five/one) and the slide
     // number — never a live outcome
@@ -131,8 +131,8 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
   });
 
   it('the negative-count claim is conditional on overflow — true in every state', () => {
-    expect(lesson15.analogy.text).toMatch(/When every port is taken|past zero/i);
-    expect(lesson15.concept).toMatch(/negative|seated|ticket/i);
+    expect(lesson15.analogy.text).toMatch(/When every spot is taken|past zero/i);
+    expect(lesson15.concept).toMatch(/negative|waiting|bench|token/i);
   });
 
   it('no internal vocabulary reaches the student', () => {
@@ -159,7 +159,7 @@ describe('Lesson 15 · lesson wiring', () => {
     expect(lesson15.slug).toBe('lesson-15');
   });
 
-  it('opens on five ports with seven contenders — overflow is one run away', () => {
+  it('opens on five spots with seven contenders — overflow is one run away', () => {
     expect(lesson15Input.params).toStrictEqual(DEFAULT_SEM);
     expect(DEFAULT_SEM.initial).toBe(5);
     const run = semaphoreRun(lesson15Input.params);
@@ -197,7 +197,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     host.remove();
     return steps;
   };
-  // A step where the dock holds AND seats — wide holders against narrow seated.
+  // A step where the lot holds AND waits — wide holders against narrow waiting.
   const occupiedStep = (): number =>
     mountSteps().findIndex((s) => s.state.holders.length > 0 && s.state.waiting.length > 0);
 
@@ -208,11 +208,11 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w.T1).toBeCloseTo(54, 5);
   });
 
-  it('mechanism layout encodes occupancy: plugged-in wide, seated compressed', () => {
+  it('mechanism layout encodes occupancy: parked wide, waiting compressed', () => {
     const step = occupiedStep();
     expect(step).toBeGreaterThanOrEqual(0);
     const states = mountSteps()[step].state;
-    // Crowded docks shrink to fit, but the holder:waiter RATIO survives —
+    // Crowded lots shrink to fit, but the holder:waiter RATIO survives —
     // assert the ratio, not the absolute pixel constants.
     const w = widthsAt(1, step);
     const holder = states.holders[0];

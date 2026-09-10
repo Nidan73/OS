@@ -24,7 +24,7 @@ describe('Lesson 3: Shortest Job First (§3C)', () => {
     expect(lesson03.analogy.domain).toBe('food');
     expect(lesson03.morphMode).toBe('morph');
     expect(lesson03.morphReveals).toBe(
-      'In the supermarket line each shopper has one cart. On a schedule width is item count and service time — letting 1-item baskets go first minimizes overall line waiting.'
+      'At the table each guest holds one plate. On a schedule width is cooking time — sending the quick plates first minimizes the whole table wait.'
     );
     expect(lesson03.concept).toContain('Shortest-Job-First');
   });

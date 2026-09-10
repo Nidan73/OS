@@ -177,25 +177,25 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
   engine: 'queue',
   engineClass: MigrationQueueEngine,
   lensLabels: {
-    analogy: '\u2708\ufe0f Agent Desk Analogy',
-    mechanism: '\u{1F4CA} Multiprocessor Runqueues',
-    analogyTitle: 'View as physical airport counter and passenger queues',
+    analogy: '👨‍🍳 Restaurant Sections Analogy',
+    mechanism: '📊 Multiprocessor Runqueues',
+    analogyTitle: 'View as restaurant sections and orders',
     mechanismTitle: 'View as multi-core runqueues and CPU caches'
   },
   analogy: {
-    domain: 'travel',
-    text: 'A staffer waving passengers from a long queue over to an empty counter balances waiting lines immediately. However, if an agent already knows your travel booking, switching counters discards that warm context and forces re-explaining from scratch.'
+    domain: 'food',
+    text: 'Waiters and sections: the host moves a waiter to the busy side when one section overflows. But the waiter who already knows your order remembers everything — move sections and the warm memory is thrown away.'
   },
   concept: 'Multiprocessor scheduling balances workloads across cores using push and pull migration. However, migrating threads across processor cores destroys CPU cache state (processor affinity), introducing cold-cache memory stalls. NUMA systems further penalize migration when threads are moved away from their local memory nodes.',
-  morphReveals: 'In the terminal, walking to a shorter counter is free — sideways distance costs nothing but a few steps, so you always join the shortest line. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.',
+  morphReveals: 'In the restaurant, walking to a busier section is free — sideways distance costs nothing but a few steps, so the host always evens the sections. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.',
   morphMode: 'morph',
   analogyMapping: [
-    'Service Counter / Desk ➔ CPU Core',
-    'Long Queue / Desk Line ➔ Per-Core Ready Runqueue',
-    'Staffer Directing Line (Push) ➔ OS Load Balancing Daemon',
-    'Idle Agent Calling Passenger (Pull) ➔ Work-Stealing Idle Dispatcher',
-    'Agent Booking Notes ➔ L1/L2 CPU Cache Warmth',
-    'Switching Desks and Re-explaining ➔ Cold Cache Reload Penalty'
+    'Restaurant Section / Table ➔ CPU Core',
+    'Section Order Spike ➔ Per-Core Ready Runqueue',
+    'Host Moving a Waiter (Push) ➔ OS Load Balancing Daemon',
+    'Idle Waiter Calling Orders (Pull) ➔ Work-Stealing Idle Dispatcher',
+    'Waiter Remembering Your Order ➔ L1/L2 CPU Cache Warmth',
+    'Switching Sections and Re-learning ➔ Cold Cache Reload Penalty'
   ],
   input: {
     queues: [
@@ -214,12 +214,12 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
     ],
     events: SCENARIO_EVENTS.push,
     analogy: {
-      domain: 'travel',
-      serviceLabel: 'Agent Desk',
+      domain: 'food',
+      serviceLabel: 'Host Desk',
       queueLabels: {
-        incoming: 'Terminal Doors (Arriving)',
-        q_core0: 'Desk 1 Line (Known Agent)',
-        q_core1: 'Desk 2 Line (Empty)'
+        incoming: 'Door Queue (Arriving)',
+        q_core0: 'Busy Section (Known Waiter)',
+        q_core1: 'Quiet Section (Empty)'
       },
       itemLabels: {
         P1: { name: 'P1' },

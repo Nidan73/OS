@@ -16,12 +16,11 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L17 · Seeing it as a graph (ATLAS units 69–71, slides 8–12)
 //
-// LESSONS.md (verbatim): "**L17 · Seeing it as a graph** — units 69–71.
-// Analogy: a map of who holds which car key. Playground: draw edges and watch
-// cycle detection fire — including the cycle that is *not* a deadlock because
-// spare instances exist."
+// LESSONS.md: L17 — units 69–71. Cars blocking each other in the building
+// driveway. Playground: draw edges and watch cycle detection fire — including
+// the cycle that is *not* a deadlock because a spare slot exists.
 //
-// ATLAS rows (verbatim):
+// ATLAS rows (deck wording, kept for provenance):
 // | 69 | `graph` | Resource-Allocation Graph | slides 8–9 | travel | A map of
 // |    |         |                           |            |        | who's
 // |    |         |                           |            |        | holding
@@ -68,9 +67,9 @@ import {
 // Overriding render() would reimplement identical interpolation for no gain.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position). In
-// the lot every driver and car takes the same space — position is just where
-// they parked. On the graph width stops meaning a body and starts meaning
-// holdings: a lot is as wide as its keys, a driver as wide as what they hold.
+// the driveway every car takes the same space — position is just where
+// it parked. On the graph width stops meaning a body and starts meaning
+// holdings: a parking slot is as wide as its cars, a driver as wide as what they hold.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DENSITY (Task A rule, applied from the start): 16 steps — the idle frame,
@@ -86,29 +85,29 @@ import {
 export type Lesson17Scenario = 'spare' | 'deadlock' | 'chain';
 
 const SPARE_NODES: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Driver A' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Driver B' },
-  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Driver C' },
-  { id: 'T4', kind: 'process', label: 'T4', analogyLabel: 'Driver D' },
-  { id: 'R1', kind: 'resource', instances: 2, label: 'R1 · 2', analogyLabel: 'Lot R1' },
-  { id: 'R2', kind: 'resource', instances: 2, label: 'R2 · 2', analogyLabel: 'Lot R2' }
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Father' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Mother' },
+  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Elder Sister' },
+  { id: 'T4', kind: 'process', label: 'T4', analogyLabel: 'Younger Brother' },
+  { id: 'R1', kind: 'resource', instances: 2, label: 'R1 · 2', analogyLabel: 'Driveway R1' },
+  { id: 'R2', kind: 'resource', instances: 2, label: 'R2 · 2', analogyLabel: 'Driveway R2' }
 ];
 
 const DEADLOCK_NODES: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Driver A' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Driver B' },
-  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Driver C' },
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Father' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Mother' },
+  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Elder Sister' },
   { id: 'R1', kind: 'resource', instances: 1, label: 'R1 · 1', analogyLabel: 'Car R1' },
   { id: 'R2', kind: 'resource', instances: 1, label: 'R2 · 1', analogyLabel: 'Car R2' },
   { id: 'R3', kind: 'resource', instances: 1, label: 'R3 · 1', analogyLabel: 'Car R3' }
 ];
 
 const CHAIN_NODES: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Driver A' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Driver B' },
-  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Driver C' },
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Father' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Mother' },
+  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Elder Sister' },
   { id: 'R1', kind: 'resource', instances: 1, label: 'R1 · 1', analogyLabel: 'Car R1' },
-  { id: 'R2', kind: 'resource', instances: 2, label: 'R2 · 2', analogyLabel: 'Lot R2' },
+  { id: 'R2', kind: 'resource', instances: 2, label: 'R2 · 2', analogyLabel: 'Driveway R2' },
   { id: 'R3', kind: 'resource', instances: 1, label: 'R3 · 1', analogyLabel: 'Car R3' }
 ];
 
@@ -157,43 +156,43 @@ export function spareEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    take('T2 takes a key from lot R1 — one of two.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('T3 takes the second R1 key — the lot is empty.', { from: 'R1', to: 'T3', kind: 'assignment' }),
-    take('T1 takes a key from lot R2 — one of two.', { from: 'R2', to: 'T1', kind: 'assignment' }),
-    take('T4 takes the second R2 key — both lots empty.', { from: 'R2', to: 'T4', kind: 'assignment' }),
-    take('T1 asks lot R1 for a key — both are out.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('T3 asks lot R2 — both out. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
+    take('Mother parks in driveway R1 — one of two slots.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Elder sister takes the second R1 slot — the lane is full.', { from: 'R1', to: 'T3', kind: 'assignment' }),
+    take('Father parks in driveway R2 — one of two slots.', { from: 'R2', to: 'T1', kind: 'assignment' }),
+    take('Younger brother takes the second R2 slot — both lanes full.', { from: 'R2', to: 'T4', kind: 'assignment' }),
+    take('Father needs R1 out — both slots are blocked.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Elder sister needs R2 out — both blocked. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   const rel1 = { from: 'R1', to: 'T2' };
   edges.splice(edges.findIndex((e) => e.from === rel1.from && e.to === rel1.to), 1);
   out.push({
-    caption: 'T2 finishes its trip and returns the R1 key.'.slice(0, 120),
+    caption: 'Mother drives out and frees her R1 slot.'.slice(0, 120),
     removeEdge: { ...rel1 }
   });
-  out.push({ caption: 'The ring breaks — R1 has a free key, T1 can move.'.slice(0, 120), clearCycle: true });
+  out.push({ caption: 'The ring breaks — R1 has a free slot, father can move.'.slice(0, 120), clearCycle: true });
   const grant1 = { from: 'R1', to: 'T1', kind: 'assignment' as const };
   edges.push({ ...grant1 });
-  out.push({ caption: 'T1 takes the freed R1 key.'.slice(0, 120), addEdge: { ...grant1 } });
+  out.push({ caption: 'Father pulls into the freed R1 slot.'.slice(0, 120), addEdge: { ...grant1 } });
   const rel2 = { from: 'R2', to: 'T4' };
   edges.splice(edges.findIndex((e) => e.from === rel2.from && e.to === rel2.to), 1);
   out.push({
-    caption: 'T4 finishes and returns its R2 key.'.slice(0, 120),
+    caption: 'Younger brother drives out and frees his R2 slot.'.slice(0, 120),
     removeEdge: { ...rel2 }
   });
   const req2 = { from: 'T3', to: 'R2', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req2.from && e.to === req2.to), 1);
   out.push({
-    caption: 'With a key free, the R2 wait is over — T3 stops asking.'.slice(0, 120),
+    caption: 'With a slot free, the R2 wait is over — sister stops asking.'.slice(0, 120),
     removeEdge: { from: req2.from, to: req2.to }
   });
   const grant2 = { from: 'R2', to: 'T3', kind: 'assignment' as const };
   edges.push({ ...grant2 });
-  out.push({ caption: 'T3 takes the freed R2 key.'.slice(0, 120), addEdge: { ...grant2 } });
+  out.push({ caption: 'Elder sister pulls into the freed R2 slot.'.slice(0, 120), addEdge: { ...grant2 } });
   const req1 = { from: 'T1', to: 'R1', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req1.from && e.to === req1.to), 1);
   out.push({
-    caption: 'T1 stops asking too — the freed key answered it.'.slice(0, 120),
+    caption: 'Father stops asking too — the freed slot answered it.'.slice(0, 120),
     removeEdge: { from: req1.from, to: req1.to }
   });
   out.push({
@@ -212,12 +211,12 @@ export function deadlockEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    take('T2 takes the only R1 key.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('T3 takes the only R2 key.', { from: 'R2', to: 'T3', kind: 'assignment' }),
-    take('T1 takes the only R3 key.', { from: 'R3', to: 'T1', kind: 'assignment' }),
-    take('T1 asks R1 — T2 holds it.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('T2 asks R2 — T3 holds it.', { from: 'T2', to: 'R2', kind: 'request' }),
-    take('T3 asks R3 — T1 holds it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
+    take('Mother blocks the only R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Elder sister blocks the only R2 exit.', { from: 'R2', to: 'T3', kind: 'assignment' }),
+    take('Father blocks the only R3 exit.', { from: 'R3', to: 'T1', kind: 'assignment' }),
+    take('Father needs R1 — mother blocks it.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Mother needs R2 — sister blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
+    take('Sister needs R3 — father blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   return out;
@@ -230,12 +229,12 @@ export function chainEvents(): GraphEvent[] {
     addEdge: { ...edge }
   });
   return [
-    take('T1 takes an R2 key.', { from: 'R2', to: 'T1', kind: 'assignment' }),
-    take('T1 asks R1.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('T2 holds the R1 key.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('T2 takes the second R2 key.', { from: 'R2', to: 'T2', kind: 'assignment' }),
-    take('T2 asks R3.', { from: 'T2', to: 'R3', kind: 'request' }),
-    take('T3 holds the R3 key.', { from: 'R3', to: 'T3', kind: 'assignment' }),
+    take('Father parks in an R2 slot.', { from: 'R2', to: 'T1', kind: 'assignment' }),
+    take('Father needs R1 out.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Mother holds the R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Mother takes the second R2 slot.', { from: 'R2', to: 'T2', kind: 'assignment' }),
+    take('Mother needs R3 out.', { from: 'T2', to: 'R3', kind: 'request' }),
+    take('Sister holds the R3 exit.', { from: 'R3', to: 'T3', kind: 'assignment' }),
     { caption: 'No ring on the map — a chain waits, but nobody waits in a circle.'.slice(0, 120) }
   ];
 }
@@ -256,7 +255,7 @@ export function scenarioInput(id: Lesson17Scenario): GraphInput {
     nodes: SCENARIO_NODES[id].map((n) => ({ ...n })),
     initialEdges: [],
     events: scenarioEvents(id),
-    analogy: { domain: 'travel', title: 'Car lots and keys' }
+    analogy: { domain: 'friends', title: 'Cars in the driveway' }
   };
 }
 
@@ -381,25 +380,25 @@ export const lesson17: Lesson<GraphInput, GraphState> = {
   engine: 'graph',
   engineClass: Lesson17GraphEngine,
   lensLabels: {
-    analogy: '🚗 Car lots and keys',
+    analogy: '🚗 Cars in the driveway',
     mechanism: '🕸️ Allocation graph',
-    analogyTitle: 'View as drivers sharing two car lots',
+    analogyTitle: 'View as family cars blocking each other in the driveway',
     mechanismTitle: 'View as the resource-allocation graph'
   },
   analogy: {
-    domain: 'travel',
-    text: 'Drivers share two small car lots. Each driver holds keys and waits on cars across the lot — the map draws who holds which key, with request arrows pointing one way and assignment arrows the other.'
+    domain: 'friends',
+    text: 'Family cars parked bumper to bumper in the building driveway. Each driver holds one spot and waits on the car blocking them — the map draws who blocks whom, with request arrows pointing one way and holding arrows the other.'
   },
   concept:
     'A resource-allocation graph draws processes and resource types as nodes: a request edge points from a waiter to a resource, an assignment edge from a resource to its holder. A deadlock needs a cycle — each process waiting on the next in a ring. But a cycle alone is not enough: if some holder on the ring waits on nothing, it finishes and the ring dissolves. Only a ring nobody can leave is a deadlock.',
   morphReveals:
-    'In the lot every driver and every car takes the same space — position is just where they parked. On the graph width stops meaning a body and starts meaning holdings: a lot is as wide as its keys, a driver as wide as what they hold — so the stuck ring reads wide all round while a freed lot narrows.',
+    'In the driveway every car takes the same space — position is just where it parked. On the graph width stops meaning a body and starts meaning holdings: a slot is as wide as its cars, a driver as wide as what they hold — so the stuck ring reads wide all round while a moved car frees the lane.',
   morphMode: 'morph',
   analogyMapping: [
     'Driver ➔ process node',
-    'Car lot ➔ resource node, one dot per key',
-    'Waiting on a car ➔ request edge, driver to lot',
-    'Holding a key ➔ assignment edge, lot to driver',
+    'Parking slot ➔ resource node, one dot per car',
+    'Blocked by a car ➔ request edge, driver to slot',
+    'Holding a spot ➔ assignment edge, slot to driver',
     'Everyone waiting in a ring ➔ a cycle on the map',
     'A ring nobody can leave ➔ deadlock; a ring someone finishes ➔ it dissolves'
   ],

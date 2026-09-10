@@ -117,7 +117,7 @@ export function raceSteps(input: TraceInput): Step<TraceState>[] {
 
   steps.push({
     t: 0,
-    caption: `Both friends look at the same moment: the shared count reads ${input.initial.counter}. Nothing has happened yet.`,
+    caption: `Mother and father look at the same moment: the shared count reads ${input.initial.counter}. Nothing has happened yet.`,
     highlight: [...threadIds],
     state: {
       stepIndex: 0,
@@ -171,20 +171,20 @@ export function raceSteps(input: TraceInput): Step<TraceState>[] {
 type ScenarioId = 'slices' | 'budget' | 'seat' | 'buffer';
 
 const SCENARIOS: Record<ScenarioId, { label: string; initial: number; plate: (n: number) => string }> = {
-  slices: { label: '🍕 Pizza slices', initial: 3, plate: n => `${n} slices on the plate` },
-  budget: { label: '🧾 Trip budget', initial: 800, plate: n => `Budget: €${n}` },
-  seat: { label: '🎫 Check-in seats', initial: 14, plate: n => `Next free seat: ${n}A` },
+  slices: { label: '🍰 Last piece of cake', initial: 3, plate: n => `${n} pieces of cake left` },
+  budget: { label: '🧾 Household ledger', initial: 800, plate: n => `Ledger: €${n}` },
+  seat: { label: '🚗 Seats in the car', initial: 14, plate: n => `${n} seats free in the car` },
   buffer: { label: '📦 Buffer count (the slide)', initial: 5, plate: n => `${n} full buffers` }
 };
 
 /**
- * The analogy acts are producer/consumer, matching the mechanism exactly:
+ * The analogy acts are family around one cake, matching the mechanism exactly:
  * T1's +1 is putting a slice back, T2's −1 is taking one off. The test suite
  * asserts these labels agree with the sign in RACE_INSTRUCTIONS.
  */
 export const ACT_TEXT: Record<'T1' | 'T2', string[]> = {
-  T1: ['Friend A looks at the plate', 'Friend A puts one back', 'Friend A writes the count'],
-  T2: ['Friend B looks at the plate', 'Friend B takes one off', 'Friend B writes the count']
+  T1: ['Mother looks at the cake', 'Mother puts one back', 'Mother writes the count'],
+  T2: ['Father looks at the cake', 'Father takes one off', 'Father writes the count']
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -253,7 +253,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
       g.setAttribute('id', `bar-friend-${tid}`);
       const label = this.label(
         geometry[`friend-${tid}`],
-        v < 0.5 ? (tIdx === 0 ? 'Friend A' : 'Friend B') : `${tIdx === 0 ? 'Friend A' : 'Friend B'} · ${tid} · R${tIdx + 1}`,
+        v < 0.5 ? (tIdx === 0 ? 'Mother' : 'Father') : `${tIdx === 0 ? 'Mother' : 'Father'} · ${tid} · R${tIdx + 1}`,
         tIdx === 0 ? '#8a4b08' : '#0b5c8a'
       );
       g.appendChild(label);
@@ -418,7 +418,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
 
   private chipLabel(tIdx: number, instr: number): string {
     const acts = instr === 0 ? 'looks' : instr === 1 ? (tIdx === 0 ? 'puts one back' : 'takes one off') : 'writes';
-    return `${tIdx === 0 ? 'A' : 'B'} · ${acts}`;
+    return `${tIdx === 0 ? 'M' : 'F'} · ${acts}`;
   }
 
   private renderChips(): void {
@@ -526,8 +526,8 @@ export const lesson10Input: TraceInput = {
   threads: [
     // Instruction strings are the algorithm's own RACE_INSTRUCTIONS — the
     // picture at view 1 is bound to what simulateRaceCondition executes.
-    { id: 'T1', name: 'Friend A (T1)', analogyName: 'Friend A', color: '#8a4b08', instructions: [...RACE_INSTRUCTIONS.T1] },
-    { id: 'T2', name: 'Friend B (T2)', analogyName: 'Friend B', color: '#0b5c8a', instructions: [...RACE_INSTRUCTIONS.T2] }
+    { id: 'T1', name: 'Mother (T1)', analogyName: 'Mother', color: '#8a4b08', instructions: [...RACE_INSTRUCTIONS.T1] },
+    { id: 'T2', name: 'Father (T2)', analogyName: 'Father', color: '#0b5c8a', instructions: [...RACE_INSTRUCTIONS.T2] }
   ],
   interleaving: [0, 0, 1, 1, 0, 1], // the slide's verbatim S0–S5 trace
   initial: { counter: 3 },
@@ -544,23 +544,23 @@ export const lesson10: Lesson<TraceInput, TraceState> = {
   engine: 'trace',
   engineClass: RaceTraceEngine,
   lensLabels: {
-    analogy: '🍕 Two friends, one plate',
+    analogy: '🍰 Mother, father, one cake',
     mechanism: '⚙️ Register-level trace',
-    analogyTitle: 'View as two friends sharing a plate of slices',
+    analogyTitle: 'View as mother and father sharing the last piece of cake',
     mechanismTitle: 'View as register-level interleaving'
   },
   analogy: {
     domain: 'friends',
-    text: 'Friend A puts a slice back on the plate while Friend B takes one off. Each writes down the count they saw when they looked — so if both look before either has written, the second write erases the first, and one change never lands. Neither friend is wrong; the order is. The same lost update corrupts a shared trip budget, and hands the same seat to two passengers.'
+    text: 'Mother puts a plate into the fridge while father takes one out. Each writes down the count they saw when they looked — so if both look before either has written, the second write erases the first, and one change never lands. Neither parent is wrong; the order is. The same lost update corrupts the household ledger, and gives the last seat in the car to two people at once.'
   },
-  concept: 'When two threads read, modify and write the same shared variable, the final value depends on the order their steps interleave. Each thread loads the count into its own register, edits the register, and writes it back — and if both threads read before either has written, the second write silently erases the first update. The slide\'s counter is the bounded buffer\'s count of full buffers: a producer increments it, a consumer decrements it, and an interleaved execution loses an update. A lost update is not a bug in either friend\'s edit; it is a property of the order. The same lost update corrupts a shared trip budget edited by three friends, and issues the same "next free seat" to two passengers. The fix — making read-modify-write indivisible — is the critical-section problem, next lesson.',
-  morphReveals: 'Around the plate, where a friend stands means nothing — they act at the same moment, and the six actions have no order you can point to. In the register trace, vertical position becomes time: the same six actions sorted into the one order they really ran in. Height stops meaning place and starts meaning when — and read top to bottom, you can see exactly which count each action saw; a lost update shows up as two actions seeing the same count before either has written.',
+  concept: 'When two threads read, modify and write the same shared variable, the final value depends on the order their steps interleave. Each thread loads the count into its own register, edits the register, and writes it back — and if both threads read before either has written, the second write silently erases the first update. The slide\'s counter is the bounded buffer\'s count of full buffers: a producer increments it, a consumer decrements it, and an interleaved execution loses an update. A lost update is not a bug in either parent\'s edit; it is a property of the order. The same lost update corrupts the household ledger the whole family edits, and hands the last seat in the car to two people. The fix — making read-modify-write indivisible — is the critical-section problem, next lesson.',
+  morphReveals: 'Around the cake, where mother and father stand means nothing — they act at the same moment, and the six actions have no order you can point to. In the register trace, vertical position becomes time: the same six actions sorted into the one order they really ran in. Height stops meaning place and starts meaning when — and read top to bottom, you can see exactly which count each action saw; a lost update shows up as two actions seeing the same count before either has written.',
   morphMode: 'morph',
   analogyMapping: [
-    'Friend A ➔ T1 (register1)',
-    'Friend B ➔ T2 (register2)',
-    'Plate of slices / ledger ➔ shared counter in memory',
-    '"Looks at the plate" ➔ register = counter (read)',
+    'Mother ➔ T1 (register1)',
+    'Father ➔ T2 (register2)',
+    'Last piece of cake in the fridge ➔ shared counter in memory',
+    '"Looks in the fridge" ➔ register = counter (read)',
     '"Puts one back" ➔ register = register + 1 (producer)',
     '"Takes one off" ➔ register = register − 1 (consumer)',
     '"Writes the count" ➔ counter = register (write)',

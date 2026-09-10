@@ -216,6 +216,6 @@ describe('Lesson 09 · lesson wiring', () => {
     expect(lesson09.input.nodes.length).toBe(6);
     expect(lesson09.input.reveals.length).toBe(12);
     expect(new Set(lesson09.input.nodes.map((n) => n.id)).size).toBe(6);
-    expect(realtimeLessonInput(DEFAULT_PARAMS).analogy?.domain).toBe('travel');
+    expect(realtimeLessonInput(DEFAULT_PARAMS).analogy?.domain).toBe('friends');
   });
 });

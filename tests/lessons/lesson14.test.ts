@@ -64,9 +64,9 @@ describe('Lesson 14 · every displayed number is computed', () => {
 });
 
 describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
-  it('analogy tokens are native: guests at the door, equal footprints', () => {
+  it('analogy tokens are native: family at the door, equal footprints', () => {
     const input = lockLessonInput(DEFAULT_LOCK);
-    expect(input.actors.map((a) => a.analogyName)).toEqual(['Guest A', 'Guest B', 'Guest C']);
+    expect(input.actors.map((a) => a.analogyName)).toEqual(['Mother', 'Elder Sister', 'Father']);
     expect(input.analogy?.waitingLabel).toContain('DOOR');
   });
 
@@ -79,7 +79,7 @@ describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(long[9].caption).toMatch(/Long stay/);
   });
 
-  it('handoff, not hang-back: the key goes to the first waiter', () => {
+  it('handoff, not hang-back: the bathroom goes to the first waiter', () => {
     const steps = lockSteps(DEFAULT_LOCK);
     const last = steps[steps.length - 1];
     expect(last.state.holders).toStrictEqual(['T2']);

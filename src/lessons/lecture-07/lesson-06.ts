@@ -103,7 +103,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
       // script, not a padding step.
       const startQ = it.queueId ?? 'Q0';
       if (startQ !== 'Q0' && startQ !== 'Q1' && startQ !== 'Q2') {
-        events.push({ caption: `${it.id} arrives — joins the ${startQ} lane.`, action: 'enqueue', itemId: it.id, toQueue: 'Q0' });
+        events.push({ caption: `${it.id} arrives — joins the ${startQ} table.`, action: 'enqueue', itemId: it.id, toQueue: 'Q0' });
       }
       if (startQ === 'Q0' || startQ === 'incoming') {
         events.push(dispatch(it, 'Q0', q0));
@@ -115,7 +115,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
           });
         } else {
           events.push({
-            caption: `${it.id} runs ${q0}ms, needing ${b - q0}ms more — demoted to Q1.`,
+            caption: `${it.id} runs ${q0}ms, needing ${b - q0}ms more — moved down a tier to Q1.`,
             action: 'demote',
             itemId: it.id,
             toQueue: 'Q1'
@@ -130,7 +130,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
             });
           } else {
             events.push({
-              caption: `${it.id} runs ${q1}ms in Q1, still needing ${rem1 - q1}ms — demoted to Q2.`,
+              caption: `${it.id} runs ${q1}ms in Q1, still needing ${rem1 - q1}ms — moved down a tier to Q2.`,
               action: 'demote',
               itemId: it.id,
               toQueue: 'Q2'
@@ -153,7 +153,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
           });
         } else {
           events.push({
-            caption: `${it.id} exceeds the Q1 quantum — demoted to Q2.`,
+            caption: `${it.id} exceeds the Q1 quantum — moved down a tier to Q2.`,
             action: 'demote',
             itemId: it.id,
             toQueue: 'Q2'
@@ -267,11 +267,11 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
     // Relocate primary control attribute to the demotion threshold slider
     playground.removeAttribute('data-primary-control');
 
-    // Update lens switcher buttons for airport lanes & MLFQ
+    // Update lens switcher buttons for restaurant seating tiers & MLFQ
     const lensButtons = document.querySelectorAll('.lens-controller button');
     if (buttonsHas(lensButtons, 0)) {
-      lensButtons[0].textContent = '✈️ Airport Lanes Analogy';
-      (lensButtons[0] as HTMLButtonElement).title = 'View as class-based airport lanes';
+      lensButtons[0].textContent = '🍽️ Restaurant Tables Analogy';
+      (lensButtons[0] as HTMLButtonElement).title = 'View as restaurant seating tiers';
     }
     if (buttonsHas(lensButtons, 2)) {
       lensButtons[2].textContent = '⚙️ MLFQ Mechanism';
@@ -291,7 +291,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
             ⚡ Standard MLFQ (8ms / 16ms / FCFS)
           </button>
           <button id="mlfq-preset-strict" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--waiting); color: var(--waiting); cursor: pointer;">
-            ✈️ Fixed Lanes (No Demotion)
+            🪑 Fixed Tables (No Demotion)
           </button>
           <button id="mlfq-preset-fast" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--running); color: var(--running); cursor: pointer;">
             ⏩ Fast Demotion (q=4ms)
@@ -422,17 +422,17 @@ function buttonsHas(list: NodeListOf<Element>, index: number): boolean {
 // Register MLFQQueueEngine for engine id 'queue'
 
 export const lesson06Events: QueueEvent[] = [
-  { caption: 'P1 arrives — joins the Q0 express lane.', action: 'enqueue', itemId: 'P1', toQueue: 'Q0' },
+  { caption: 'P1 arrives — is seated at the Q0 express table.', action: 'enqueue', itemId: 'P1', toQueue: 'Q0' },
   { caption: 'P2 arrives — the quick order queues behind P1.', action: 'enqueue', itemId: 'P2', toQueue: 'Q0' },
   { caption: 'P3 arrives — three deep in Q0, nobody served yet.', action: 'enqueue', itemId: 'P3', toQueue: 'Q0' },
   { caption: 'P1 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
-  { caption: 'P1 outlives the 8ms slice with 22ms left — demoted to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
+  { caption: 'P1 outlives the 8ms slice with 22ms left — moved down a tier to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
   { caption: 'P2 dispatched on CPU 0 from Q0 (q=8). Short order, runs to the end of its burst.', action: 'dispatch', itemId: 'P2', coreId: 'cpu0' },
   { caption: 'P2 finishes inside Q0 in 8ms and exits — no demotion.', action: 'complete', itemId: 'P2' },
   { caption: 'P3 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
-  { caption: 'P3 still needs 7ms after 8ms — demoted to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
+  { caption: 'P3 still needs 7ms after 8ms — moved down a tier to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
   { caption: 'P1 dispatched again, now from Q1 (q=16). It runs its second quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
-  { caption: 'P1 still needs 6ms after 16ms — demoted to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' },
+  { caption: 'P1 still needs 6ms after 16ms — moved down a tier to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' },
   { caption: 'P3 dispatched from Q1 (q=16). Its 7ms remainder fits — runs to completion.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
   { caption: 'P3 finishes in Q1 and exits.', action: 'complete', itemId: 'P3' },
   { caption: 'P1 dispatched from Q2 (FCFS). The long batch runs to completion.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
@@ -459,9 +459,9 @@ export const lesson06Input: QueueInput = {
   ],
   events: lesson06Events,
   analogy: {
-    domain: 'travel',
-    serviceLabel: 'Check-in Desk',
-    queueLabels: { incoming: 'Terminal Doors (Arriving)', Q0: 'First Class Lane', Q1: 'Business Lane', Q2: 'Economy Lane' }
+    domain: 'food',
+    serviceLabel: 'Host Desk',
+    queueLabels: { incoming: 'Door Queue (Arriving)', Q0: 'Front Tables', Q1: 'Middle Tables', Q2: 'Back Tables' }
   }
 };
 
@@ -475,26 +475,26 @@ export const lesson06: Lesson<QueueInput, QueueState> = {
   engine: 'queue',
   engineClass: MLFQQueueEngine,
   lensLabels: {
-    analogy: '\u2708\ufe0f Airport Lanes Analogy',
-    mechanism: '\u2699\ufe0f MLFQ Mechanism',
-    analogyTitle: 'View as class-based airport lanes',
+    analogy: '🍽️ Restaurant Tables Analogy',
+    mechanism: '⚙️ MLFQ Mechanism',
+    analogyTitle: 'View as restaurant seating tiers',
     mechanismTitle: 'View as multilevel feedback queue mechanism'
   },
   analogy: {
-    domain: 'travel',
-    text: 'Airport check-in with permanently separate lines for first, business, and economy where lower classes wait indefinitely — paired with a counter that demotes dithering customers to slower lanes with longer time slots, while quick orders stay in express.'
+    domain: 'food',
+    text: 'Restaurant seating tiers: order fast and you keep the front tables, but linger over your plate and the host moves you down a tier to the back. Wait too long back there and the host brings you forward again.'
   },
   concept: 'Multilevel Queue scheduling partitions ready jobs into permanent priority tiers with independent scheduling algorithms, risking starvation for lower queues. Multilevel Feedback Queue (MLFQ) dynamically adjusts priority based on observed CPU-burst behavior: jobs that exhaust their time quantum are demoted to lower-priority, higher-quantum queues, while interactive I/O jobs remain at top priority. Aging mechanisms periodically promote long-waiting jobs to prevent starvation.',
-  morphReveals: 'At the airport, which lane you stand in is printed on your ticket — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.',
+  morphReveals: 'At the restaurant, which tier you sit at is printed on your booking — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.',
   morphMode: 'morph',
   analogyMapping: [
-    'First Class Lane ➔ Top Priority Queue Q0 (RR q=8ms)',
-    'Business Class Lane ➔ Medium Priority Queue Q1 (RR q=16ms)',
-    'Economy Class Lane ➔ Low Priority Queue Q2 (FCFS)',
-    'Check-in Desk / Counter ➔ CPU Core (cpu0)',
-    'Fast Check-in / Quick Order (P2) ➔ Interactive I/O-bound job',
-    'Complex Inquiry / Dithering (P1, P3) ➔ CPU-bound batch job',
-    'Lane Demotion ➔ MLFQ Feedback Demotion on Quantum Expiry'
+    'Front Tables ➔ Top Priority Queue Q0 (RR q=8ms)',
+    'Middle Tables ➔ Medium Priority Queue Q1 (RR q=16ms)',
+    'Back Tables ➔ Low Priority Queue Q2 (FCFS)',
+    'Host Desk / Kitchen ➔ CPU Core (cpu0)',
+    'Fast Order (P2) ➔ Interactive I/O-bound job',
+    'Lingering Order (P1, P3) ➔ CPU-bound batch job',
+    'Moved Down a Tier ➔ MLFQ Feedback Demotion on Quantum Expiry'
   ],
   input: lesson06Input
 };

@@ -21,10 +21,10 @@ describe('Lesson 4: Round Robin and the Cost of Fairness (§3C)', () => {
     expect(lesson04.slides).toBe('slides 16–19');
     expect(lesson04.engine).toBe('gantt');
     expect(lesson04.analogy.domain).toBe('friends');
-    expect(lesson04.analogy.text).toContain('Karaoke night');
+    expect(lesson04.analogy.text).toContain('family car');
     expect(lesson04.concept).toContain('Round Robin');
     expect(lesson04.morphReveals).toBe(
-      'At karaoke every turn is the same length, so fairness is just taking your place in the circle. On the timeline that same equal width becomes the quantum — and a long song now needs many separate turns, so shrinking the slice to feel fairer multiplies the handovers until the night is spent passing the microphone.'
+      'Taking turns with the car, every slot is the same length, so fairness is just holding your place in the key line. On the timeline that same equal width becomes the quantum — and a long drive now needs many separate turns, so shrinking the slot to feel fairer multiplies the handovers until the evening is spent passing the keys.'
     );
   });
 
