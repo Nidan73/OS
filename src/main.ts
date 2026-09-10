@@ -308,27 +308,30 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
 
     const ch = CHAPTERS.find(c => c.slug === lectureSlug);
 
-    // Left chapter rail
+    // Chapter lessons in id order, for position and prev/next navigation.
+    const chapterLessons = LESSONS_META
+      .filter(l => l.chapterSlug === lectureSlug)
+      .sort((a, b) => a.id - b.id);
+    const idx = chapterLessons.findIndex(l => l.slug === lessonSlug);
+    const prevLesson = idx > 0 ? chapterLessons[idx - 1] : null;
+    const nextLesson = idx >= 0 && idx < chapterLessons.length - 1 ? chapterLessons[idx + 1] : null;
+
+    // Left chapter rail: a quiet navigator. Back, where she is, and the two
+    // neighbouring lessons. The lens buttons in the player make the old
+    // "Interactive Lenses" explainer redundant, so it is gone.
     const leftRail = document.createElement('aside');
     leftRail.className = 'unit-sidebar-rail';
-    leftRail.style.display = 'flex';
-    leftRail.style.flexDirection = 'column';
-    leftRail.style.gap = 'var(--step)';
     leftRail.innerHTML = `
-      <a href="#/${lectureSlug}" style="font-weight: 600; color: var(--accent); margin-bottom: var(--step); display: inline-block;">&larr; All ${ch?.title ?? 'Chapter'} Lessons</a>
-      <div style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Active Chapter</div>
-      <div style="font-weight: 600; margin-bottom: var(--step);">${ch?.topic ?? ''}</div>
-      <div style="padding: 14px; background: var(--surface); border-left: 4px solid var(--accent); border-radius: var(--rounded-lg, 18px); border: 1px solid var(--hairline); font-weight: 600;">
-        Lesson ${lesson.id}: ${lesson.title}
+      <a class="rail-back" href="#/${lectureSlug}">&larr; All ${ch?.title ?? 'Chapter'} Lessons</a>
+      <div>
+        <div class="rail-label">Active Chapter</div>
+        <div class="rail-chapter">${ch?.topic ?? ''}</div>
       </div>
-      <div style="margin-top: var(--step); padding: 14px; font-size: 0.85rem; background: var(--canvas-parchment, #f5f5f7); border-radius: var(--rounded-lg, 18px); border: 1px solid var(--hairline); color: var(--ink-2); line-height: 1.45;">
-        <strong style="color: var(--ink);">Interactive Lenses</strong><br>
-        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--muted);">
-          <div>• Physical Analogy (${lesson.analogy.domain})</div>
-          <div>• OS Mechanism Timeline</div>
-          <div>• Drag or scrub to morph between them</div>
-        </div>
-      </div>
+      <div class="rail-current">Lesson ${lesson.id}: ${lesson.title}</div>
+      <nav class="rail-nav" aria-label="Neighbouring lessons">
+        ${prevLesson ? `<a href="#/${lectureSlug}/${prevLesson.slug}">&larr; Lesson ${prevLesson.id}<span>${prevLesson.title}</span></a>` : ''}
+        ${nextLesson ? `<a href="#/${lectureSlug}/${nextLesson.slug}">Lesson ${nextLesson.id} &rarr;<span>${nextLesson.title}</span></a>` : ''}
+      </nav>
     `;
 
     // Center animation column
@@ -337,13 +340,13 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
     centerCol.style.display = 'flex';
     centerCol.style.flexDirection = 'column';
     centerCol.style.gap = 'calc(var(--step) * 0.9)';
+    centerCol.style.minWidth = '0';
 
     const lessonHeader = document.createElement('div');
+    lessonHeader.className = 'lesson-header';
     lessonHeader.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
-        <span style="font-size: 0.82rem; color: var(--accent); font-weight: 600; font-family: var(--font-mono);">Lesson ${lesson.id} · Lecture ${lesson.lecture} · ${lesson.slides}</span>
-      </div>
-      <h1 style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px 0; color: var(--ink);">${lesson.title}</h1>
+      <div class="kicker">Lesson ${lesson.id} · Lecture ${lesson.lecture} · ${lesson.slides}</div>
+      <h1>${lesson.title}</h1>
     `;
     centerCol.appendChild(lessonHeader);
 
@@ -356,45 +359,45 @@ async function renderLessonRoute(lectureSlug: string, lessonSlug: string, mainCo
       return;
     }
 
-    activeLessonPlayer = new LessonPlayer(centerCol, engine, animMountTarget, lesson.morphReveals, lesson.morphMode, lesson.lensLabels);
+    activeLessonPlayer = new LessonPlayer(centerCol, engine, animMountTarget, lesson.morphMode, lesson.lensLabels);
 
-    // Right sidebar: Concept explanation & physical analogy
+    // Right reading column: concept first (the exam voice), then the analogy
+    // (the scene), then what the morph changes. Flat surfaces, type-led.
     const rightSidebar = document.createElement('aside');
     rightSidebar.className = 'unit-right-sidebar';
-    rightSidebar.style.display = 'flex';
-    rightSidebar.style.flexDirection = 'column';
-    rightSidebar.style.gap = 'var(--step)';
 
-    const conceptCard = document.createElement('div');
-    conceptCard.style.padding = '14px 16px';
-    conceptCard.style.background = 'var(--surface)';
-    conceptCard.style.border = '1px solid var(--hairline)';
-    conceptCard.style.borderRadius = 'var(--rounded-lg, 18px)';
+    const conceptCard = document.createElement('section');
+    conceptCard.className = 'reading-card';
     conceptCard.innerHTML = `
-      <h3 style="font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; color: var(--ink);">OS Concept</h3>
-      <p style="font-family: var(--font-ui); font-size: 15.5px; line-height: 1.45; letter-spacing: -0.3px; color: var(--ink);">${lesson.concept}</p>
+      <h3>OS Concept</h3>
+      <p>${lesson.concept}</p>
     `;
 
     const analogyDomainColor = lesson.analogy.domain === 'travel' ? 'var(--travel)' : lesson.analogy.domain === 'food' ? 'var(--food)' : 'var(--friends)';
-    const analogyCard = document.createElement('div');
-    analogyCard.style.padding = '14px 16px';
-    analogyCard.style.background = 'var(--surface)';
-    analogyCard.style.border = '1px solid var(--hairline)';
-    analogyCard.style.borderRadius = 'var(--rounded-lg, 18px)';
+    const analogyCard = document.createElement('section');
+    analogyCard.className = 'reading-card';
     analogyCard.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-        <h3 style="font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink);">Physical Analogy</h3>
-        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: ${analogyDomainColor}; border: 1px solid currentColor; padding: 2px 8px; border-radius: var(--rounded-pill, 9999px);">${lesson.analogy.domain}</span>
-      </div>
-      <p style="font-family: var(--font-ui); font-style: italic; font-size: 15.5px; line-height: 1.45; letter-spacing: -0.3px; color: var(--ink-2);">${lesson.analogy.text}</p>
+      <h3>Physical Analogy <span class="domain-chip" style="color: ${analogyDomainColor};">${lesson.analogy.domain}</span></h3>
+      <p class="analogy-text">${lesson.analogy.text}</p>
       ${(lesson as any).analogyMapping && (lesson as any).analogyMapping.length > 0 ? `
-      <div style="margin-top: calc(var(--step) * 1.5); font-size: 0.88rem; line-height: 1.5; color: var(--muted); border-top: 1px solid var(--hairline); padding-top: var(--step);">
-        <strong style="color: var(--ink);">How the Analogy Maps to the OS:</strong><br>
-        ${(lesson as any).analogyMapping.map((m: string) => `• ${m}`).join('<br>')}
+      <div class="mapping-list">
+        <strong>How the analogy maps to the OS</strong>
+        ${(lesson as any).analogyMapping.map((m: string) => `<div>• ${m}</div>`).join('')}
       </div>` : ''}
     `;
 
     rightSidebar.append(conceptCard, analogyCard);
+
+    if (lesson.morphReveals) {
+      const morphCard = document.createElement('section');
+      morphCard.className = 'reading-card';
+      morphCard.innerHTML = `
+        <h3>What the Morph Changes</h3>
+        <p class="analogy-text">${lesson.morphReveals}</p>
+      `;
+      rightSidebar.appendChild(morphCard);
+    }
+
     mainContainer.append(leftRail, centerCol, rightSidebar);
   } catch (err) {
     renderFallback(mainContainer, { slug: lessonSlug }, err);
