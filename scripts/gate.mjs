@@ -35,6 +35,7 @@ const LESSONS = [
   { slug: 'lesson-14', chapter: 'lecture-09', name: 'Locks, and the cost of waiting' },
   { slug: 'lesson-15', chapter: 'lecture-09', name: 'Semaphores' },
   { slug: 'lesson-17', chapter: 'lecture-10', name: 'Seeing it as a graph' },
+  { slug: 'lesson-20', chapter: 'lecture-10', name: "The banker's algorithm" },
 ];
 
 /** Internal vocabulary that must never reach a student. */

@@ -15,6 +15,7 @@ import { lesson13, AtomicCounterEngine } from '../../src/lessons/lecture-09/less
 import { lesson14, LockCounterEngine } from '../../src/lessons/lecture-09/lesson-14.js';
 import { lesson15, SemaphoreCounterEngine } from '../../src/lessons/lecture-09/lesson-15.js';
 import { lesson17, Lesson17GraphEngine } from '../../src/lessons/lecture-10/lesson-17.js';
+import { lesson20, Lesson20MatrixEngine } from '../../src/lessons/lecture-10/lesson-20.js';
 import { GanttEngine } from '../../src/engines/gantt.js';
 import { QueueEngine } from '../../src/engines/queue.js';
 
@@ -51,7 +52,8 @@ const CASES: Array<{ slug: string; make: () => Mounted }> = [
   { slug: 'lesson-13', make: () => mount(AtomicCounterEngine, lesson13.input) },
   { slug: 'lesson-14', make: () => mount(LockCounterEngine, lesson14.input) },
   { slug: 'lesson-15', make: () => mount(SemaphoreCounterEngine, lesson15.input) },
-  { slug: 'lesson-17', make: () => mount(Lesson17GraphEngine, lesson17.input) }
+  { slug: 'lesson-17', make: () => mount(Lesson17GraphEngine, lesson17.input) },
+  { slug: 'lesson-20', make: () => mount(Lesson20MatrixEngine, lesson20.input) }
 ];
 
 function mount(Cls: new (host: HTMLElement, input: never) => {
@@ -99,7 +101,7 @@ describe('gate · every lesson encodes something in geometry (§3C.2a)', () => {
       'lesson-01', 'lesson-02', 'lesson-03', 'lesson-04', 'lesson-05',
       'lesson-06', 'lesson-07', 'lesson-08', 'lesson-09',
       'lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14', 'lesson-15',
-      'lesson-17'
+      'lesson-17', 'lesson-20'
     ]);
   });
 
