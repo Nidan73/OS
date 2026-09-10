@@ -222,7 +222,9 @@ describe('Lesson 19 · lesson wiring and copy', () => {
       lesson19.concept,
       lesson19.morphReveals,
       ...friendlyEvents().map((e) => e.caption),
-      ...grantEvents().map((e) => e.caption)
+      // both lenses are student-facing, so both are scanned. The claim moved
+      // to the analogy caption when captions started following the lens.
+      ...grantEvents().flatMap((e) => [e.caption, e.analogyCaption ?? ''])
     ].join('\n').toLowerCase();
     expect(allCopy).toContain('unsafe means no guarantee');
     expect(allCopy).toContain('nobody is stuck');

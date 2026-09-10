@@ -26,8 +26,19 @@ export type EngineId = 'gantt' | 'queue' | 'trace' | 'counter' | 'graph' | 'matr
 export interface Step<S = unknown> {
   /** seconds from timeline start; strictly increasing across the array */
   t: number;
-  /** the explanatory text for this step. Present tense, ≤ 120 chars. */
+  /**
+   * The explanatory text for this step. This is the fallback and is what the
+   * mechanism lens shows when `analogyCaption` is absent.
+   */
   caption: string;
+  /**
+   * The same beat told in the scene's own words, shown while the analogy lens
+   * is active. The picture is different in the two views, so the sentence
+   * under it should be too: at view 0 she is watching Ammu count notes, at
+   * view 1 she is watching a safety sweep. Both must describe the SAME event.
+   * Omit to show `caption` in both views.
+   */
+  analogyCaption?: string;
   /** engine-specific render state at time t */
   state: S;
   /** optional emphasis hint for the renderer, e.g. ['P2', 'edge:R1->P2'] */

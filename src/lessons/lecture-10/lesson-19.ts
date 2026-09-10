@@ -100,6 +100,8 @@ export type Lesson19Scenario = 'ledger' | 'grant' | 'friendly' | 'hostile' | 'cl
  * beat's flag that everyone's remaining need is now outstanding.
  */
 export interface Lesson19Event extends GraphEvent {
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   addEdges?: RagEdge[];
   removeEdges?: { from: string; to: string }[];
   allAskNeed?: boolean;
@@ -180,8 +182,13 @@ export function stuckOf(state: Lesson19State): string[] {
  */
 export const CAPTION_MAX = 320;
 
-const take = (caption: string, edges: RagEdge[]): Lesson19Event => ({
-  caption: caption.slice(0, CAPTION_MAX),
+/**
+ * `caption` is the mechanism sentence and `analogy` is the same beat in the
+ * scene's words. The player shows whichever matches the lens she is on.
+ */
+const take = (analogy: string, edges: RagEdge[], caption?: string): Lesson19Event => ({
+  caption: (caption ?? analogy).slice(0, CAPTION_MAX),
+  analogyCaption: analogy.slice(0, CAPTION_MAX),
   addEdges: edges.map((e) => ({ ...e }))
 });
 
@@ -193,31 +200,44 @@ export function ledgerEvents(): Lesson19Event[] {
   const out: Lesson19Event[] = [
     take(
       'Before she lends anyone a single note, Ammu makes each of them say the most they could possibly need. Abbu goes first: ten notes, at the very outside. He does not want ten today. He wants her to know ten is the ceiling.',
-      [claimEdge(0)]
+      [claimEdge(0)],
+      'P0 declares Max = 10. Avoidance needs every maximum claim up front, before any resource is granted, because it cannot look ahead without them.'
     ),
     take(
       'Afra says four. It is the smallest ceiling at the table, which quietly makes her the easiest person to plan around.',
-      [claimEdge(1)]
+      [claimEdge(1)],
+      'P1 declares Max = 4. The smallest maximum claim is usually the one a safe sequence starts with.'
     ),
     take(
       'Arijit says nine. Ammu writes it down without comment. Nine and four and ten come to twenty three, and there are twelve notes in the envelope, so she already knows she cannot simply hand everyone their ceiling and hope.',
-      [claimEdge(2)]
+      [claimEdge(2)],
+      'P2 declares Max = 9. Total Max is 23 against 12 instances, and that is normal: avoidance never requires that every maximum could be granted at once, only that some finishing order always exists.'
     ),
     take(
       'Abbu takes five of his ten. He is holding five and could still come back for five more, and Ammu is keeping track of both of those numbers, not just the first one.',
-      allocEdges(0, 5)
+      allocEdges(0, 5),
+      'P0 Allocation = 5, so Need = Max minus Allocation = 5. Both numbers matter: Allocation is what it holds, Need is what it can still demand.'
     ),
-    take('Afra takes two of her four. Two more could still come.', allocEdges(1, 2)),
+    take(
+      'Afra takes two of her four. Two more could still come.',
+      allocEdges(1, 2),
+      'P1 Allocation = 2, Need = 2.'
+    ),
     take(
       'Arijit takes two of his nine. Nine notes are out of the envelope and two are still in it. Two does not sound like much until you notice who it has to be enough for.',
-      allocEdges(2, 2)
+      allocEdges(2, 2),
+      'P2 Allocation = 2, Need = 7. Available is now 2 against outstanding Need of 5, 2 and 7.'
     )
   ];
   const state = stateAfterEvents(out);
   const seq = safeSequenceOf(state);
   const free = availableOf(state);
   out.push({
-    caption: `So Ammu checks. With ${free} notes free, is there any order at all in which all three could still finish and pay her back? There is: ${seq}. That order is called a safe sequence, and because one exists the state is safe.`.slice(
+    analogyCaption: `So Ammu checks. With ${free} notes free, is there any order at all in which all three could still finish and pay her back? There is: ${seq}. Because such an order exists, she can keep lending.`.slice(
+      0,
+      CAPTION_MAX
+    ),
+    caption: `Safety algorithm on Available = ${free}: a safe sequence exists, ${seq}. Each process in it can reach its Max from Available plus what the ones before it release. The state is SAFE.`.slice(
       0,
       CAPTION_MAX
     ),
@@ -240,8 +260,13 @@ export function grantEvents(): Lesson19Event[] {
     )
   );
   out.push({
+    analogyCaption:
+      'Now run the same check. One note is free. Abbu could still want five and Arijit six, and neither fits in one note. Only Afra can definitely finish. Ammu has lost the guarantee, not the trip: nobody is stuck yet.'.slice(
+        0,
+        CAPTION_MAX
+      ),
     caption:
-      'Now run the same check. One note is free. Abbu could still want five, Arijit six, and neither of those fits in one note. Only Afra can definitely finish. There is no safe sequence any more, so this state is called unsafe. Read that word carefully: nobody is stuck. She has lost the guarantee, not the trip.'.slice(
+      'Available = 1. No safe sequence exists: only P1 has Need within Available, and releasing it does not free enough for P0 or P2. The state is UNSAFE. Note it is not deadlocked. No process is blocked, and lucky requests may still let all three finish.'.slice(
         0,
         CAPTION_MAX
       ),
@@ -460,9 +485,14 @@ export class Lesson19GraphEngine extends GraphEngine implements PlaygroundCapabl
     const steps: Step<Lesson19State>[] = [];
     let t = 0;
 
-    const snapshot = (caption: string, highlight: string[]): Step<Lesson19State> => ({
+    const snapshot = (
+      caption: string,
+      highlight: string[],
+      analogyCaption?: string
+    ): Step<Lesson19State> => ({
       t: t++,
       caption: caption.slice(0, CAPTION_MAX),
+      analogyCaption: analogyCaption?.slice(0, CAPTION_MAX),
       highlight,
       state: {
         edges: edges.map((e) => ({ ...e })),
@@ -489,7 +519,7 @@ export class Lesson19GraphEngine extends GraphEngine implements PlaygroundCapabl
       if (ev.setCycle) cycleIds = [...ev.setCycle];
       if (ev.allAskNeed) allAskNeed = true;
       const hl = ev.setCycle ?? ev.activeNodes ?? [];
-      steps.push(snapshot(ev.caption, hl));
+      steps.push(snapshot(ev.caption, hl, ev.analogyCaption));
     }
 
     return steps;

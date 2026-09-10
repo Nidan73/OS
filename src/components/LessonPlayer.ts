@@ -476,13 +476,19 @@ export class LessonPlayer {
     this.updateCaption();
   }
 
+  /**
+   * The caption follows the lens. Below the halfway point she is looking at
+   * the scene, so she reads the scene; above it she is looking at the
+   * mechanism, so she reads the mechanism. Same beat, same event, two
+   * vocabularies. Lessons that supply only `caption` show it in both views.
+   */
   private updateCaption(): void {
     const steps = this.engine.getSteps();
-    const idx = this.engine.getCurrentIndex();
-    const step = steps[idx];
-    if (step) {
-      this.captionBanner.textContent = step.caption;
-    }
+    const step = steps[this.engine.getCurrentIndex()];
+    if (!step) return;
+    const analogy = step.analogyCaption;
+    this.captionBanner.textContent =
+      analogy && this.engine.getView() < 0.5 ? analogy : step.caption;
   }
 
   private setupEventListeners(): void {
@@ -551,6 +557,7 @@ export class LessonPlayer {
     });
 
     this.unsubscribeView = this.engine.onViewChange((v) => {
+      this.updateCaption();
       this.viewSlider.value = String(v);
       this.viewPercentLabel.textContent = `${Math.round(v * 100)}%`;
       if (v <= 0.1) {
