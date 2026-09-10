@@ -7,6 +7,7 @@ import {
   guaranteeOf,
   programFor,
   threadsFor,
+  analogyProgramFor,
   SCENARIOS,
   SCENARIO_LABELS,
   T1_PROGRAM,
@@ -176,6 +177,22 @@ describe('L24 · scenarios', () => {
     expect(guaranteeOf('lucky')).toBe(guaranteeOf('broken'));
   });
 
+  it('keeps the analogy wording index-matched to the code, in every scenario', () => {
+    for (const id of Object.keys(SCENARIOS) as Lesson24Scenario[]) {
+      for (const t of threadsFor(id)) {
+        expect(t.analogyInstructions, `${id}/${t.id}`).toHaveLength(t.instructions.length);
+        // and the analogy side must not leak code back in
+        for (const line of t.analogyInstructions!) {
+          expect(line).not.toMatch(/memory_barrier|while \(|print x|flag =|x = 100/);
+        }
+      }
+    }
+    // the barrier line is the one that drops, at the same index on both sides
+    expect(analogyProgramFor('T2', true)).toHaveLength(3);
+    expect(analogyProgramFor('T2', false)).toHaveLength(2);
+    expect(analogyProgramFor('T2', false)[1]).toBe(analogyProgramFor('T2', true)[2]);
+  });
+
   it('shows the barrier lines only in the barrier scenario', () => {
     expect(threadsFor('barrier')[1].instructions).toContain('memory_barrier()');
     expect(threadsFor('broken')[1].instructions).not.toContain('memory_barrier()');
@@ -254,19 +271,66 @@ describe('L24 · engine', () => {
     expect(b).toEqual(a);
   });
 
-  it('morphs the gap between the columns — the carrying property, not paint', () => {
-    const gap = () => {
+  it('moves a pending write a long way between views — the carrying property', () => {
+    // The previous version of this test measured the gap between the two
+    // columns and asserted it moved by >= 1px. Measured, that gap moves 20 ->
+    // 16, so the test passed on four pixels of drift and proved nothing. It
+    // now measures the thing the lesson actually claims and demands real
+    // travel, so incidental layout jitter cannot satisfy it.
+    engine.applyScenario('broken');
+    const steps = engine.getSteps();
+    const twoPending = steps.findIndex(
+      (st) => (st.state as unknown as { pending: unknown[] }).pending.length === 2
+    );
+    expect(twoPending, 'a step with two writes in flight').toBeGreaterThan(-1);
+    engine.seek(twoPending);
+
+    const at = (v: number) => {
+      engine.setView(v);
       const c = engine['container'] as HTMLElement;
-      const t1 = c.querySelector('#bar-T1 rect') as SVGRectElement;
-      const t2 = c.querySelector('#bar-T2 rect') as SVGRectElement;
-      const l = parseFloat(t1.getAttribute('x')!) + parseFloat(t1.getAttribute('width')!);
-      return parseFloat(t2.getAttribute('x')!) - l;
+      return (['x', 'flag'] as const).map((n) => {
+        const el = c.querySelector(`#inflight-${n}`) as SVGRectElement;
+        return { x: parseFloat(el.getAttribute('x')!), y: parseFloat(el.getAttribute('y')!) };
+      });
     };
-    engine.setView(0);
-    const g0 = gap();
-    engine.setView(1);
-    const g1 = gap();
-    expect(Math.abs(g1 - g0)).toBeGreaterThanOrEqual(1);
+    const a = at(0);
+    const b = at(1);
+
+    // in the hallway the two sit apart along the corridor; in the buffer they
+    // share one x and are separated only by order
+    expect(Math.abs(a[1].x - a[0].x)).toBeGreaterThan(80);
+    expect(Math.abs(b[1].x - b[0].x)).toBeLessThan(1);
+    expect(Math.abs(b[1].y - b[0].y)).toBeGreaterThan(8);
+    // and each token itself travels a real distance
+    for (let i = 0; i < 2; i++) {
+      expect(Math.abs(b[i].x - a[i].x), `token ${i} travel`).toBeGreaterThan(60);
+    }
+  });
+
+  it('keeps every in-flight label inside its own box at both views', () => {
+    // The gate cannot catch this: its SVG overflow check compares text against
+    // el.closest('g'), and a <g> has no intrinsic size — it is the union of
+    // its children, so text can never overflow its own group. Measured here
+    // against the rect the text is drawn inside.
+    engine.applyScenario('broken');
+    const steps = engine.getSteps();
+    const c = engine['container'] as HTMLElement;
+    for (let i = 0; i < steps.length; i++) {
+      engine.seek(i);
+      for (const v of [0, 1]) {
+        engine.setView(v);
+        for (const n of ['x', 'flag'] as const) {
+          const box = c.querySelector(`#inflight-${n}`) as SVGRectElement | null;
+          const txt = c.querySelector(`#inflight-text-${n}`) as SVGTextElement | null;
+          if (!box || !txt) continue;
+          const w = parseFloat(box.getAttribute('width')!);
+          // happy-dom has no text metrics, so assert the budget the render
+          // relies on: ~6.1px per char at 10px monospace, plus 8px padding
+          const needed = (txt.textContent ?? '').length * 6.1 + 8;
+          expect(needed, `step ${i} view ${v} "${txt.textContent}"`).toBeLessThanOrEqual(w);
+        }
+      }
+    }
   });
 
   it('renders an in-flight token for exactly the stores that are pending', () => {
@@ -276,9 +340,8 @@ describe('L24 · engine', () => {
     for (let i = 0; i < steps.length; i++) {
       engine.seek(i);
       const st = steps[i].state as unknown as { pending: { name: string }[] };
-      const drawn = [...c.querySelectorAll('[id^="inflight-"]')]
+      const drawn = [...c.querySelectorAll('rect[id^="inflight-"]')]
         .map((e) => e.id.replace('inflight-', ''))
-        .filter((n) => n !== 'label')
         .sort();
       expect(drawn, `step ${i}`).toEqual(st.pending.map((p) => p.name).sort());
     }
@@ -295,8 +358,9 @@ describe('L24 · lesson contract', () => {
 
   it('names a geometric property whose meaning changes, not the topic', () => {
     const m = lesson24.morphReveals!;
-    expect(m.toLowerCase()).toContain('gap');
-    expect(m).toMatch(/stops being|starts being/);
+    // the carrying property is WHERE a pending write sits, not the old "gap"
+    expect(m.toLowerCase()).toMatch(/position|where a thing sits/);
+    expect(m).toMatch(/stops meaning|starts meaning/);
     expect(m.length).toBeGreaterThan(120);
   });
 

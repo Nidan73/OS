@@ -234,6 +234,13 @@ that caused a 50-minute hang with zero files written. All three widened to famil
   attributes the spec already names. I have not made that change: the gate is the instrument
   that judges lessons I wrote, and widening it myself is a conflict of interest. Hand it to the
   implementer.
+- **The gate cannot see SVG text overflowing its box — OPEN.** `scripts/gate.mjs` compares
+  each `svg text` against `el.closest('g, .box, .card')`. A `<g>` has no intrinsic size: its
+  bbox is the union of its children, so a text node can never exceed its own group and the
+  check silently passes. L24 shipped with a 110px label inside a 52px box and scored 29/29.
+  The fix is to compare the text against the `rect` it is drawn inside, not its parent group.
+  Unlike the geometry finding below, **tightening this one is safe** — it can only catch more,
+  never fewer, so it is not a conflict of interest for whoever wrote the lessons.
 - **The playground column is 412px wide and the primary control must fit above y=900.**
   `LessonPlayer` marks the whole playground SECTION as `[data-primary-control]`, so the gate
   measures the entire section, not the button inside it. Budget is roughly 412x198. Two

@@ -7,6 +7,12 @@ export interface TraceThread {
   instructions: string[];
   color?: string;
   analogyName?: string;
+  /**
+   * The same steps said in the scene's own words, shown in the analogy view.
+   * Must be the same length as `instructions` — index i is the same act.
+   * Omit to show the code in both views.
+   */
+  analogyInstructions?: string[];
 }
 
 export interface TraceInput {
@@ -22,6 +28,18 @@ export interface TraceInput {
   analogy?: {
     domain: 'friends' | 'travel' | 'food';
     title?: string;
+    /**
+     * Heading over the shared-state panel in the analogy view. Every trace
+     * lesson has its own scene, so this cannot be a constant — it used to be
+     * hardcoded to 'SHARED CAKE LEDGER', which is L10's scene. L10 overrides
+     * render() and never draws this panel, so that string only ever appeared
+     * in L24's kitchen, where it was simply wrong.
+     */
+    memoryTitle?: string;
+    /**
+     * What each shared variable is called on the analogy side, keyed by the
+     * mechanism name. Keep them short: the panel is 190px wide.
+     */
     labels?: Record<string, string>;
   };
 }
@@ -230,7 +248,11 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
       thGroup.append(colBg, title);
 
       // Render instruction lines
-      th.instructions.forEach((inst, iIdx) => {
+      const shownInstructions =
+        v < 0.5 && th.analogyInstructions?.length === th.instructions.length
+          ? th.analogyInstructions
+          : th.instructions;
+      shownInstructions.forEach((inst, iIdx) => {
         const lineY = curY + 45 + iIdx * 28;
         const isExecuted = state.threadPointers[tIdx] > iIdx;
         const isCurrent = state.threadPointers[tIdx] === iIdx + 1 && state.activeThreadIndex === tIdx;
@@ -279,7 +301,10 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
     memTitle.setAttribute('font-size', '11');
     memTitle.setAttribute('font-weight', '700');
     memTitle.setAttribute('fill', 'var(--muted)');
-    memTitle.textContent = v < 0.5 ? 'SHARED CAKE LEDGER' : 'SHARED MEMORY & REGISTERS';
+    memTitle.textContent =
+      v < 0.5
+        ? (this.input.analogy?.memoryTitle ?? 'WHAT BOTH SIDES SHARE')
+        : 'SHARED MEMORY & REGISTERS';
 
     this.memoryGroup.append(memBg, memTitle);
 
@@ -294,7 +319,9 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
       t.setAttribute('font-size', '12');
       t.setAttribute('font-weight', '600');
       t.setAttribute('fill', isMod ? 'var(--accent)' : 'var(--ink)');
-      t.textContent = `${key} = ${val}`;
+      // The number is identical in both views; only what it is called changes.
+      const shownKey = v < 0.5 ? (this.input.analogy?.labels?.[key] ?? key) : key;
+      t.textContent = `${shownKey} = ${val}`;
       this.memoryGroup.appendChild(t);
       varY += 24;
     });

@@ -56,15 +56,26 @@ import {
 // print x rather than silently mis-executing them. buildSteps drives the
 // trace from the algorithm instead, which is where the semantics belong.
 //
-// The carrying property of the morph is THE GAP BETWEEN THE TWO COLUMNS.
-// In the dining room that gap is a hallway: the distance between the kitchen
-// and the table, which is furniture — it holds nothing and means nothing, and
-// a dish crossing it is just a dish being carried. In the machine the same gap
-// is where a write lives while it is invisible. It stops being distance and
-// starts being delay: a store sitting in it has definitely happened, and can
-// still not be read by anyone else. Once the gap can hold something, "x = 100
-// has run" and "x = 100 can be seen" come apart, and that gap is the entire
-// reason the deck needs a barrier at all.
+// The carrying property of the morph is WHERE A PENDING WRITE SITS.
+//
+// FIRST ATTEMPT, AND WHY IT WAS WRONG. This was originally "the gap between
+// the two columns". Measured, that gap is 20px at view 0 and 16px at view 1 —
+// four pixels, which cannot carry a meaning. The tokens placed in it also
+// overflowed their boxes, because SVG text does not clip. The morph test I had
+// written asserted only that the gap moved by >= 1px, so it passed on drift
+// and proved nothing. Recorded rather than quietly replaced.
+//
+// WHAT IT IS NOW. A write that has been issued and is not yet visible is drawn
+// in the band below the columns, and its POSITION is the carrying property.
+// In the hallway the pending writes are strung out along the corridor, spaced
+// apart: a corridor has length, and a thing in it is somewhere — the dish is
+// further along than the call, or it is not. In the machine they collapse into
+// a stack at one fixed x: a store buffer has no geography at all, only order.
+// Position stops meaning distance and starts meaning nothing — which is
+// exactly the property that makes weak ordering dangerous. You cannot look at
+// a buffer and see how far along something is, so "x = 100 has run" and
+// "x = 100 can be read" come apart with nothing on screen to warn you, and
+// that is the entire reason the deck needs a barrier.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DENSITY: one beat per discrete mechanism event, and the event set here is
@@ -120,6 +131,15 @@ export function programFor(actor: 'T1' | 'T2', barriers: boolean): string[] {
   return barriers ? [...full] : full.filter((i) => i !== 'memory_barrier()');
 }
 
+/** The same three lines said in the kitchen's words. Index-matched to above. */
+export const T1_ANALOGY = ['listen for the call', 'let the room catch up', 'carry out the dish'];
+export const T2_ANALOGY = ['put the biryani in the dish', 'wait till it is really out there', 'call "ready!"'];
+
+export function analogyProgramFor(actor: 'T1' | 'T2', barriers: boolean): string[] {
+  const full = actor === 'T1' ? T1_ANALOGY : T2_ANALOGY;
+  return barriers ? [...full] : full.filter((_, i) => i !== 1);
+}
+
 /** The scene, in the kitchen's words. Ids stay bound to the deck's threads. */
 export const ACTOR_NAMES: Record<'T1' | 'T2', string> = {
   T1: 'At the table',
@@ -133,8 +153,28 @@ export const ACTOR_ANALOGY: Record<'T1' | 'T2', string> = {
 
 /** What each shared variable is, on the dining-room side. */
 export const VAR_ANALOGY: Record<'x' | 'flag', string> = {
-  x: 'what is in the serving dish',
-  flag: 'the call of "ready!"'
+  x: 'the dish',
+  flag: 'the call'
+};
+
+// ── In-flight lane geometry (canvas is 720x260; the columns end at y=174) ──
+// Kept here, exported, and asserted in the tests, so no figure on screen is a
+// literal typed twice.
+export const LANE_X = 22;
+export const LANE_LABEL_Y = 196;
+export const LANE_Y = 206;
+/** analogy: tokens strung out down the corridor */
+export const HALL_STRIDE = 186;
+export const HALL_TOKEN_W = 172;
+/** mechanism: tokens stacked in a buffer that has no geography */
+export const BUFFER_X = 420;
+export const BUFFER_STRIDE = 24;
+export const BUFFER_TOKEN_W = 92;
+
+/** Short enough to fit the token box — measured, not guessed. */
+export const TOKEN_ANALOGY: Record<'x' | 'flag', string> = {
+  x: 'the dish, still coming',
+  flag: 'the call, still carrying'
 };
 
 /** Unit 47, slide 3 — the cores a masked interrupt does not protect. */
@@ -182,7 +222,8 @@ export class Lesson24TraceEngine extends TraceEngine {
         stepIndex: t,
         activeThreadIndex,
         threadPointers: [...pointers],
-        registers: { R1: ev.printed, R2: null },
+        // no registers in this lesson — the panel would only show two dashes
+        registers: {},
         memory: { x: ev.visible.x, flag: ev.visible.flag },
         lastModifiedVar: null,
         caption,
@@ -280,6 +321,16 @@ export class Lesson24TraceEngine extends TraceEngine {
    * that has happened and cannot be read. The tokens sit in the gap between
    * the two columns, and that gap is the carrying property of the morph.
    */
+  /**
+   * TraceEngine's render, plus the one thing it has no concept of: a write
+   * that has happened and cannot yet be read.
+   *
+   * The lane sits in the band below the two columns, because the horizontal
+   * gap between the columns is 20px at view 0 and 16px at view 1 — measured,
+   * not assumed — and four pixels cannot carry a meaning. The first version of
+   * this lesson put the tokens in that gap and claimed it as the morph; the
+   * text overflowed its box and the geometry barely moved. See the header.
+   */
   protected override render(state: TraceState, view: number): void {
     super.render(state, view);
     const g = this.inFlightGroup;
@@ -289,60 +340,67 @@ export class Lesson24TraceEngine extends TraceEngine {
     g.replaceChildren();
 
     const ns = 'http://www.w3.org/2000/svg';
-    const t1 = this.container.querySelector('#bar-T1 rect') as SVGRectElement | null;
-    const t2 = this.container.querySelector('#bar-T2 rect') as SVGRectElement | null;
-    if (!t1 || !t2) return;
+    const pending = s.pending ?? [];
 
-    const leftEdge = parseFloat(t1.getAttribute('x') || '0') + parseFloat(t1.getAttribute('width') || '0');
-    const rightEdge = parseFloat(t2.getAttribute('x') || '0');
-    const gapW = Math.max(0, rightEdge - leftEdge);
-    const midY = parseFloat(t1.getAttribute('y') || '0') + 172;
-
-    // The gap itself, named. In the kitchen it is a hallway; in the machine it
-    // is the window during which a write has happened and cannot be read.
+    // The band is named in both views, and the name is the whole lesson.
     const label = document.createElementNS(ns, 'text');
     label.setAttribute('id', 'inflight-label');
-    label.setAttribute('x', String(leftEdge + gapW / 2));
-    label.setAttribute('y', String(midY - 22));
-    label.setAttribute('text-anchor', 'middle');
+    // the label tracks what it names, or it reads as belonging to nothing
+    label.setAttribute('x', String(LANE_X + (BUFFER_X - LANE_X) * v));
+    label.setAttribute('y', String(LANE_LABEL_Y));
     label.setAttribute('font-size', '9');
     label.setAttribute('font-weight', '700');
     label.setAttribute('letter-spacing', '0.06em');
     label.setAttribute('fill', 'var(--muted)');
-    label.textContent = v < 0.5 ? 'THE HALLWAY' : 'DONE, NOT YET VISIBLE';
+    label.textContent = v < 0.5 ? 'THE HALLWAY' : "THE KITCHEN'S STORE BUFFER";
     g.appendChild(label);
 
-    const pending = s.pending ?? [];
+    if (pending.length === 0) {
+      const empty = document.createElementNS(ns, 'text');
+      empty.setAttribute('id', 'inflight-empty');
+      empty.setAttribute('x', String(LANE_X));
+      empty.setAttribute('y', String(LANE_Y + 14));
+      empty.setAttribute('font-size', '10');
+      empty.setAttribute('fill', 'var(--muted)');
+      empty.textContent =
+        v < 0.5 ? 'Nothing on its way — the room is up to date.' : 'Buffer empty — everything issued is visible.';
+      g.appendChild(empty);
+      return;
+    }
+
     pending.forEach((p, i) => {
-      const tokenW = Math.max(52, gapW - 16);
-      const x = leftEdge + 8;
-      const y = midY - 8 + i * 22;
+      // Strung out along the corridor in the analogy; stacked in a buffer in
+      // the mechanism. A corridor has length and things in it sit apart in
+      // space; a buffer has no length, only order.
+      const aX = LANE_X + i * HALL_STRIDE;
+      const aY = LANE_Y;
+      const mX = BUFFER_X;
+      const mY = LANE_Y + i * BUFFER_STRIDE;
+      const x = aX + (mX - aX) * v;
+      const y = aY + (mY - aY) * v;
+      const w = HALL_TOKEN_W + (BUFFER_TOKEN_W - HALL_TOKEN_W) * v;
 
       const box = document.createElementNS(ns, 'rect');
       box.setAttribute('id', `inflight-${p.name}`);
       box.setAttribute('x', String(x));
       box.setAttribute('y', String(y));
-      box.setAttribute('width', String(tokenW));
-      box.setAttribute('height', '18');
-      box.setAttribute('rx', String(9 - 4 * v));
+      box.setAttribute('width', String(w));
+      box.setAttribute('height', '19');
+      box.setAttribute('rx', String(9.5 - 5.5 * v));
       box.setAttribute('fill', 'var(--surface)');
       box.setAttribute('stroke', 'var(--waiting)');
       box.setAttribute('stroke-width', '1.5');
       box.setAttribute('stroke-dasharray', '3 2');
 
       const txt = document.createElementNS(ns, 'text');
-      txt.setAttribute('x', String(x + tokenW / 2));
-      txt.setAttribute('y', String(y + 13));
+      txt.setAttribute('id', `inflight-text-${p.name}`);
+      txt.setAttribute('x', String(x + w / 2));
+      txt.setAttribute('y', String(y + 13.5));
       txt.setAttribute('text-anchor', 'middle');
-      txt.setAttribute('font-size', '9.5');
+      txt.setAttribute('font-size', '10');
       txt.setAttribute('font-family', 'var(--font-mono)');
       txt.setAttribute('fill', 'var(--waiting)');
-      txt.textContent =
-        v < 0.5
-          ? p.name === 'x'
-            ? 'dish, still coming'
-            : 'call, still carrying'
-          : `${p.name} = ${p.value}`;
+      txt.textContent = v < 0.5 ? TOKEN_ANALOGY[p.name] : `${p.name} = ${p.value}`;
 
       g.append(box, txt);
     });
@@ -467,6 +525,7 @@ export function threadsFor(id: Lesson24Scenario) {
       name: ACTOR_NAMES.T1,
       analogyName: ACTOR_ANALOGY.T1,
       instructions: programFor('T1', barriers),
+      analogyInstructions: analogyProgramFor('T1', barriers),
       color: 'var(--accent)'
     },
     {
@@ -474,6 +533,7 @@ export function threadsFor(id: Lesson24Scenario) {
       name: ACTOR_NAMES.T2,
       analogyName: ACTOR_ANALOGY.T2,
       instructions: programFor('T2', barriers),
+      analogyInstructions: analogyProgramFor('T2', barriers),
       color: 'var(--running)'
     }
   ];
@@ -487,6 +547,9 @@ export function scenarioInput(id: Lesson24Scenario): TraceInput {
     analogy: {
       domain: 'food',
       title: 'The kitchen and the table',
+      // not "what both sides share" — the panel shows what is VISIBLE, which
+      // is precisely what the table can read and the kitchen may have moved on from
+      memoryTitle: 'WHAT THE TABLE CAN SEE',
       labels: { x: VAR_ANALOGY.x, flag: VAR_ANALOGY.flag }
     }
   };
@@ -516,14 +579,14 @@ export const lesson24: Lesson<TraceInput, TraceState> = {
   concept:
     'A memory model is the set of guarantees an architecture makes about when one processor\'s writes become visible to the others. Under a strongly ordered model a modification by one processor is immediately visible to all the rest, so nothing can slip. Under a weakly ordered model it may not be — a write can have definitely executed and still be unreadable by another processor, and two writes can become visible in the opposite order to the one they were issued in. That is why Lesson 12\'s printout could come out 0 when the program plainly says 100: not because the store did not run, but because the announcement arrived before it did. A memory barrier is an instruction that forces every change already made to be propagated to all other processors before execution continues, which is what pins the two writes into an order that can be relied on. Putting a barrier between x = 100 and flag = true, and another between the spin loop and the read, is what makes Thread 1 output 100 on every run rather than on the lucky ones. The older answer to all of this — simply disabling interrupts — works on a uniprocessor, because the code then runs without preemption, but it protects only the processor that does it, so it is generally too inefficient and not broadly scalable on multiprocessor systems.',
   morphReveals:
-    'In the dining room the space between the kitchen and the table is a hallway: it is furniture, it holds nothing, and a dish crossing it is just a dish being carried. In the machine that same gap is where a write lives while it is invisible — it stops being distance and starts being delay. Once the gap can hold something, "the store has run" and "the store can be read" come apart, and you can watch the call sitting in the gap overtake the dish that was put there first. That gap is the whole reason a barrier has to exist.',
+    'In the hallway, where a thing sits is how far along it has got: the dish and the call are strung out down the corridor, spaced apart, and you can point at which one is further on. On the machine side those same two collapse into a stack at one fixed spot, because a store buffer has no length — position stops meaning distance and starts meaning nothing at all, only order survives. That is precisely what makes weakly ordered memory dangerous: you cannot look and see how far along a write is, so "the store has run" and "the store can be read" come apart with nothing on screen to warn you.',
   morphMode: 'morph',
   analogyMapping: [
     'The kitchen ➔ Thread 2, issuing the writes',
     'Ammu listening at the table ➔ Thread 1, spinning on while (!flag)',
     'What is in the serving dish ➔ the shared variable x',
     'The call of "ready!" ➔ the shared variable flag',
-    'The hallway between them ➔ the window in which a write has run but is not visible',
+    'Where a thing sits in the hallway ➔ nothing — a store buffer has order, not distance',
     'Everyone hearing things in the same order ➔ a strongly ordered memory model, slide 4',
     'The call outrunning the dish ➔ weakly ordered memory — L12\'s printed 0, explained',
     'Saying nothing until it is really out there ➔ memory_barrier(), slide 5',
