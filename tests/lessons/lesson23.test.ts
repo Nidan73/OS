@@ -362,3 +362,59 @@ describe('L23 · lesson contract', () => {
     }
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Added after an audit caught an arithmetic error in morphReveals: it claimed
+// the engagement party was "wider than the other four together" when 29 < 32.
+// Nothing bound that sentence to DECK_BURSTS, so prose could assert anything.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('L23 · the prose agrees with the burst data', () => {
+  const biggest = Math.max(...Object.values(DECK_BURSTS));
+  const rest = Object.values(DECK_BURSTS).reduce((a, b) => a + b, 0) - biggest;
+
+  it('quotes both figures, and they are the real ones', () => {
+    expect(biggest).toBe(29);
+    expect(rest).toBe(32);
+    expect(lesson23.morphReveals).toContain(String(biggest));
+    expect(lesson23.morphReveals).toContain(String(rest));
+  });
+
+  it('does not claim the biggest exceeds the rest, because it does not', () => {
+    expect(biggest).toBeLessThan(rest);
+    expect(lesson23.morphReveals!.toLowerCase()).not.toMatch(
+      /wider than the other four together|larger than the other four together/
+    );
+    // it must say "almost", which is the true relation
+    expect(lesson23.morphReveals!.toLowerCase()).toMatch(/almost as wide/);
+  });
+
+  it('every number in morphReveals is one the algorithms produce', () => {
+    const known = new Set<number>([
+      ...Object.values(DECK_BURSTS),
+      biggest,
+      rest,
+      ...comparisonFor('fcfs').map((v) => v.avgWaiting),
+      Object.keys(DECK_BURSTS).length
+    ]);
+    const quoted = (lesson23.morphReveals!.match(/\b\d+(\.\d+)?\b/g) ?? []).map(Number);
+    expect(quoted.length).toBeGreaterThan(0);
+    for (const n of quoted) {
+      expect(known.has(n), `morphReveals quotes ${n}, which no algorithm produces`).toBe(true);
+    }
+  });
+
+  it('the tally walks the chart, not the input order — SJF reorders the bars', () => {
+    const e = new Lesson23GanttEngine(document.createElement('div'), scenarioInput('sjf'));
+    e.init();
+    e.applyScenario('sjf');
+    const tally = e
+      .getSteps()
+      .filter((s) => s.caption.includes('Running total'))
+      .map((s) => s.state.activeProcessId);
+    const barOrder = Array.from(new Set(e.getScheduleResult().bars.map((b) => b.id)));
+    expect(tally).toEqual(barOrder);
+    // and SJF genuinely reorders, so this is not vacuously true
+    expect(barOrder).not.toEqual(DECK_ORDER);
+  });
+});

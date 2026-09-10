@@ -241,6 +241,42 @@ function roundsReveals(countRollbacks: boolean): DiagramReveal[] {
   return out;
 }
 
+/**
+ * Slide 42's first option: abort every deadlocked process. Its cost is the sum
+ * of every victim's cost and its payoff is every held unit released — both
+ * computed from CANDIDATES, never typed. The scoreboard used to carry
+ * "abort cost 183 · 6 spots freed" as a literal string: correct at the time,
+ * and silently wrong the moment a candidate changes.
+ */
+export interface AbortAllTotals {
+  cost: number;
+  unitsFreed: number;
+  flats: number;
+}
+
+/**
+ * Rollbacks charged to each flat by the time beat `stepIndex` has played.
+ * Pure: same index in, same tally out, with no reference to engine state.
+ * The final beat prices in every pick — that beat is the verdict.
+ */
+export function tallyAt(stepIndex: number): Record<string, number> {
+  const run = runFor('rollback');
+  const tally = emptyTally();
+  const priced = stepIndex >= run.picks.length + 2 ? run.picks.length : Math.max(0, stepIndex - 1);
+  for (let i = 0; i < priced && i < run.picks.length; i++) {
+    tally[run.picks[i]] = (tally[run.picks[i]] ?? 0) + 1;
+  }
+  return tally;
+}
+
+export function abortAllTotals(candidates: VictimCandidate[] = CANDIDATES): AbortAllTotals {
+  return {
+    cost: candidates.reduce((sum, c) => sum + victimCost(c, false).total, 0),
+    unitsFreed: candidates.reduce((sum, c) => sum + c.heldUnits, 0),
+    flats: candidates.length
+  };
+}
+
 export function runFor(scenario: Lesson22Scenario): RecoveryRun {
   return recoveryRounds(CANDIDATES, ROUNDS, scenario === 'rollback');
 }
@@ -310,18 +346,17 @@ export class Lesson22DiagramEngine extends DiagramEngine implements PlaygroundCa
     this.paintScoreboard();
   }
 
+  /**
+   * Card widths under the rollback policy encode the cost as it stands at THIS
+   * beat, so they must be derived from the step being rendered — not from the
+   * engine's current index. SPEC §4A: render(state, view) is an absolute
+   * function of state, which is what makes scrubbing and teardown safe. An
+   * earlier version read getCurrentIndex() and getSteps() here, so rendering
+   * an arbitrary snapshot drew whatever the engine happened to be pointing at.
+   */
   protected render(state: DiagramState, view: number): void {
     if (this.scenario === 'rollback') {
-      const stepIdx = this.getCurrentIndex();
-      const run = runFor('rollback');
-      const currentTally = emptyTally();
-      const steps = this.getSteps();
-      const isFinalStep = steps.length > 0 && stepIdx >= steps.length - 1;
-      const countPricedIn = isFinalStep ? run.picks.length : Math.max(0, stepIdx - 1);
-      for (let i = 0; i < countPricedIn && i < run.picks.length; i++) {
-        currentTally[run.picks[i]] = (currentTally[run.picks[i]] ?? 0) + 1;
-      }
-      this.input.nodes = nodesFor(true, currentTally);
+      this.input.nodes = nodesFor(true, tallyAt(state.stepIndex));
     }
     super.render(state, view);
   }
@@ -333,15 +368,16 @@ export class Lesson22DiagramEngine extends DiagramEngine implements PlaygroundCa
     const rounds = this.scenario === 'starve' || this.scenario === 'rollback';
     const run = runFor(this.scenario);
     const tone = isAbortAll ? 'var(--accent)' : rounds && run.starved ? 'var(--waiting)' : 'var(--running)';
+    const totals = abortAllTotals();
     const label = isAbortAll
-      ? 'All 3 flats'
+      ? `All ${totals.flats} flats`
       : !rounds
         ? selectVictim(CANDIDATES, false).id
         : run.starved
           ? `${run.starvedId} starved`
           : 'Tows shared out';
     const detail = isAbortAll
-      ? 'abort cost 183 · 6 spots freed'
+      ? `abort cost ${totals.cost} · ${totals.unitsFreed} spots freed`
       : !rounds
         ? `cost ${selectVictim(CANDIDATES, false).total}`
         : run.picks.join(' → ');
