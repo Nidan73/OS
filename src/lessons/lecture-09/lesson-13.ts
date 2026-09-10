@@ -205,7 +205,10 @@ const MODE_BUTTONS: Array<{ mechanism: MechanismKey; atomic: boolean; label: str
 /**
  * Lesson 13's engine, scoped to this lesson. Uses CounterEngine.render()
  * unchanged — the lesson adds the atomicity story: steps come from
- * simulateAtomicSteps() and the playground re-maps them on every toggle.
+ * atomicSteps() (the simulateAtomicSteps trace mapped 1:1, plus the computed
+ * tally beats), and the playground re-maps them on every toggle. Steps are
+ * never re-derived from CounterInput.events — the events array exists for
+ * input-shape compatibility only; the trace mapping is the single source.
  */
 export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapable {
   protected declare input: AtomicLessonInput;

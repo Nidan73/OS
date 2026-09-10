@@ -46,11 +46,13 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     const wP2 = parseFloat(host.querySelector<SVGRectElement>('#bar-P2 rect')?.getAttribute('width') ?? '0');
     const wP3 = parseFloat(host.querySelector<SVGRectElement>('#bar-P3 rect')?.getAttribute('width') ?? '0');
 
-    // In mechanism view, bar width reflects CPU burst duration (burst 15 * 5 = 75px)
-    expect(wP1).toBe(15 * 5);
+    // In mechanism view, bar width reflects CPU burst duration (burst * 5px)
+    expect(wP1).toBe(12 * 5);
     expect(wP2).toBe(15 * 5);
-    expect(wP3).toBe(15 * 5);
-    expect(wP1).toBeGreaterThan(50); // expanded from analogy person token to burst duration
+    expect(wP3).toBe(20 * 5);
+    expect(wP3).toBeGreaterThan(wP2);
+    expect(wP2).toBeGreaterThan(wP1);
+    expect(wP3 / wP1).toBeCloseTo(20 / 12, 5);
   });
 
   // §3C.2c Required Test 3: Geometry interpolates — the morph is real
@@ -62,14 +64,15 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
       return parseFloat(rect?.getAttribute('width') ?? '0');
     };
 
+    const expectedB: Record<string, number> = { P1: 60, P2: 75, P3: 100 };
     for (const id of ids) {
       const [a, mid, b] = [widthAt(0, id), widthAt(0.5, id), widthAt(1, id)];
       expect(a).toBe(50);
-      expect(b).toBe(75);
+      expect(b).toBe(expectedB[id]);
       // Strictly between endpoints
       expect(mid).toBeGreaterThan(Math.min(a, b));
       expect(mid).toBeLessThan(Math.max(a, b));
-      expect(mid).toBeCloseTo(62.5, 1);
+      expect(mid).toBeCloseTo((50 + expectedB[id]) / 2, 1);
     }
   });
 

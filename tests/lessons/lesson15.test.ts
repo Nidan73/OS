@@ -4,6 +4,7 @@ import { CounterEngine } from '../../src/engines/counter.js';
 import {
   DEFAULT_SEM,
   SEM_RANGES,
+  SemaphoreCounterEngine,
   lesson15,
   lesson15Input,
   semaphoreLessonInput,
@@ -164,5 +165,70 @@ describe('Lesson 15 · lesson wiring', () => {
     const run = semaphoreRun(lesson15Input.params);
     expect(run.steps.some((s) => s.value < 0)).toBe(true);
     expect(lesson15.input.events.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
+  const IDS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  const widthsAt = (view: number, step: number): Record<string, number> => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const engine = new SemaphoreCounterEngine(host, semaphoreLessonInput(DEFAULT_SEM));
+    engine.init(view);
+    engine.seek(step);
+    engine.setView(view);
+    const out: Record<string, number> = {};
+    for (const id of IDS) {
+      const rect = host.querySelector(`#bar-${id} rect`);
+      out[id] = parseFloat(rect?.getAttribute('width') ?? 'NaN');
+    }
+    engine.destroy();
+    host.remove();
+    return out;
+  };
+
+  const mountSteps = () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const engine = new SemaphoreCounterEngine(host, semaphoreLessonInput(DEFAULT_SEM));
+    engine.init(0);
+    const steps = engine.getSteps().map((s) => ({ ...s, state: { ...s.state } }));
+    engine.destroy();
+    host.remove();
+    return steps;
+  };
+  // A step where the dock holds AND seats — wide holders against narrow seated.
+  const occupiedStep = (): number =>
+    mountSteps().findIndex((s) => s.state.holders.length > 0 && s.state.waiting.length > 0);
+
+  it('analogy layout is native, not the mechanism restyled', () => {
+    const w = widthsAt(0, occupiedStep());
+    const vals = IDS.map((id) => w[id]);
+    expect(Math.max(...vals) - Math.min(...vals)).toBeLessThan(1);
+    expect(w.T1).toBeCloseTo(54, 5);
+  });
+
+  it('mechanism layout encodes occupancy: plugged-in wide, seated compressed', () => {
+    const step = occupiedStep();
+    expect(step).toBeGreaterThanOrEqual(0);
+    const states = mountSteps()[step].state;
+    // Crowded docks shrink to fit, but the holder:waiter RATIO survives —
+    // assert the ratio, not the absolute pixel constants.
+    const w = widthsAt(1, step);
+    const holder = states.holders[0];
+    const waiter = states.waiting[0];
+    expect(w[holder] / w[waiter]).toBeCloseTo(96 / 60, 1);
+    expect(w[holder]).toBeGreaterThan(w[waiter]);
+  });
+
+  it('geometry interpolates — the morph is real', () => {
+    const step = occupiedStep();
+    for (const id of IDS) {
+      const a = widthsAt(0, step)[id];
+      const mid = widthsAt(0.5, step)[id];
+      const b = widthsAt(1, step)[id];
+      expect(mid).toBeGreaterThan(Math.min(a, b));
+      expect(mid).toBeLessThan(Math.max(a, b));
+    }
   });
 });

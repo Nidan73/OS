@@ -252,9 +252,9 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
     ],
     items: [
       { id: "T1", name: "Task 1", burst: 12, queueId: "ready" },
-      { id: "T2", name: "Task 2", burst: 12, queueId: "ready" },
-      { id: "T3", name: "Task 3", burst: 12, queueId: "ready" },
-      { id: "T4", name: "Task 4", burst: 12, queueId: "ready" }
+      { id: "T2", name: "Task 2", burst: 8, queueId: "ready" },
+      { id: "T3", name: "Task 3", burst: 16, queueId: "ready" },
+      { id: "T4", name: "Task 4", burst: 20, queueId: "ready" }
     ],
     events: [
       { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },

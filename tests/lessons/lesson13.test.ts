@@ -8,6 +8,7 @@ import {
 } from '../../src/algorithms/synchronization.js';
 import { CounterEngine } from '../../src/engines/counter.js';
 import {
+  AtomicCounterEngine,
   DEFAULT_ATOMIC,
   atomicIncrement,
   atomicLessonInput,
@@ -215,5 +216,70 @@ describe('Lesson 13 · lesson wiring', () => {
     expect(DEFAULT_ATOMIC.atomic).toBe(false);
     expect(atomicTrace(lesson13Input.params).bothEnteredCS).toBe(true);
     expect(lesson13.input.events.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Lesson 13 · geometry on actual coordinates (§3C.2c)', () => {
+  const widthsAt = (view: number, step: number): Record<string, number> => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const engine = new AtomicCounterEngine(host, atomicLessonInput(DEFAULT_ATOMIC));
+    engine.init(view);
+    engine.seek(step);
+    engine.setView(view);
+    const out: Record<string, number> = {};
+    for (const id of ['T1', 'T2']) {
+      const rect = host.querySelector(`#bar-${id} rect`);
+      out[id] = parseFloat(rect?.getAttribute('width') ?? 'NaN');
+    }
+    engine.destroy();
+    host.remove();
+    return out;
+  };
+
+  // The mounted engine runs DEFAULT_ATOMIC (tas-split). Find the first step
+  // with a holder AND a waiter in the ENGINE's own steps — the picture's
+  // occupancy, not a parallel computation's.
+  const mountSteps = (): ReturnType<typeof atomicSteps> => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const engine = new AtomicCounterEngine(host, atomicLessonInput(DEFAULT_ATOMIC));
+    engine.init(0);
+    const steps = engine.getSteps().map((s) => ({ ...s, state: { ...s.state } }));
+    engine.destroy();
+    host.remove();
+    return steps as ReturnType<typeof atomicSteps>;
+  };
+  const occupiedStep = (): number =>
+    mountSteps().findIndex((s) => s.state.holders.length > 0 && s.state.waiting.length > 0);
+
+  it('analogy layout is native, not the mechanism restyled', () => {
+    const w = widthsAt(0, occupiedStep());
+    expect(Math.max(w.T1, w.T2) - Math.min(w.T1, w.T2)).toBeLessThan(1);
+    expect(w.T1).toBeCloseTo(54, 5);
+    expect(w.T2).toBeCloseTo(54, 5);
+  });
+
+  it('mechanism layout encodes occupancy: holder fills wide, waiter compresses', () => {
+    const step = occupiedStep();
+    expect(step).toBeGreaterThanOrEqual(0);
+    const w = widthsAt(1, step);
+    const states = mountSteps()[step].state;
+    const holder = states.holders[0];
+    const waiter = states.waiting[0];
+    expect(w[holder]).toBeCloseTo(96, 5);
+    expect(w[waiter]).toBeCloseTo(60, 5);
+    expect(w[holder] / w[waiter]).toBeCloseTo(96 / 60, 5);
+  });
+
+  it('geometry interpolates — the morph is real', () => {
+    const step = occupiedStep();
+    for (const id of ['T1', 'T2']) {
+      const a = widthsAt(0, step)[id];
+      const mid = widthsAt(0.5, step)[id];
+      const b = widthsAt(1, step)[id];
+      expect(mid).toBeGreaterThan(Math.min(a, b));
+      expect(mid).toBeLessThan(Math.max(a, b));
+    }
   });
 });

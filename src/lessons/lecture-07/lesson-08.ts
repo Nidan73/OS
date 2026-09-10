@@ -179,9 +179,9 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
       { id: 'core1', label: 'Core 1 (Idle)' }
     ],
     items: [
-      { id: 'P1', name: 'Regular Diner', burst: 15, queueId: 'q_core0', affinity: 'core0' },
+      { id: 'P1', name: 'Regular Diner', burst: 12, queueId: 'q_core0', affinity: 'core0' },
       { id: 'P2', name: 'Regular Diner', burst: 15, queueId: 'q_core0', affinity: 'core0' },
-      { id: 'P3', name: 'Regular Diner', burst: 15, queueId: 'q_core0', affinity: 'core0' }
+      { id: 'P3', name: 'Regular Diner', burst: 20, queueId: 'q_core0', affinity: 'core0' }
     ],
     events: SCENARIO_EVENTS.push,
     analogy: {

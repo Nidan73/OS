@@ -4,6 +4,7 @@ import { CounterEngine } from '../../src/engines/counter.js';
 import {
   DEFAULT_LOCK,
   LOCK_RANGES,
+  LockCounterEngine,
   lesson14,
   lesson14Input,
   lockCosts,
@@ -140,5 +141,66 @@ describe('Lesson 14 · lesson wiring', () => {
     expect(lesson14Input.params).toStrictEqual(DEFAULT_LOCK);
     expect(lockCosts(lesson14Input.params).preferSpinlock).toBe(true);
     expect(lesson14.input.events.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Lesson 14 · geometry on actual coordinates (§3C.2c)', () => {
+  const widthsAt = (view: number, step: number): Record<string, number> => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const engine = new LockCounterEngine(host, lockLessonInput(DEFAULT_LOCK));
+    engine.init(view);
+    engine.seek(step);
+    engine.setView(view);
+    const out: Record<string, number> = {};
+    for (const id of ['T1', 'T2', 'T3']) {
+      const rect = host.querySelector(`#bar-${id} rect`);
+      out[id] = parseFloat(rect?.getAttribute('width') ?? 'NaN');
+    }
+    engine.destroy();
+    host.remove();
+    return out;
+  };
+
+  const mountSteps = () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const engine = new LockCounterEngine(host, lockLessonInput(DEFAULT_LOCK));
+    engine.init(0);
+    const steps = engine.getSteps().map((s) => ({ ...s, state: { ...s.state } }));
+    engine.destroy();
+    host.remove();
+    return steps;
+  };
+  const occupiedStep = (): number =>
+    mountSteps().findIndex((s) => s.state.holders.length > 0 && s.state.waiting.length > 0);
+
+  it('analogy layout is native, not the mechanism restyled', () => {
+    const w = widthsAt(0, occupiedStep());
+    expect(Math.max(w.T1, w.T2, w.T3) - Math.min(w.T1, w.T2, w.T3)).toBeLessThan(1);
+    expect(w.T1).toBeCloseTo(54, 5);
+  });
+
+  it('mechanism layout encodes occupancy: holder fills wide, waiter compresses', () => {
+    const step = occupiedStep();
+    expect(step).toBeGreaterThanOrEqual(0);
+    const w = widthsAt(1, step);
+    const states = mountSteps()[step].state;
+    const holder = states.holders[0];
+    const waiter = states.waiting[0];
+    expect(w[holder]).toBeCloseTo(96, 5);
+    expect(w[waiter]).toBeCloseTo(60, 5);
+    expect(w[holder] / w[waiter]).toBeCloseTo(96 / 60, 5);
+  });
+
+  it('geometry interpolates — the morph is real', () => {
+    const step = occupiedStep();
+    for (const id of ['T1', 'T2', 'T3']) {
+      const a = widthsAt(0, step)[id];
+      const mid = widthsAt(0.5, step)[id];
+      const b = widthsAt(1, step)[id];
+      expect(mid).toBeGreaterThan(Math.min(a, b));
+      expect(mid).toBeLessThan(Math.max(a, b));
+    }
   });
 });
