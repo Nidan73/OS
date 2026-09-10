@@ -39,6 +39,12 @@ const LESSONS = [
   { slug: 'lesson-20', chapter: 'lecture-10', name: "The banker's algorithm" },
 ];
 
+/** Reference pages to gate. */
+const REFERENCES = [
+  { slug: 'reference', chapter: 'lecture-06', name: 'Scheduling criteria & five metrics' },
+  { slug: 'reference', chapter: 'lecture-07', name: 'Thread scheduling PCS/SCS & schedulers' },
+];
+
 /** Internal vocabulary that must never reach a student. */
 const JARGON = [
   /§\s*\d/,                    // spec section references
@@ -358,11 +364,107 @@ async function gateLesson(page, lesson) {
   check(consoleErrors.length === 0, `${tag} console`, consoleErrors.slice(0, 3).join(' | '));
 }
 
+async function gateReference(page, ref) {
+  const url = `${BASE}/#/${ref.chapter}/${ref.slug}`;
+  const tag = `[${ref.chapter}/${ref.slug}]`;
+  console.log(`\n── ${ref.chapter}/${ref.slug} · ${ref.name}`);
+
+  const consoleErrors = [];
+  page.on('pageerror', (e) => consoleErrors.push(String(e)));
+  page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(url, { waitUntil: 'load' });
+  await page.waitForTimeout(500);
+
+  // ── 1. The page actually rendered, and did not hit the error boundary
+  const fellBack = await page.locator('text=/failed to load|page not found|reference not found/i').count();
+  check(fellBack === 0, `${tag} error boundary`, 'reference rendered fallback/not found card');
+
+  const pageCount = await page.locator('main.reference-page').count();
+  check(pageCount > 0, `${tag} rendered`, 'no main.reference-page container found');
+
+  // ── 2. No text clipped or overflowing its container
+  const clipped = await page.evaluate(() => {
+    const bad = [];
+    document.querySelectorAll('svg text, .caption, .metric, .label, td, th').forEach((el) => {
+      const t = (el.textContent ?? '').trim();
+      if (!t) return;
+      const parent = el.closest('g, .box, .card, .ref-metric-card, .ref-stat-card') ?? el.parentElement;
+      if (!parent) return;
+      const a = el.getBoundingClientRect();
+      const b = parent.getBoundingClientRect();
+      if (b.width < 2 || a.width < 2) return;
+      if (a.right > b.right + 2 || a.left < b.left - 2) bad.push(t.slice(0, 40));
+    });
+    return [...new Set(bad)];
+  });
+  check(clipped.length === 0, `${tag} text overflow`, clipped.join(' | '));
+
+  // ── 3. No internal vocabulary in student-facing copy
+  const visibleText = await page.evaluate(() => document.body.innerText);
+  for (const rx of JARGON) {
+    const hit = visibleText.match(rx);
+    check(!hit, `${tag} jargon`, hit ? `"${hit[0]}" is visible to the student` : '');
+  }
+
+  // ── 4. Responsive floor: no horizontal body scroll at any width
+  for (const vp of VIEWPORTS) {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await page.waitForTimeout(250);
+    const hScroll = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
+    );
+    check(!hScroll, `${tag} h-scroll @${vp.name}`, 'body scrolls horizontally');
+    fs.mkdirSync(SHOTS, { recursive: true });
+    await page.screenshot({ path: path.join(SHOTS, `${ref.chapter}_${ref.slug}_${vp.name}.png`) });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  // ── 5. Both themes render, and body text passes WCAG AA
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+    await page.waitForTimeout(200);
+    const sample = await page.evaluate(() => {
+      const el = document.querySelector('.ref-lead, .ref-body, .ref-prose, p');
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      let node = el, bg = 'rgba(0, 0, 0, 0)';
+      while (node && bg === 'rgba(0, 0, 0, 0)') {
+        bg = getComputedStyle(node).backgroundColor;
+        node = node.parentElement;
+      }
+      return { fg: cs.color, bg, size: parseFloat(cs.fontSize) };
+    });
+    if (sample) {
+      const fg = parseRGB(sample.fg), bg = parseRGB(sample.bg);
+      if (fg && bg) {
+        const ratio = contrastRatio(fg, bg);
+        const min = sample.size >= 18.66 ? 3 : 4.5;
+        check(
+          ratio >= min,
+          `${tag} contrast ${theme}`,
+          `${ratio.toFixed(2)}:1 at ${sample.size}px, needs ${min}:1`
+        );
+      }
+    }
+    await page.screenshot({ path: path.join(SHOTS, `${ref.chapter}_${ref.slug}_${theme}.png`) });
+  }
+  await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
+
+  // ── 6. Nothing threw while rendering
+  check(consoleErrors.length === 0, `${tag} console`, consoleErrors.slice(0, 3).join(' | '));
+}
+
 async function main() {
   const only = process.argv[2];
-  const targets = only ? LESSONS.filter((l) => l.slug === only) : LESSONS;
-  if (targets.length === 0) {
-    console.error(`No lesson matching "${only}". Known: ${LESSONS.map((l) => l.slug).join(', ')}`);
+  const lessonTargets = only ? LESSONS.filter((l) => l.slug === only) : LESSONS;
+  const refTargets = only
+    ? REFERENCES.filter((r) => r.chapter === only || `${r.chapter}-reference` === only || `${r.chapter}/reference` === only || only === 'reference' || only === 'references')
+    : REFERENCES;
+
+  if (lessonTargets.length === 0 && refTargets.length === 0) {
+    console.error(`No lesson or reference matching "${only}". Known: ${LESSONS.map((l) => l.slug).join(', ')}, ${REFERENCES.map((r) => `${r.chapter}-reference`).join(', ')}`);
     process.exit(2);
   }
 
@@ -370,7 +472,8 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
   try {
-    for (const lesson of targets) await gateLesson(page, lesson);
+    for (const lesson of lessonTargets) await gateLesson(page, lesson);
+    for (const ref of refTargets) await gateReference(page, ref);
   } catch (err) {
     failures.push(`gate crashed: ${err.message}`);
   } finally {
@@ -379,7 +482,10 @@ async function main() {
 
   console.log(`\n${'─'.repeat(60)}`);
   if (failures.length === 0) {
-    console.log(`GATE PASSED — ${checks} checks across ${targets.length} lesson(s).`);
+    const parts = [];
+    if (lessonTargets.length > 0) parts.push(`${lessonTargets.length} lesson(s)`);
+    if (refTargets.length > 0) parts.push(`${refTargets.length} reference page(s)`);
+    console.log(`GATE PASSED — ${checks} checks across ${parts.join(' and ')}.`);
     process.exit(0);
   }
   console.log(`GATE FAILED — ${failures.length} of ${checks} checks:\n`);

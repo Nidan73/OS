@@ -9,7 +9,7 @@ Repo: `https://github.com/Nidan73/OS.git` · work on `main` unless told otherwis
 
 ## What is being built
 
-A deployable static site teaching **22 interactive lessons** on Operating Systems
+A deployable static site teaching **24 interactive lessons** on Operating Systems
 (CSC 2209, Lectures 6–10) — for a student preparing for an exam. Quality matters more than speed;
 scope is not being cut.
 
@@ -113,52 +113,98 @@ number was wrong by 47% and no test or gate check could see it. That is why §2.
 
 ## Where things stand
 
-**Wave 1 complete and merged to `main`** — Lessons 1–8. **Wave 2's three engines
-(`trace`, `counter`, `diagram`) and `src/algorithms/synchronization.ts` are already built** on
-`phase1/engines-wave2`; do not rewrite them. Current verified state on that branch:
-**117 unit tests pass, 243 gate checks pass across 8 lessons, `tsc` and `npm run build` clean.**
+**`main` is at `081019e`.** Verified by running it:
+
+```
+npm test          →  32 files / 329 tests passing
+npx tsc --noEmit  →  clean
+npm run build     →  clean
+npm run verify    →  GATE PASSED — 594 checks across 18 lesson(s)   (~104s)
+grep -rn "prototype as any" src   →  0
+```
+
+**18 of 24 lessons built:** L1–L17 and L20.
 
 | Wave | Lessons | Engines | Status |
 |---|---|---|---|
-| 1 | L1, L2, L3, L4, L5 · L6, L7, L8 | `gantt`, `queue` | **done, merged** |
-| 2 | L9 · L10, L11, L12 · L13, L14, L15 | `diagram`, `trace`, `counter` | **next** |
-| 3 | L16, L17, L18, L19 · L20, L21 · L22 | `graph`, `matrix`, `diagram` | not started |
+| 1 | L1–L8 | `gantt`, `queue` | **done, merged** |
+| 2 | L9 · L10–L12 · L13–L15 | `diagram`, `trace`, `counter` | **done, merged** |
+| 3 | L16, L17, L20 | `graph`, `matrix` | **done, merged** |
+| 3 | **L18, L19, L21, L22** | `diagram`, `graph`, `matrix` | **next** |
+| 4 | **L23, L24** | `diagram`/`gantt`, `trace` | not started |
 
-Waves are grouped so each introduces at most two new engines. Wave 3 is the hardest chapter
-(deadlocks) and runs last, when the patterns are most established.
+**All seven engines are proven by a shipped lesson** — `gantt`, `queue`, `trace`, `counter`,
+`diagram`, `graph`, `matrix`. **Do not rewrite them.** Three deck-verified algorithm modules:
+`scheduling.ts`, `synchronization.ts`, `deadlock.ts`.
+
+### Things learned the expensive way — do not rediscover
+
+- **`npm run gate <slug>` is ~6s. Full `npm run verify` is ~104s.** Use the single-lesson gate
+  while iterating; full verify only before you merge.
+- **`verify.mjs` builds into run-scoped `dist-verify-<pid>-<ts>/`, never `dist/`.** Two runs
+  cannot collide. Use `GATE_PORT=<n>` to move the preview.
+- **Do not parallelise the gate.** Tried and measured: 594/18 correct but **310s against a
+  104s baseline**, ≥419s at concurrency 1. Per-lesson browser contexts refetch the bundle cold
+  and the timeouts needed to survive parallel races are pure wait.
+- **Parallel subagents do not work in commandcode** — tested twice; one pair died in 9s, another
+  hung ~50 minutes with zero files written. Work sequentially. They *do* work in Antigravity.
+- **Never run a build against the shared tree while another agent is working.** It clobbers
+  `dist/` mid-gate and produces phantom failures.
+
+### The analogy register — apply from the start
+
+Every analogy is cast for one learner: a Bangladeshi undergraduate, upper-middle-class.
+The register is **cars, mother, father, the cat, restaurants, food** — household and city life
+for a family that owns cars and eats out. **Not** rivers or scenery; **not** street food,
+messes or hostels — wrong social register.
+
+Each lesson declares which it is:
+
+- **mechanism-fixed** — the mechanism dictates the analogy's shape, so a familiar-noun swap is
+  correct and sufficient. L11's queue-enter-lock-exit-return is mandatory; the home bathroom is
+  simply the familiar version. Say so; do not over-think it.
+- **re-cast** — real structural choice existed, so find the scenario that genuinely maps.
+  L20 is the model: mother's household ledger *actually has* Available/Max/Allocation/Need.
+
+Read `src/lessons/lecture-06/lesson-01.ts` and `src/lessons/lecture-09/lesson-14.ts` for voice.
+
+### Slide discrepancies found — report any others, never massage an input
+
+- **L6 slide 11:** SJF arrivals 0/2/4/5 but a published average wait of 7, only reachable if all
+  four arrive at t=0. L3 keeps the published answer for exam alignment and documents it.
+- **L7 slide 8:** teaches `PTHREAD_SCOPE_PROCESS`, but Linux NPTL is 1:1 and returns `ENOTSUP` —
+  an API mode that does not work on the student's platform.
+- Lectures 8, 9 and 10 checked clean.
 
 ---
 
-## Your next task: Wave 2
+## Your next task
 
-Seven parallel subagents, `branch` isolation, branches `phase1/lesson-NN-<slug>`.
+Work **sequentially**, one branch per lesson, `phase1/lesson-NN-<slug>`.
 
-- **L9** Real-time and latency (`diagram`)
-- **L10** The last slice — race conditions (`trace`)
-- **L11** What a correct solution must promise (`trace`)
-- **L12** Peterson's solution, and why hardware breaks it (`trace`)
-- **L13** One indivisible motion — test-and-set, CAS (`counter`)
-- **L14** Locks, and the cost of waiting at the door (`counter`)
-- **L15** Semaphores (`counter`)
+- **L18** Making it impossible — units 72–75 (`diagram`)
+- **L19** Safe, unsafe, and stuck — units 76–79 (`diagram` + `graph`)
+- **L21** Spotting a deadlock — units 84–87 (`graph` + `matrix`)
+- **L22** Getting out — units 88, 89 (`diagram`)
+- **L23** Guessing before you build — units 31–33, Little's formula `n = λ·W`
+- **L24** The barrier — units 47–49. **Pairs with L12**: L12 owns the broken case, L24 owns the
+  fix. Reference it; do not duplicate its trace.
 
-**Subagents inherit no conversation history.** Every brief must be self-contained and include,
-quoted in full rather than referenced:
+**L17, L21 and L22 share one picture:** cars blocking each other in the building driveway — who
+blocks whom, the closed ring, which car has to move out. Build on it rather than inventing.
 
-- the lesson's entry from `LESSONS.md`, verbatim
-- the `ATLAS.md` rows for the units it absorbs (id, title, slides, analogy domain, analogy text)
-- `src/lessons/lecture-06/lesson-02.ts` as the reference implementation
-- SPEC §3C.2a, §3C.2b and §3C.2c in full
-- the exact file paths it owns, and that it must touch nothing else
-- "add your lesson to the `LESSONS` array in `scripts/gate.mjs`"
-- "expose `[data-view-lens]` and `[data-primary-control]`"
-- "run `npm run gate` for your lesson before reporting; a failing gate means not finished"
+Every lesson needs: a row in the `LESSONS` array in `scripts/gate.mjs` **and** a row in
+`LESSONS_META` in `src/main.ts`; a row in `tests/engine-taxonomy.test.ts`; `[data-view-lens]`
+and `[data-primary-control]`; the three SPEC §3C.2c geometry tests reading **real DOM
+coordinates**; one step per discrete mechanism event; a `morphReveals` naming a geometric
+property whose **meaning** changes; and an honest `engine` declaration (`standalone` if the
+`engineClass` extends `AnimationEngine` directly — the taxonomy test enforces this).
 
-A wave is not done until all seven pass. **Merge each branch to `main` yourself after its gate
-passes — subagents never merge.** Never force-push.
+**Crossfade is still available and still unused.** 18 lessons, zero `morphMode: 'crossfade'`,
+against a spec expecting roughly a quarter. If a morph does not carry, an honest crossfade with
+a one-line `morphReason` is the right answer and will not be marked down.
 
-Report the wave as one summary: which lessons passed, which declared `crossfade` and why, and
-**any lesson where the slide's stated inputs did not reproduce its stated answer** — flag those
-rather than massaging the input. That is the one failure mode the gate cannot catch.
+**Merge each branch to `main` yourself after its gate passes.** Never force-push.
 
 ---
 
