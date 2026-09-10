@@ -199,11 +199,20 @@ All 24 lessons are built and gated. What is left is the finishing layer, in this
    Widen the check, then re-run the full gate; nothing should newly fail.
    **This was deliberately left for you:** the seat that found it also wrote the lessons the
    gate judges, and should not be the one loosening it.
-3. **Lecture 8, 9 and 10 reference pages.** Only 06 and 07 exist. Lecture 10 slide 33 was
-   blocked on L21/L22 and no longer is.
-4. **DESIGN.md pass (L2 finding 5)** — pill buttons, `{rounded.lg}` cards on `{colors.hairline}`,
-   tile rhythm.
-5. **a11y sweep**, then a verified `dist/` and `DEPLOY.md`.
+3. **a11y — add the checks to the gate first, then fix what they surface.** The gate today
+   checks contrast in both themes and nothing else: no focus-visible, no keyboard reach, no
+   accessible name on icon-only controls, no `prefers-reduced-motion` assertion (the code
+   honours it in `core/engine.ts` and `base.css`, but nothing proves it stays honoured).
+   Sweeping by hand first would be reviewing by eye again.
+4. **DESIGN.md L2 finding 5 is mostly done — verify, do not re-do.** 41 of 45 buttons are
+   already pills and `--rounded-lg` appears 90 times. Only four ±1 stepper buttons
+   (`lesson-05`, `lesson-10`) are not pills, and a pill may be wrong for them. Decide those
+   four; do not restyle the other 41.
+5. A verified `dist/` and `DEPLOY.md`.
+
+**There are no reference pages left to build.** The layer is complete at two — 06 and 07.
+Ch 8 and Ch 9 retain nothing (units 47–49 became L24), and Lecture 10 slide 33 is a section
+header whose content L21 and L22 now teach. Record that decision; do not build a third page.
 
 Every lesson needs: a row in the `LESSONS` array in `scripts/gate.mjs` **and** a row in
 `LESSONS_META` in `src/main.ts`; a row in `tests/engine-taxonomy.test.ts`; `[data-view-lens]`

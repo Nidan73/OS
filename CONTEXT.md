@@ -253,8 +253,18 @@ that caused a 50-minute hang with zero files written. All three widened to famil
 - **L2 finding 5** — DESIGN.md Part 1 components only partly applied: buttons are not
   `{rounded.pill}`, cards need `{rounded.lg}` on `{colors.hairline}`, no tile rhythm.
   Cosmetic, not blocking, but must land before the site is called done.
-- **Lecture 10 reference page (slide 33) is still unbuilt.** L21 and L22 now exist, which was
-  the blocker. Lectures 8 and 9 have no reference page either — only 06 and 07 do.
+- **The reference layer is COMPLETE at two pages — 06 and 07. There is no Ch 8, 9 or 10 page
+  to build.** I claimed otherwise in an earlier revision of this file; that was wrong and
+  invented scope. LESSONS.md is explicit: Ch 6 keeps the scheduling criteria (unit 6), Ch 7
+  keeps thread scheduling PCS/SCS (units 17, 18), **Ch 9 retains nothing** because units 47–49
+  became L24, and Ch 8 is not listed because it retains nothing either. The one loose end,
+  Lecture 10 slide 33 ("allow system to enter deadlock state / detection algorithm / recovery
+  scheme"), is a section header whose three bullets L21 (detection) and L22 (recovery) now
+  teach in full — so it needs a recorded decision, not a page.
+- **DESIGN.md L2 finding 5 has largely landed and the open item below is stale.** Measured:
+  41 of 45 buttons carry `--rounded-pill`, and `--rounded-lg` is used 90 times. The four
+  exceptions are ±1 stepper buttons in `lesson-05` and `lesson-10`, where a pill is arguably
+  the wrong shape. What is left is a decision on those four, not a sweep.
 - Four merged branches can be deleted: `phase1/lesson-16-chopsticks`,
   `phase1/lesson-20-bankers`, `phase1/lesson-20-density`, `phase1/task-E-gate-speed`. The last
   one contains the reverted parallel gate — do not resurrect it.
