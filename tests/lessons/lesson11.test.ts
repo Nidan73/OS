@@ -118,3 +118,55 @@ describe('Lesson 11 · lesson wiring', () => {
     expect(lesson11.absorbsUnits).toEqual([38, 39, 40, 41, 42, 43]);
   });
 });
+
+describe('Lesson 11 · captions follow the lens', () => {
+  const MODES = ['none', 'mutex', 'progress', 'bounded'] as const;
+
+  it('every step of every mode speaks both lenses, within the rail', () => {
+    for (const broken of MODES) {
+      const result = simulateCriticalSection(broken);
+      const steps = csSteps({ broken });
+      expect(steps.length).toBe(result.steps.length);
+      for (const s of steps) {
+        expect(s.caption.length, s.caption).toBeLessThanOrEqual(320);
+        expect(s.caption.length).toBeGreaterThan(0);
+        expect(s.analogyCaption, `${broken}: ${s.caption}`).toBeDefined();
+        expect((s.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+        expect((s.analogyCaption ?? '').length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('the analogy voice names each failure the simulation computes', () => {
+    const mutex = csSteps({ broken: 'mutex' });
+    expect(
+      mutex.some((s) => (s.analogyCaption ?? '').includes('two people are in the bathroom at once')),
+      'mutex must show two inside'
+    ).toBe(true);
+
+    const progress = csSteps({ broken: 'progress' });
+    expect(
+      progress.some((s) => (s.analogyCaption ?? '').includes('the latch is still turned')),
+      'progress must show the engaged latch over a free bathroom'
+    ).toBe(true);
+
+    const bounded = csSteps({ broken: 'bounded' });
+    expect(
+      bounded.some((s) => (s.analogyCaption ?? '').includes('slips past the corridor queue')),
+      'bounded must show the queue jump'
+    ).toBe(true);
+
+    const intact = csSteps({ broken: 'none' });
+    for (const s of intact) {
+      expect(s.analogyCaption ?? '').not.toMatch(/two people|latch is still turned|slips past/);
+    }
+  });
+
+  it('the mechanism captions stay the algorithm\'s own words, untouched', () => {
+    for (const broken of MODES) {
+      const steps = csSteps({ broken });
+      const result = simulateCriticalSection(broken);
+      steps.forEach((s, i) => expect(s.caption).toBe(result.steps[i].caption));
+    }
+  });
+});

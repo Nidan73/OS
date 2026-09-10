@@ -115,4 +115,31 @@ describe('Lesson 18 · lesson wiring and copy', () => {
       expect(copy).not.toMatch(pattern);
     }
   });
+
+  it('every reveal of every strategy speaks both lenses, within the rail', () => {
+    for (const strategy of ['none', ...PREVENTIONS] as PreventionStrategy[]) {
+      const reveals = preventionInput(strategy).reveals;
+      expect(reveals.length).toBe(2);
+      for (const r of reveals) {
+        expect(r.caption.length, r.caption).toBeLessThanOrEqual(320);
+        expect(r.analogyCaption, `${strategy}: ${r.caption}`).toBeDefined();
+        expect((r.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+        expect((r.analogyCaption ?? '').length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('the analogy voice names the dinner rule each strategy applies', () => {
+    const expectations: Array<[PreventionStrategy, RegExp]> = [
+      ['none', /four dinner rules stand/],
+      ['share', /serving spoons everyone can share/],
+      ['all-at-once', /every utensil your recipe needs at once, or take none/],
+      ['release', /put yours down and try again/],
+      ['order', /numbers the dishes/]
+    ];
+    for (const [strategy, rx] of expectations) {
+      const second = preventionInput(strategy).reveals[1];
+      expect(second.analogyCaption ?? '', strategy).toMatch(rx);
+    }
+  });
 });

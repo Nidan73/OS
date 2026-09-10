@@ -88,6 +88,25 @@ export interface PublicationState extends PublicationStep {
 }
 
 /**
+ * The doorway sentence for one print-test action, derived from the structured
+ * PublicationStep.action rather than parsed from the algorithm's caption.
+ */
+export function doorwayCaption(action: string, x: number): string {
+  switch (action) {
+    case 'x = 100':
+      return 'Abbu puts the dish back on the flame to finish: the fact is being made.';
+    case 'flag = true':
+      return 'Abbu calls out that the food is ready: the announcement, made whether or not the dish is done.';
+    case 'while (!flag); passes':
+      return 'Ammu hears the announcement and stops waiting at the door.';
+    case 'print x':
+      return `Ammu serves what the announcement promised, and what she carries out is ${x}.`;
+    default:
+      return '';
+  }
+}
+
+/**
  * The timeline IS the print test: the toggled reorder re-orders the very
  * steps the learner scrubs through. The doorway protocol's verdict travels
  * alongside as bothInside, computed by simulatePeterson for this mode.
@@ -97,16 +116,21 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
   const pub = simulateReorderingOutput(input.reordered);
   const open: Step<PublicationState> = {
     t: 0,
-    caption: 'Ammu and Abbu share one kitchen doorway: Abbu calls while cooking, Ammu waits to serve.',
+    caption: 'The print test opens: T1 will spin on the flag, then print x.',
+    analogyCaption: 'Ammu and Abbu share one kitchen doorway: Abbu calls while cooking, Ammu waits to serve.',
     highlight: ['T1', 'T2'],
     state: { ...pub.steps[0], step: 0, printed: null, caption: 'The room before the test.' , bothInside }
   };
   const verdictText = pub.flipped
     ? `Printed ${pub.output}, expected ${pub.expectedOutput}, the announcement overtook the act.`
     : `Printed ${pub.output} as announced, the fact landed before the flag.`;
+  const verdictAnalogy = pub.flipped
+    ? 'The announcement ran ahead of the cooking: Ammu served before the dish was ready, and the doorway protocol could not save her.'
+    : 'The dish was finished before the call, so Ammu serves exactly what was announced. The doorway holds.';
   const verdict: Step<PublicationState> = {
     t: pub.steps.length + 1,
     caption: verdictText,
+    analogyCaption: verdictAnalogy,
     highlight: ['T1', 'T2'],
     state: { ...pub.steps[pub.steps.length - 1], step: pub.steps.length + 1, caption: verdictText, bothInside }
   };
@@ -115,6 +139,7 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
     ...pub.steps.map(s => ({
       t: s.step,
       caption: s.caption,
+      analogyCaption: doorwayCaption(s.action, s.printed ?? s.x),
       highlight: [s.actorId],
       state: { ...s, bothInside }
     })),

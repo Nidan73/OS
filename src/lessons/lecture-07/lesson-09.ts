@@ -242,86 +242,90 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
   const finalCaption = b.met
     ? `Total ${b.totalResponseTime}ms lands inside ${b.deadline}ms with ${b.slackTime}ms to spare, the car is still waiting.`
     : `Total ${b.totalResponseTime}ms overshoots ${b.deadline}ms by ${Math.abs(b.slackTime)}ms, the car has already left.`;
+  const finalMechanism = b.met
+    ? `Total response time ${b.totalResponseTime}ms against a ${b.deadline}ms deadline: met, with ${b.slackTime}ms of slack.`
+    : `Total response time ${b.totalResponseTime}ms against a ${b.deadline}ms deadline: missed by ${Math.abs(b.slackTime)}ms.`;
   return [
     {
-      caption: `The car leaves at ${b.deadline}ms. Everything the system does must fit left of it, length is time.`,
+      caption: `The deadline is ${b.deadline}ms. Every phase of the response must fit inside it, and horizontal length is time.`, analogyCaption: `The car leaves at ${b.deadline}ms. Everything the system does must fit left of it, length is time.`,
       highlightNodeIds: ['gate', 'slack'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: `Leaves at ${b.deadline}ms`,
       metrics
     },
     {
-      caption: `The doorbell rings, the interrupt arrives and the clock starts.`,
+      caption: `The interrupt arrives. This is where the response time begins to be counted.`, analogyCaption: `The doorbell rings, the interrupt arrives and the clock starts.`,
       highlightNodeIds: ['alarm'],
       activeNodeIds: ['alarm'],
       badgeText: `Call ${b.interruptLatency}ms`,
       metrics
     },
     {
-      caption: `Noticing it and saving state already eats ${b.interruptLatency}ms of the budget.`,
+      caption: `INTERRUPT LATENCY: ${b.interruptLatency}ms to recognise the interrupt and save the current state, before any handling starts.`, analogyCaption: `Noticing it and saving state already eats ${b.interruptLatency}ms of the budget.`,
       highlightNodeIds: ['alarm'],
       activeNodeIds: ['alarm'],
       badgeText: `Call ${b.interruptLatency}ms`,
       metrics
     },
     {
-      caption: `The corridor is still crowded, the outgoing task holds the exit.`,
+      caption: `The conflict phase has not finished: the running task still holds resources the real-time task needs.`, analogyCaption: `The corridor is still crowded, the outgoing task holds the exit.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Blocked ${b.conflictPhase}ms`,
       metrics
     },
     {
-      caption: `The corridor clears over ${b.conflictPhase}ms, preemption done, resources released.`,
+      caption: `CONFLICT PHASE: ${b.conflictPhase}ms to preempt the running task and release the resources it held.`, analogyCaption: `The corridor clears over ${b.conflictPhase}ms, preemption done, resources released.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Corridor ${b.conflictPhase}ms`,
       metrics
     },
     {
-      caption: `Abbu is ready but waiting, the corridor has not cleared yet.`,
+      caption: `The real-time task is ready but not yet dispatched.`, analogyCaption: `Abbu is ready but waiting, the corridor has not cleared yet.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Abbu waits`,
       metrics
     },
     {
-      caption: `Abbu takes over in ${b.dispatchPhase}ms, the context switch itself.`,
+      caption: `DISPATCH PHASE: ${b.dispatchPhase}ms for the context switch to the real-time task.`, analogyCaption: `Abbu takes over in ${b.dispatchPhase}ms, the context switch itself.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Handover ${b.dispatchPhase}ms`,
       metrics
     },
     {
-      caption: `Reaching the task costs ${b.totalDispatchLatency}ms before it even starts.`,
+      caption: `DISPATCH LATENCY is conflict plus dispatch, ${b.totalDispatchLatency}ms spent before the task executes a single instruction.`, analogyCaption: `Reaching the task costs ${b.totalDispatchLatency}ms before it even starts.`,
       highlightNodeIds: ['aisle', 'switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Dispatch ${b.totalDispatchLatency}ms`,
       metrics
     },
     {
-      caption: `The school run is staged but held, the handover has not happened yet.`,
+      caption: `The task is scheduled but has not been given the processor yet.`, analogyCaption: `The school run is staged but held, the handover has not happened yet.`,
       highlightNodeIds: ['run'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Held ${b.executionTime}ms`,
       metrics
     },
     {
-      caption: `The school run takes ${b.executionTime}ms while everything yields. Priority hurries it, but the clock still rules.`,
+      caption: `The task executes for ${b.executionTime}ms. Preemptive priority gets it to the front, which buys soft real-time; it does not by itself guarantee the deadline.`, analogyCaption: `The school run takes ${b.executionTime}ms while everything yields. Priority hurries it, but the clock still rules.`,
       highlightNodeIds: ['run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run'],
       badgeText: `Run ${b.executionTime}ms`,
       metrics
     },
     {
-      caption: `Stacked end to end, the response already spans ${b.totalResponseTime}ms.`,
+      caption: `TOTAL RESPONSE TIME is interrupt latency plus dispatch latency plus execution, ${b.totalResponseTime}ms against a deadline of ${b.deadline}ms.`, analogyCaption: `Stacked end to end, the response already spans ${b.totalResponseTime}ms.`,
       highlightNodeIds: ['alarm', 'aisle', 'switch', 'run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: `Total ${b.totalResponseTime}ms`,
       metrics
     },
     {
-      caption: finalCaption,
+      caption: finalMechanism,
+      analogyCaption: finalCaption,
       highlightNodeIds: b.met ? ['gate', 'slack'] : ['gate', 'run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: b.met ? `Inside by ${b.slackTime}ms` : `Over by ${Math.abs(b.slackTime)}ms`,

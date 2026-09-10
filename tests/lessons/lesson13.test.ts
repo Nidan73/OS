@@ -15,7 +15,8 @@ import {
   atomicSteps,
   atomicTrace,
   lesson13,
-  lesson13Input
+  lesson13Input,
+  lockInstructionCaption
 } from '../../src/lessons/lecture-09/lesson-13.js';
 
 const COMBOS: Array<{ mechanism: AtomicMechanism; atomic: boolean }> = [
@@ -79,14 +80,35 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
         expect(st.value).toBe(s.lock === 0 ? 1 : 0);
         expect(st.holders).toStrictEqual(s.entered);
         expect(st.waiting).toStrictEqual(s.waiting);
-        expect(steps[i].caption).toBe(s.caption.slice(0, 120));
-        expect(steps[i].caption.length).toBeLessThanOrEqual(120);
+        // The algorithm speaks in the hook scene, so its caption is the
+        // analogy lens; the mechanism lens gets the generated instruction
+        // sentence. Both are asserted 1:1 against their sources.
+        expect(steps[i].analogyCaption).toBe(s.caption.slice(0, 120));
+        expect(steps[i].caption).toBe(lockInstructionCaption(s, c.mechanism));
+        expect(steps[i].caption.length).toBeLessThanOrEqual(320);
+        expect(steps[i].caption.length).toBeGreaterThan(0);
         expect(steps[i].t).toBe(i);
       });
       for (const tail of steps.slice(trace.steps.length)) {
-        expect(tail.caption.length).toBeLessThanOrEqual(120);
+        expect(tail.caption.length).toBeLessThanOrEqual(320);
+        expect(tail.analogyCaption, tail.caption).toBeDefined();
+        expect((tail.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
     }
+  });
+
+  it('the mechanism voice names the primitive, and the fused run says indivisible', () => {
+    const split = atomicSteps({ mechanism: 'tas', atomic: false });
+    const fused = atomicSteps({ mechanism: 'tas', atomic: true });
+    // The split run never invokes the primitive, that is the defect; the
+    // fused run is exactly that one indivisible instruction.
+    expect(split.some((s) => s.caption.includes('test_and_set'))).toBe(false);
+    expect(split.some((s) => s.caption.includes('two steps'))).toBe(true);
+    expect(fused.some((s) => s.caption.includes('one indivisible instruction'))).toBe(true);
+    const casFused = atomicSteps({ mechanism: 'cas', atomic: true });
+    expect(casFused.some((s) => s.caption.includes('compare_and_swap'))).toBe(true);
+    const casSplit = atomicSteps({ mechanism: 'cas', atomic: false });
+    expect(casSplit.some((s) => s.caption.includes('the gap between check and act'))).toBe(true);
   });
 
   it('the tally beats carry simulateAtomicIncrement 1:1, plain loses, CAS keeps', () => {

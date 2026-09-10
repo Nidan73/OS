@@ -79,6 +79,51 @@ function casVerdict(): ReturnType<typeof simulateCompareAndSwap> {
 }
 
 /**
+ * The lock-instruction sentence for one trace step, derived from the
+ * structured AtomicTraceStep (action, lock, entered) rather than parsed from
+ * the algorithm's hook-scene caption. `mechanism` picks the primitive's name
+ * so test_and_set and compare_and_swap read differently.
+ */
+export function lockInstructionCaption(
+  s: { action: string; lock: number; entered: string[]; actorId: string },
+  mechanism: AtomicMechanism
+): string {
+  const primitive = mechanism === 'tas' ? 'test_and_set' : 'compare_and_swap';
+  switch (s.action) {
+    case 'free':
+      return mechanism === 'tas'
+        ? `The lock reads ${s.lock}: free, and no thread holds it.`
+        : `The tag reads ${s.lock}: unclaimed, the expected value for a swap.`;
+    case 'acquire':
+      return `${s.actorId} executes ${primitive}: it reads 0, writes 1, and holds the lock in one indivisible instruction.`;
+    case 'read':
+      return `${s.actorId} reads the lock into a register: it sees ${s.lock}. Nothing has been written yet.`;
+    case 'write':
+      return s.entered.length > 1
+        ? `${s.actorId} writes 1 from its stale register: the read and the write were separate steps, and both threads are inside now.`
+        : `${s.actorId} writes 1 from its register: the read and the write are two steps with a gap between them.`;
+    case 'spin':
+      return `${s.actorId} re-reads the lock in a loop: still ${s.lock}, so it keeps waiting.`;
+    case 'release':
+      return `${s.actorId} writes 0: the lock reads free again.`;
+    case 'swap':
+      return `${s.actorId} compares the lock with the expected 0 and swaps in 1: one indivisible ${primitive}.`;
+    case 'compare':
+      return `${s.actorId} compares: the lock reads ${s.lock}, not the expected 0, so ${primitive} refuses and nothing changes.`;
+    case 'check':
+      return `${s.actorId} reads the tag: it sees ${s.lock}.`;
+    case 'act':
+      return s.entered.length > 1
+        ? `${s.actorId} acts on its stale check and writes 1: the gap between check and act let a second thread through.`
+        : `${s.actorId} acts on its saved check and writes 1.`;
+    case 'verdict':
+      return `The lock reads ${s.lock} while ${s.entered.length} threads hold it: that disagreement is the corruption.`;
+    default:
+      return '';
+  }
+}
+
+/**
  * Pure mapping: simulateAtomicSteps output → CounterEngine steps. One trace
  * step becomes one CounterState: the same lock meter, the same entered set
  * as holders, the same waiting queue. Nothing on screen is typed.
@@ -95,7 +140,8 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
       : 'spin';
     return {
       t: s.step,
-      caption: s.caption.slice(0, 120),
+      caption: lockInstructionCaption(s, p.mechanism),
+      analogyCaption: s.caption.slice(0, 120),
       highlight: s.actorId === ', ' ? [] : [s.actorId],
       state: {
         stepIndex: s.step,
@@ -118,6 +164,7 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     {
       t: base,
       caption: `The tally starts at ${inc.start}: two threads each add one, expecting ${inc.expected}.`,
+      analogyCaption: `Ammu and Abbu both keep the household tally. It reads ${inc.start}; each adds one, so together they expect ${inc.expected}.`,
       highlight: ['T1', 'T2'],
       state: {
         stepIndex: base, value: 1, capacity: 1, activeActorId: 'T1',
@@ -128,6 +175,7 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     {
       t: base + 1,
       caption: `Without atomics both threads snapshot ${inc.start}, one update is already doomed.`,
+      analogyCaption: `Both write down ${inc.start} before either of them writes. Two notes taken from one moment.`,
       highlight: ['T1', 'T2'],
       state: {
         stepIndex: base + 1, value: 0, capacity: 1, activeActorId: 'T2',
@@ -138,6 +186,7 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     {
       t: base + 2,
       caption: `The plain tally lands at ${inc.finalPlain}, not ${inc.expected}, ${inc.lostPlain} update lost.`,
+      analogyCaption: `They write from their notes: the tally lands at ${inc.finalPlain}, and one addition vanished between the notes.`,
       highlight: ['T1'],
       state: {
         stepIndex: base + 2, value: 0, capacity: 1, activeActorId: 'T1',
@@ -148,6 +197,7 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     {
       t: base + 3,
       caption: `Through compare_and_swap the second swap refuses and retries ${inc.retriesCAS}x, nothing is lost.`,
+      analogyCaption: `This time Abbu checks the tally against his note before writing: it has moved on, so he starts his addition again.`,
       highlight: ['T2'],
       state: {
         stepIndex: base + 3, value: 0, capacity: 1, activeActorId: 'T2',
@@ -158,6 +208,7 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     {
       t: base + 4,
       caption: `The retry lands: the CAS tally ends at ${inc.finalCAS}, every update kept.`,
+      analogyCaption: `His retry carries both additions: the tally ends at ${inc.finalCAS}, and nothing is lost.`,
       highlight: ['T2'],
       state: {
         stepIndex: base + 4, value: 0, capacity: 1, activeActorId: 'T2',

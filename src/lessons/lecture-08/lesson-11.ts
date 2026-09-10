@@ -115,10 +115,46 @@ export interface CSInput {
   broken: CSGuarantee;
 }
 
+/**
+ * The bathroom-scene sentence for one transition, derived from the structured
+ * CSStep (movedId, phases, inside, waiting, flags) rather than parsed from the
+ * algorithm's caption, so the two voices cannot drift.
+ */
+export function bathroomCaption(s: CSStep, broken: CSGuarantee): string {
+  if (s.movedId === null) {
+    return 'The house is quiet: everyone is at the table, the bathroom door is open, and nobody needs it yet.';
+  }
+  const p = s.movedId;
+  const phase = s.phases[p];
+  const twoInside = s.inside.length > 1;
+  switch (phase) {
+    case 'entry':
+      return `${p} joins the queue at the bathroom door.`;
+    case 'critical':
+      if (twoInside) {
+        return `${p} walks in without checking the latch, and now two people are in the bathroom at once.`;
+      }
+      if (broken === 'bounded' && s.waiting.length > 0) {
+        return `${p} has been in before, and slips past the corridor queue. Nobody is made to wait forever, but waiting longer happens.`;
+      }
+      return `${p} finds the bathroom free, the latch turns, and in they go.`;
+    case 'exit':
+      return `${p} is done and turns the latch back on the way out.`;
+    case 'remainder':
+      if (s.progressViolated) {
+        return `${p} sits back down, but the latch is still turned: the bathroom stands free and the corridor waits for nothing.`;
+      }
+      return `${p} releases the bathroom and returns to the table.`;
+    default:
+      return s.caption;
+  }
+}
+
 export function csSteps(input: CSInput): Step<CSStep>[] {
   return simulateCriticalSection(input.broken).steps.map(s => ({
     t: s.step,
     caption: s.caption,
+    analogyCaption: bathroomCaption(s, input.broken),
     highlight: s.movedId ? [s.movedId] : [...CS_PROCS],
     state: s
   }));

@@ -109,14 +109,23 @@ export function toThreadIds(interleaving: number[]): Array<'T1' | 'T2'> {
 }
 
 /** Pure mapping: simulateRaceCondition output -> Step<TraceState>[]. */
-export function raceSteps(input: TraceInput): Step<TraceState>[] {
+export function raceSteps(input: TraceInput, scenario: ScenarioId = 'slices'): Step<TraceState>[] {
   const result = simulateRaceCondition(input.initial.counter, toThreadIds(input.interleaving));
   const threadIds = input.threads.map(t => t.id);
   const steps: Step<TraceState>[] = [];
+  const scene = SCENE_ACTS[scenario];
+  const who = (threadId: string): string => (threadId === 'T1' ? 'Ammu' : 'Abbu');
+  const analogyVerdict = (diff: number): string =>
+    diff > 0
+      ? `Both of them wrote before either read the other, and one update is gone from the ${scene.place}.`
+      : diff < 0
+        ? `One update landed twice: two entries for one act, and the ${scene.place} no longer matches what happened.`
+        : `Every update landed, the ${scene.place} is exactly right.`;
 
   steps.push({
     t: 0,
-    caption: `Ammu and Abbu look at the same moment: the shared count reads ${input.initial.counter}. Nothing has happened yet.`,
+    caption: `The shared counter starts at ${input.initial.counter}. Neither thread has executed an instruction yet.`,
+    analogyCaption: `Ammu and Abbu arrive at the ${scene.place} at the same moment. It reads ${input.initial.counter}, and nobody has acted yet.`,
     highlight: [...threadIds],
     state: {
       stepIndex: 0,
@@ -135,6 +144,16 @@ export function raceSteps(input: TraceInput): Step<TraceState>[] {
     pointers[tIdx]++;
     const isLast = i === result.steps.length - 1;
     let caption = rs.description;
+    let analogy: string;
+    if (rs.instruction.includes('= counter')) {
+      analogy = `${who(rs.threadId)} ${scene.look}: it reads ${rs.counter}.`;
+    } else if (rs.instruction.includes('+ 1')) {
+      analogy = `${who(rs.threadId)} ${scene.inc}, writing ${rs.register1 ?? ''} on the note first.`;
+    } else if (rs.instruction.includes('- 1')) {
+      analogy = `${who(rs.threadId)} ${scene.dec}, writing ${rs.register2 ?? ''} on the note first.`;
+    } else {
+      analogy = `${who(rs.threadId)} ${scene.write}: the ${scene.thing} now reads ${rs.counter}.`;
+    }
     if (isLast) {
       const diff = result.expectedCounter - result.finalCounter;
       const verdict =
@@ -142,10 +161,12 @@ export function raceSteps(input: TraceInput): Step<TraceState>[] {
         : diff < 0 ? 'one update was applied twice'
         : 'every update landed';
       caption = `${rs.description}. The shared count ends at ${result.finalCounter}, expected ${result.expectedCounter}, ${verdict}.`;
+      analogy = `${analogy} ${analogyVerdict(diff)}`;
     }
     steps.push({
       t: i + 1,
       caption,
+      analogyCaption: analogy,
       highlight: [threadIds[tIdx]],
       state: {
         stepIndex: i + 1,
@@ -168,12 +189,42 @@ export function raceSteps(input: TraceInput): Step<TraceState>[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 type ScenarioId = 'slices' | 'budget' | 'seat' | 'buffer';
+export type { ScenarioId };
 
 const SCENARIOS: Record<ScenarioId, { label: string; initial: number; plate: (n: number) => string }> = {
   slices: { label: '🍰 Last piece of cake', initial: 3, plate: n => `${n} pieces of cake left` },
   budget: { label: '🧾 Household ledger', initial: 800, plate: n => `Ledger: €${n}` },
   seat: { label: '🚗 Seats in the car', initial: 14, plate: n => `${n} seats free in the car` },
   buffer: { label: '📦 Buffer count (the slide)', initial: 5, plate: n => `${n} full buffers` }
+};
+
+/**
+ * The same three register-level acts, in each scenario's own words. The
+ * analogy captions and the analogy-side card labels read from this so
+ * switching the playground scenario can never leave cake prose sitting on
+ * top of the ledger.
+ */
+export const SCENE_ACTS: Record<
+  ScenarioId,
+  { thing: string; place: string; look: string; inc: string; dec: string; write: string }
+> = {
+  slices: { thing: 'cake', place: 'cake', look: 'looks at the cake', inc: 'puts a slice back on the cake', dec: 'takes a slice from the cake', write: 'writes the count on the cake note' },
+  budget: { thing: 'ledger', place: 'ledger', look: 'reads the ledger', inc: 'adds a receipt to the ledger', dec: 'subtracts a payment from the ledger', write: 'writes the total in the ledger' },
+  seat: { thing: 'car', place: 'row of seats', look: 'counts the free seats in the car', inc: 'returns a seat to the car', dec: 'takes a seat in the car', write: 'updates the seat count' },
+  buffer: { thing: 'buffer', place: 'buffer count', look: 'reads the buffer count', inc: 'produces an item into the buffer', dec: 'consumes an item from the buffer', write: 'writes the buffer count' }
+};
+
+/**
+ * Short act labels for the cards on the analogy canvas. Cards have a fixed
+ * footprint and the morph's interpolation is measured on group bounding
+ * boxes, so a label that outgrows its card would fake geometry movement:
+ * captions carry the rich scene wording, cards stay terse.
+ */
+export const SCENE_CARD: Record<ScenarioId, { look: string; inc: string; dec: string; write: string }> = {
+  slices: { look: 'looks at the cake', inc: 'puts one back', dec: 'takes one off', write: 'writes the count' },
+  budget: { look: 'reads the ledger', inc: 'adds a receipt', dec: 'takes a payment', write: 'writes the total' },
+  seat: { look: 'counts the seats', inc: 'adds a seat', dec: 'takes a seat', write: 'writes the count' },
+  buffer: { look: 'reads the count', inc: 'produces one', dec: 'consumes one', write: 'writes the count' }
 };
 
 /**
@@ -196,7 +247,9 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
   private actsGroup!: SVGGElement;
 
   protected override buildSteps(input: TraceInput): Step<TraceState>[] {
-    return raceSteps(input);
+    // The selected scenario feeds the analogy captions so a playground switch
+    // re-derives them; cake prose can never outlive the cake scenario.
+    return raceSteps(input, this.scenario);
   }
 
   /** The live result, computed on every call (§2.1), never cached, never typed. */
@@ -242,6 +295,8 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
 
     const geometry = actGeometry(v, this.input.interleaving);
     const order = actOrder(this.input.interleaving);
+    const card = SCENE_CARD[this.scenario];
+    const who = (tid: 'T1' | 'T2'): string => (tid === 'T1' ? 'Ammu' : 'Abbu');
 
     // Plate / shared memory, same entity, both views.
     this.renderPlate(state, v, geometry['plate']);
@@ -278,7 +333,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
         g.setAttribute('id', `bar-${key}`);
 
         const text = v < 0.5
-          ? ACT_TEXT[tid][i]
+          ? `${who(tid)} ${i === 0 ? card.look : i === 1 ? (tid === 'T1' ? card.inc : card.dec) : card.write}`
           : `${slot + 1}. ${this.input.threads[tIdx].instructions[i]}`;
         g.appendChild(this.label(box, text, isCurrent ? 'var(--accent)' : executed ? 'var(--ink)' : 'var(--muted)', v >= 0.5 ? 9 : 10.5));
 

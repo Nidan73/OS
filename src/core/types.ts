@@ -28,7 +28,8 @@ export interface Step<S = unknown> {
   t: number;
   /**
    * The explanatory text for this step. This is the fallback and is what the
-   * mechanism lens shows when `analogyCaption` is absent.
+   * mechanism lens shows when `analogyCaption` is absent. Fits the caption
+   * rail: 320 chars (measured four lines above the fold at 1440x900).
    */
   caption: string;
   /**
@@ -36,7 +37,7 @@ export interface Step<S = unknown> {
    * is active. The picture is different in the two views, so the sentence
    * under it should be too: at view 0 she is watching Ammu count notes, at
    * view 1 she is watching a safety sweep. Both must describe the SAME event.
-   * Omit to show `caption` in both views.
+   * Same rail as `caption`. Omit to show `caption` in both views.
    */
   analogyCaption?: string;
   /** engine-specific render state at time t */

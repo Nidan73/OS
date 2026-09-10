@@ -143,6 +143,40 @@ function shortCaption(s: string): string {
 }
 
 /**
+ * The mechanism sentence for one semaphore step, derived from the structured
+ * op step (action, value, holders, waitingQueue) and its predecessor, so the
+ * parking-scene caption and the exam-voice caption stay two views of the same
+ * computed transition.
+ */
+function mechanismCaption(
+  s: SemaphoreSimulationResult['steps'][number],
+  prev: SemaphoreSimulationResult['steps'][number] | null,
+  mode: 'spin' | 'block'
+): string {
+  const op = s.action.endsWith(':omit_signal')
+    ? 'omit_signal'
+    : s.action.endsWith(':signal')
+      ? 'signal'
+      : 'wait';
+  if (op === 'omit_signal') {
+    return `${s.actorId} omits signal(): the count stays ${s.value} and no waiter is ever woken.`;
+  }
+  const prevValue = prev ? prev.value : s.value + (op === 'wait' ? 1 : -1);
+  const base = `${s.actorId} executes ${op}(): count ${prevValue} → ${s.value}.`;
+  if (op === 'wait' && s.waitingQueue.includes(s.actorId)) {
+    return `${base} The count is negative, so it counts waiters: ${s.actorId} ${mode === 'spin' ? 'spins on the count' : 'blocks on the bench'}.`;
+  }
+  if (op === 'signal') {
+    const woken = prev ? prev.waitingQueue.filter((w) => !s.waitingQueue.includes(w)) : [];
+    if (woken.length > 0) {
+      return `${base} A waiter is woken: ${woken.join(', ')} leaves the waiting queue and takes the spot.`;
+    }
+    return `${base} A freed spot is now available.`;
+  }
+  return base;
+}
+
+/**
  * Pure mapping: simulateSemaphoreOps output → CounterEngine steps. The count
  * IS the value (negatives included, the engine renders them as sleepers);
  * holders and the bench queue map straight across. Nothing is typed.
@@ -152,7 +186,8 @@ export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
   const steps: Step<CounterState>[] = [
     {
       t: 0,
-      caption: `${p.initial} free spots on the board. Nobody holds one yet.`,
+      caption: `Semaphore initialised to ${p.initial}. wait() decrements it, signal() increments it, and negative values count waiters.`,
+      analogyCaption: `${p.initial} free spots on the board. Nobody holds one yet.`,
       highlight: [],
       state: {
         stepIndex: 0, value: p.initial, capacity: p.initial, activeActorId: null,
@@ -168,7 +203,8 @@ export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
       : 'acquire';
     steps.push({
       t: i + 1,
-      caption: shortCaption(s.caption),
+      caption: mechanismCaption(s, i > 0 ? run.steps[i - 1] : null, p.mode),
+      analogyCaption: shortCaption(s.caption),
       highlight: [s.actorId],
       state: {
         stepIndex: i + 1,
@@ -185,16 +221,24 @@ export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
   // The lot is read once at the end: the computed verdict, balanced, bench
   // waiters still queued, miscounted, or deadlocked, is its own discrete event.
   const last = run.steps[run.steps.length - 1];
-  const verdict = run.deadlocked
+  const analogyVerdict = run.deadlocked
     ? 'Nobody wakes, the forgotten signal deadlocks the lot.'
     : last.waitingQueue.length > 0
       ? `${last.waitingQueue.length} still waiting, below zero counts waiters, not spots.`
       : p.mistake !== 'none'
         ? 'The board disagrees with the lot, the calls were misused.'
         : `Lot balanced, count ${run.finalValue}, everyone parked.`;
+  const mechanismVerdict = run.deadlocked
+    ? 'wait() never finds a rising count: with the signal omitted, every blocked process waits forever. This is deadlock.'
+    : p.mistake !== 'none'
+      ? `Final count ${run.finalValue}, but the call sequence misused the semaphore: the value no longer matches the resource state.${last.waitingQueue.length > 0 ? ` ${last.waitingQueue.length} process(es) remain in the waiting queue.` : ''}`
+      : last.waitingQueue.length > 0
+        ? `Final count ${run.finalValue}: negative counts waiters, so ${last.waitingQueue.length} process(es) remain in the waiting queue.`
+        : `Final count ${run.finalValue}: every wait() was matched by a signal(), so the lot is balanced.`;
   steps.push({
     t: run.steps.length + 1,
-    caption: verdict.slice(0, 120),
+    caption: mechanismVerdict,
+    analogyCaption: analogyVerdict,
     highlight: last ? [...last.holders, ...last.waitingQueue] : [],
     state: {
       stepIndex: run.steps.length + 1,
@@ -204,7 +248,7 @@ export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
       holders: last ? [...last.holders] : [],
       waiting: last ? [...last.waitingQueue] : [],
       action: run.deadlocked ? 'fail' : 'release',
-      caption: verdict
+      caption: analogyVerdict
     }
   });
   return steps;

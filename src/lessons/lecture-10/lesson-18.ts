@@ -110,6 +110,18 @@ const STRATEGY_CAPTIONS: Record<PreventionStrategy, string> = {
   order: 'Every process requests lower-numbered resources first, the ring cannot close.'
 };
 
+/**
+ * The same strategy in the dinner scene's words. Keyed by strategy so the
+ * analogy caption and the mechanism caption stay two tellings of one rule.
+ */
+const STRATEGY_ANALOGY_CAPTIONS: Record<PreventionStrategy, string> = {
+  none: 'All four dinner rules stand at once: one-person spoons, holding one while asking for another, no taking a spoon back, and the waiting circling round the table. Dinner can freeze.',
+  share: 'Ammu puts out serving spoons everyone can share: when a dish needs no waiting, that rule is gone, and the freeze cannot even start.',
+  'all-at-once': 'The new rule is take every utensil your recipe needs at once, or take none: nobody holds one spoon while waiting for another.',
+  release: 'If the next spoon is taken, you put yours down and try again: what you hold can be taken back, so holding while waiting cannot lock.',
+  order: 'She numbers the dishes, and everyone takes the lower number first: the waiting can never come round in a circle.'
+};
+
 export function preventionInput(strategy: PreventionStrategy): DiagramInput {
   const result = applyPrevention(strategy);
   const broken = (Object.keys(result.conditions) as DeadlockCondition[])
@@ -148,11 +160,13 @@ export function preventionInput(strategy: PreventionStrategy): DiagramInput {
     reveals: [
       {
         caption: 'Prevent, avoid, detect and recover, or ignore: four ways to handle deadlock.',
+        analogyCaption: 'Ammu lists the four ways to handle a frozen dinner: prevent it, avoid it, detect it and recover, or ignore it and hope. Tonight she prevents.',
         highlightNodeIds: ['result'],
         metrics: { deadlockPossible: result.deadlockPossible ? 'yes' : 'no' }
       },
       {
         caption: STRATEGY_CAPTIONS[strategy],
+        analogyCaption: STRATEGY_ANALOGY_CAPTIONS[strategy],
         highlightNodeIds,
         metrics: { deadlockPossible: result.deadlockPossible ? 'yes' : 'no' }
       }

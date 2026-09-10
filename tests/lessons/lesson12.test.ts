@@ -137,3 +137,34 @@ describe('Lesson 12 · lesson wiring', () => {
     expect(lesson12.absorbsUnits).toEqual([44, 45, 46]);
   });
 });
+
+describe('Lesson 12 · captions follow the lens', () => {
+  it('every step of both modes speaks both lenses, within the rail', () => {
+    for (const reordered of [false, true]) {
+      const steps = publicationSteps({ reordered });
+      for (const s of steps) {
+        expect(s.caption.length, s.caption).toBeLessThanOrEqual(320);
+        expect(s.caption.length).toBeGreaterThan(0);
+        expect(s.analogyCaption, `${reordered}: ${s.caption}`).toBeDefined();
+        expect((s.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+        expect((s.analogyCaption ?? '').length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('the analogy print step names what Ammu carried out, and the mechanism keeps the numbers', () => {
+    for (const reordered of [false, true]) {
+      const result = simulateReorderingOutput(reordered);
+      const steps = publicationSteps({ reordered });
+      const print = steps.find(s => s.state.action === 'print x')!;
+      expect(print.analogyCaption).toContain(`${result.output}`);
+      const verdict = steps[steps.length - 1];
+      expect(verdict.caption).toContain(`${result.output}`);
+      expect(verdict.caption).toContain(`${result.expectedOutput}`);
+      expect(
+        verdict.analogyCaption,
+        reordered ? 'flipped verdict in scene words' : 'intact verdict in scene words'
+      ).toMatch(reordered ? /before the dish was ready|ran ahead/ : /exactly what was announced/);
+    }
+  });
+});

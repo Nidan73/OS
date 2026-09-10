@@ -39,7 +39,7 @@ describe('Lesson 14 · every displayed number is computed', () => {
     const verdict = steps[9].caption;
     expect(verdict).toContain(`${m.spinWastedCycles}`);
     expect(verdict).toContain(`${m.contextSwitchWastedCycles}`);
-    for (const s of steps) expect(s.caption.length).toBeLessThanOrEqual(120);
+    for (const s of steps) expect(s.caption.length).toBeLessThanOrEqual(320);
   });
 
   it('sliders reach both sides of the crossover', () => {

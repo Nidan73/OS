@@ -51,14 +51,14 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
       expect(st.value).toBe(s.value);
       expect(st.holders).toStrictEqual(s.holders);
       expect(st.waiting).toStrictEqual(s.waitingQueue);
-      expect(steps[i + 1].caption.length).toBeLessThanOrEqual(120);
+      expect(steps[i + 1].caption.length).toBeLessThanOrEqual(320);
     });
     const verdict = steps[steps.length - 1];
     const last = run.steps[run.steps.length - 1];
     expect(verdict.state.value).toBe(run.finalValue);
     expect(verdict.state.holders).toStrictEqual(last.holders);
     expect(verdict.state.waiting).toStrictEqual(last.waitingQueue);
-    expect(verdict.caption.length).toBeLessThanOrEqual(120);
+    expect(verdict.caption.length).toBeLessThanOrEqual(320);
   });
 
   it('the intact run wakes in order; the dock slider reaches the binary lock', () => {
@@ -165,6 +165,51 @@ describe('Lesson 15 · lesson wiring', () => {
     const run = semaphoreRun(lesson15Input.params);
     expect(run.steps.some((s) => s.value < 0)).toBe(true);
     expect(lesson15.input.events.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Lesson 15 · captions follow the lens', () => {
+  it('every step of every reachable configuration speaks both lenses, within the rail', () => {
+    for (const initial of [SEM_RANGES.initial.min, DEFAULT_SEM.initial, SEM_RANGES.initial.max]) {
+      for (const mode of ['spin', 'block'] as const) {
+        for (const mistake of ['none', 'swap', 'double', 'omit'] as const) {
+          const steps = semaphoreSteps({ initial, mode, mistake });
+          for (const s of steps) {
+            expect(s.caption.length, s.caption).toBeLessThanOrEqual(320);
+            expect(s.caption.length).toBeGreaterThan(0);
+            expect(s.analogyCaption, `${initial}/${mode}/${mistake}: ${s.caption}`).toBeDefined();
+            expect((s.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+            expect((s.analogyCaption ?? '').length).toBeGreaterThan(0);
+          }
+        }
+      }
+    }
+  });
+
+  it('mechanism captions carry the count transition and the wait/signal name', () => {
+    const steps = semaphoreSteps(DEFAULT_SEM);
+    const first = steps[1];
+    expect(first.caption).toMatch(/executes wait\(\): count 5 → 4/);
+    const waking = steps.find((s) => s.caption.includes('A waiter is woken'));
+    expect(waking, 'the intact run ends with a wakeup').toBeDefined();
+    // parking voice for the release beat, mechanism voice names who woke
+    expect(waking!.analogyCaption).toMatch(/leaves a spot|woken/);
+    expect(waking!.caption).toMatch(/A waiter is woken: T\d/);
+  });
+
+  it('each misuse names its own mechanism diagnosis', () => {
+    const swap = semaphoreSteps({ ...DEFAULT_SEM, mistake: 'swap' });
+    expect(swap.at(-1)!.caption).toMatch(/misused the semaphore/);
+    const double = semaphoreSteps({ ...DEFAULT_SEM, mistake: 'double' });
+    expect(double.at(-1)!.caption).toMatch(/misused the semaphore/);
+    const omit = semaphoreSteps({ ...DEFAULT_SEM, mistake: 'omit' });
+    expect(omit.at(-1)!.caption).toMatch(/This is deadlock/);
+    expect(omit.at(-1)!.analogyCaption).toMatch(/deadlocks the lot/);
+    expect(omit.some((s) => s.caption.includes('omits signal()'))).toBe(true);
+    // spin and block describe the same count with the right waiting verb
+    const spin = semaphoreSteps({ ...DEFAULT_SEM, mode: 'spin' });
+    expect(spin.some((s) => s.caption.includes('spins on the count'))).toBe(true);
+    expect(spin.every((s) => !s.caption.includes('blocks on the bench'))).toBe(true);
   });
 });
 

@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { QueueEngine } from "../../src/engines/queue.js";
-import { lesson07 } from "../../src/lessons/lecture-07/lesson-07.js";
+import { SMTQueueEngine, lesson07 } from "../../src/lessons/lecture-07/lesson-07.js";
 
 describe("Lesson 7: More cores, more problems (§3C)", () => {
   let host: HTMLElement;
@@ -118,6 +118,78 @@ describe("Lesson 7: More cores, more problems (§3C)", () => {
       // strictly between endpoints: 50 < 55 < 60
       expect(mid).toBeGreaterThan(Math.min(a, b));
       expect(mid).toBeLessThan(Math.max(a, b));
+    }
+  });
+
+  test("every event in every reachable configuration speaks both lenses", () => {
+    // The playground can reach four configurations. Each event must carry the
+    // mechanism sentence and the kitchen sentence for the same beat, within
+    // the caption rail, in both of them.
+    const configs = [
+      { coresCount: 1, smtEnabled: false },
+      { coresCount: 1, smtEnabled: true },
+      { coresCount: 2, smtEnabled: false },
+      { coresCount: 2, smtEnabled: true }
+    ];
+
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const engine = new SMTQueueEngine(
+      host,
+      JSON.parse(JSON.stringify(lesson07.input))
+    );
+    engine.init(0);
+
+    const playground = document.createElement("section");
+    const scoreboard = document.createElement("section");
+    engine.renderPlayground(playground, scoreboard);
+
+    for (const { coresCount, smtEnabled } of configs) {
+      // Every control interaction re-renders the playground, so re-query the
+      // controls each round: a stale reference would silently stop driving
+      // the configuration and weaken this guard to a single-branch test.
+      const slider = playground.querySelector("#core-count-slider") as HTMLInputElement;
+      const toggle = playground.querySelector("#btn-toggle-smt") as HTMLButtonElement;
+      expect(slider).not.toBeNull();
+      expect(toggle).not.toBeNull();
+
+      slider.value = String(coresCount);
+      slider.dispatchEvent(new Event("input", { bubbles: true }));
+      // Only flip the toggle when the current state differs from the target,
+      // the button toggles rather than sets.
+      if (
+        (toggle.textContent?.includes("Active") ?? false) !== smtEnabled
+      ) {
+        playground.querySelector<HTMLButtonElement>("#btn-toggle-smt")!.click();
+      }
+      const steps = engine.getSteps();
+      expect(steps.length).toBeGreaterThan(4);
+      for (const step of steps) {
+        expect(step.caption.length, step.caption).toBeLessThanOrEqual(320);
+        expect(step.caption.length, step.caption).toBeGreaterThan(0);
+        expect(
+          (step.analogyCaption ?? "").length,
+          step.analogyCaption ?? step.caption
+        ).toBeGreaterThan(0);
+        expect(
+          (step.analogyCaption ?? "").length,
+          step.analogyCaption ?? step.caption
+        ).toBeLessThanOrEqual(320);
+        // The analogy voice speaks of the kitchen, never of cores: a missing
+        // analogyCaption falls back to the mechanism caption, which this
+        // guard exists to catch.
+        expect(step.analogyCaption, step.caption).toBeDefined();
+      }
+    }
+    engine.destroy();
+    host.remove();
+  });
+
+  test("the static lesson input carries both voices on every event", () => {
+    for (const ev of lesson07.input.events ?? []) {
+      expect(ev.analogyCaption, ev.caption).toBeDefined();
+      expect(ev.caption.length, ev.caption).toBeLessThanOrEqual(320);
+      expect((ev.analogyCaption ?? "").length, ev.caption).toBeLessThanOrEqual(320);
     }
   });
 });

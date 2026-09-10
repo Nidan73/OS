@@ -190,3 +190,58 @@ describe('Lesson 10 · lesson wiring', () => {
     expect(lesson10.absorbsUnits).toEqual([34, 35, 36, 37]);
   });
 });
+
+describe('Lesson 10 · captions follow the lens, in the selected scenario', () => {
+  const SCENES = ['slices', 'budget', 'seat', 'buffer'] as const;
+  const CAKE_ONLY = /cake|slice/i;
+  const SCENE_ONLY_WORD: Record<string, RegExp> = {
+    slices: /cake|slice/i,
+    budget: /ledger|receipt|payment/i,
+    seat: /seat/i,
+    buffer: /buffer/i
+  };
+
+  it('every step of every scenario speaks both lenses, within the rail', () => {
+    for (const scenario of SCENES) {
+      for (const order of [SLIDE_ORDER, BRIEF_ORDER, SERIAL_ORDER]) {
+        const input = withInput(SCENARIOS_INIT[scenario], order);
+        const result = simulateRaceCondition(input.initial.counter, toThreadIds(order));
+        const steps = raceSteps(input, scenario);
+        expect(steps.length).toBe(result.steps.length + 1);
+        for (const s of steps) {
+          expect(s.caption.length, s.caption).toBeLessThanOrEqual(320);
+          expect(s.caption.length).toBeGreaterThan(0);
+          expect(s.analogyCaption, `${scenario} ${s.caption}`).toBeDefined();
+          expect((s.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+        }
+        // the verdict numbers the mechanism quotes are the algorithm's
+        const last = steps[steps.length - 1];
+        expect(last.caption).toContain(`ends at ${result.finalCounter}`);
+        expect(last.caption).toContain(`expected ${result.expectedCounter}`);
+        expect(last.analogyCaption).toContain(String(result.finalCounter));
+      }
+    }
+  });
+
+  it('switching scenario re-derives the scene: no cake words outside the cake', () => {
+    for (const scenario of SCENES) {
+      const steps = raceSteps(withInput(SCENARIOS_INIT[scenario], SLIDE_ORDER), scenario);
+      for (const s of steps) {
+        const analogy = s.analogyCaption ?? '';
+        if (scenario !== 'slices') {
+          expect(analogy, `${scenario}: ${analogy}`).not.toMatch(CAKE_ONLY);
+        }
+        expect(analogy).toMatch(SCENE_ONLY_WORD[scenario]);
+      }
+    }
+  });
+
+  it('the analogy verdict names the right failure for the right interleaving', () => {
+    const lost = raceSteps(withInput(5, SLIDE_ORDER), 'slices').at(-1)!.analogyCaption!;
+    expect(lost).toMatch(/one update is gone/);
+    const kept = raceSteps(withInput(5, SERIAL_ORDER), 'slices').at(-1)!.analogyCaption!;
+    expect(kept).toMatch(/exactly right/);
+  });
+});
+
+const SCENARIOS_INIT: Record<string, number> = { slices: 3, budget: 800, seat: 14, buffer: 5 };

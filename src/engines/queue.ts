@@ -52,6 +52,8 @@ export interface QueueInput {
   items: QueueItem[];
   events?: QueueEvent[];
   analogy?: QueueAnalogyConfig;
+  /** The opening beat in the scene's words, shown on the analogy lens. */
+  initialAnalogyCaption?: string;
 }
 
 export interface QueueState {
@@ -111,6 +113,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
     steps.push({
       t: 0,
       caption: 'Initial queue layout: tasks arrive and await assignment.',
+      analogyCaption: input.initialAnalogyCaption,
       state: {
         time: 0,
         queues: cloneQueues(),

@@ -183,7 +183,7 @@ export type EngineId = 'gantt' | 'queue' | 'trace' | 'counter' | 'graph' | 'matr
 export interface Step<S = unknown> {
   /** seconds from timeline start; strictly increasing across the array */
   t: number;
-  /** the explanatory text for this step. Present tense, ≤ 120 chars. */
+  /** the explanatory text for this step. Present tense, ≤ 320 chars (the caption rail). */
   caption: string;
   /** engine-specific render state at time t */
   state: S;
@@ -880,7 +880,9 @@ Each of the 89 units is one file exporting a `Unit`. Content rules:
 - **`analogy.text`** — 1–2 sentences, concrete and physical. The analogy must map *structurally*
   to the mechanism, not just vibe at it. If you cannot explain which part of the analogy is the
   CPU, the analogy is wrong.
-- **`caption`** (per step) — ≤ 120 chars, states what is happening *right now* and why.
+- **`caption`** (per step) — ≤ 320 chars (the caption rail, sized for story-beat captions), states
+  what is happening *right now* and why. An optional `analogyCaption` on the same step tells the
+  same beat in the scene's words for the analogy lens.
   Prefer `"P2 preempts P1: 4 remaining < 7 remaining"` over `"Now P2 runs"`.
 - **`input`** — take the numbers from the lecture slides listed in the Atlas. Do not invent
   example data when the slide provides some.
