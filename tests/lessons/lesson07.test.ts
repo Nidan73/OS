@@ -25,7 +25,7 @@ describe("Lesson 7: More cores, more problems (§3C)", () => {
     expect(lesson07.concept).toContain("Multiprocessor");
     expect(lesson07.morphMode).toBe("morph");
     expect(lesson07.morphReveals).toBe(
-      "In the kitchen a gap at the chef's station is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second hardware thread slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else."
+      "In the kitchen a gap at the cook's counter is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else."
     );
   });
 

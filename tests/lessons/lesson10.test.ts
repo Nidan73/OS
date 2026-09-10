@@ -44,7 +44,7 @@ describe('Lesson 10 · the last slide numbers (§2.1)', () => {
     expect(r.steps[r.steps.length - 1].register2).toBe(4);
   });
 
-  it('the ATLAS story: 3 slices, both read, both write "2"', () => {
+  it('the cake story: 3 pieces, both look, both write "2"', () => {
     const r = simulateRaceCondition(3, toThreadIds(SLIDE_ORDER));
     expect(r.finalCounter).toBe(2);
     expect(r.isCorrupted).toBe(true);
@@ -95,7 +95,7 @@ describe('Lesson 10 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1);
   });
 
-  it('analogy vertical position carries NO time: each friend\'s acts run bottom-up', () => {
+  it('analogy vertical position carries NO time: each parent\'s acts run bottom-up', () => {
     const g = actGeometry(0, SLIDE_ORDER);
     // story order act0 -> act2, but y strictly DECREASES: place, not time
     expect(g['act-T1-0'].y).toBeGreaterThan(g['act-T1-1'].y);
@@ -163,9 +163,9 @@ describe('Lesson 10 · words agree with the mechanism', () => {
     expect(r.expectedCounter).toBe(lesson10Input.initial.counter);
   });
 
-  it('no copy claims both friends make the same-direction edit', () => {
-    expect(lesson10.analogy.text.toLowerCase()).not.toMatch(/both (friends )?(take|write|put)/);
-    expect(lesson10.concept.toLowerCase()).not.toMatch(/both (friends )?(take one|write back "2")/);
+  it('no copy claims mother and father make the same-direction edit', () => {
+    expect(lesson10.analogy.text.toLowerCase()).not.toMatch(/both (mother and father )?(take|write|put)/);
+    expect(lesson10.concept.toLowerCase()).not.toMatch(/both (parents )?(take one|write back "2")/);
     expect(ACT_TEXT.T1[1].toLowerCase()).not.toBe(ACT_TEXT.T2[1].toLowerCase());
   });
 

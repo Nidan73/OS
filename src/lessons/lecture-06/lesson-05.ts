@@ -58,37 +58,38 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
 
     // Service station labels
     const truckTitle = svg.querySelector('#truck-title');
-    if (truckTitle) truckTitle.textContent = 'GATE 42';
+    if (truckTitle) truckTitle.textContent = 'DINNER TABLE';
 
     const truckState = svg.querySelector('#truck-state');
     if (truckState) {
       if (state.activeProcessId) {
-        truckState.textContent = `BOARDING ${state.activeProcessId}`;
-        truckState.setAttribute('fill', 'var(--travel)');
+        const who = this.input.analogy?.items?.[state.activeProcessId]?.customerName ?? state.activeProcessId;
+        truckState.textContent = `SERVING ${who.toUpperCase()}`;
+        truckState.setAttribute('fill', 'var(--friends)');
       } else {
-        truckState.textContent = 'GATE READY';
+        truckState.textContent = 'READY TO SERVE';
         truckState.setAttribute('fill', 'var(--muted)');
       }
     }
 
-    // Polish sprites and process labels for airport domain
+    // Family members at the dinner table in the analogy view.
     for (const p of this.input.processes) {
       const procGroup = svg.querySelector(`#proc-${p.id}`);
       if (!procGroup) continue;
 
       const prio = p.priority ?? 1;
 
-      // Update tray text in sprite to Boarding Group
+      // Update tray text in sprite to Serving Order
       const trayTxt = procGroup.querySelector(`#sprite-${p.id} text`);
       if (trayTxt) {
-        trayTxt.textContent = `Grp ${prio}`;
+        trayTxt.textContent = `No. ${prio}`;
       }
 
       // Update label
       const label = procGroup.querySelector(`#label-${p.id}`) as SVGTextElement;
       if (label) {
         if (v < 0.5) {
-          label.textContent = `${p.id} · Grp ${prio} (${p.burst}m)`;
+          label.textContent = `${p.id} · No. ${prio} (${p.burst}m)`;
         }
       }
     }
@@ -116,15 +117,15 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
         <div>
           <h3 style="font-size: 0.88rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">
-            Airport Gate · Priority & Aging Playground
+            Dinner Table · Serving Order & Mother's Rule
           </h3>
           <span style="font-size: 0.7rem; color: var(--muted);">
-            Group 1 = Priority 1 · Group 9 = Priority 9 (Starving)
+            Served first = Priority 1 · Served last = Priority 9 (Still Waiting)
           </span>
         </div>
         <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
           <button id="aging-toggle" type="button" data-primary-control="true" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.74rem; font-weight: 700; border-radius: var(--rounded-pill, 9999px); border: 1.5px solid ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; background: ${isP4Aged ? 'rgba(8, 127, 91, 0.12)' : 'rgba(217, 119, 6, 0.12)'}; color: ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; cursor: pointer; transition: all var(--dur-fast) var(--ease);">
-            <span>${isP4Aged ? '🛡️ Aging: ON' : '⚠️ Aging: OFF'}</span>
+            <span>${isP4Aged ? '🤱 Mother steps in: ON' : '⚠️ Mother steps in: OFF'}</span>
             <span style="font-size: 0.65rem; padding: 1px 5px; border-radius: var(--rounded-pill, 9999px); background: ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; color: #FFFFFF;">
               ${isP4Aged ? 'Toggle Off' : 'Toggle On'}
             </span>
@@ -141,7 +142,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
           const isAged = p.id === 'P4' && isP4Aged;
           const cardBorder = isStarving ? 'var(--waiting)' : isAged ? 'var(--running)' : 'var(--hairline)';
           const cardBg = isStarving ? 'rgba(217, 119, 6, 0.08)' : isAged ? 'rgba(8, 127, 91, 0.08)' : 'var(--canvas-parchment, #f5f5f7)';
-          const roleLabel = p.id === 'P2' ? 'First' : p.id === 'P5' ? 'Sky' : p.id === 'P1' ? 'Business' : p.id === 'P3' ? 'Main' : 'Group 9';
+          const roleLabel = p.id === 'P2' ? 'Father' : p.id === 'P5' ? 'Mother' : p.id === 'P1' ? 'Elder Sister' : p.id === 'P3' ? 'Younger Brother' : 'Little Cousin';
 
           return `
             <div class="process-order-card" data-proc="${p.id}" style="flex: 1; min-width: 76px; padding: 3px 5px; background: ${cardBg}; border: 1.5px solid ${cardBorder}; border-radius: 12px; display: flex; flex-direction: column; gap: 1px;">
@@ -150,7 +151,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
                 <span style="font-size: 0.65rem; padding: 1px 3px; border-radius: var(--rounded-pill, 9999px); background: var(--surface); border: 1px solid var(--hairline); font-family: var(--font-mono); font-weight: 600;">${p.burst}ms</span>
               </div>
               <div style="font-size: 0.65rem; font-weight: 600; color: ${isStarving ? 'var(--waiting)' : isAged ? 'var(--running)' : 'var(--ink)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                Grp ${p.priority ?? 1} · ${roleLabel}
+                No. ${p.priority ?? 1} · ${roleLabel}
               </div>
               <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1px; gap: 2px;">
                 <button type="button" class="btn-boost-prio" data-proc="${p.id}" data-delta="-1" title="Increase priority" style="padding: 1px 4px; border: 1px solid var(--hairline); border-radius: 3px; background: var(--surface); font-size: 0.62rem; font-weight: 700; cursor: pointer;">
@@ -179,7 +180,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
           Live Scoreboard
         </h3>
         <div style="padding: 1px 7px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.7rem; ${isP4Aged ? 'background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);' : 'background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);'}">
-          ${isP4Aged ? '✅ Group 9 Rescued by Aging (Wait: 1 ms)' : '⚠️ Starvation Active: Group 9 Waits 18 ms'}
+          ${isP4Aged ? '✅ Little Cousin Served by Mother (Wait: 1 ms)' : '⚠️ Little Cousin Skipped: Waits 18 ms'}
         </div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 4px;">
@@ -191,11 +192,11 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
           <div style="font-size: 0.65rem; color: var(--muted); font-family: var(--font-mono);">${isP4Aged ? '5.4 ms with aging' : '8.2 ms baseline'}</div>
         </div>
         <div style="padding: 4px 6px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: 12px;">
-          <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Group 9 (P4) Wait</div>
+          <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Little Cousin (P4) Wait</div>
           <div style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; margin: 1px 0;">
             ${p4Wait} ms
           </div>
-          <div style="font-size: 0.65rem; color: var(--muted); font-family: var(--font-mono);">${isP4Aged ? 'Rescued from starvation' : 'Starving at line end'}</div>
+          <div style="font-size: 0.65rem; color: var(--muted); font-family: var(--font-mono);">${isP4Aged ? 'Mother moved them up' : 'Skipped at the table'}</div>
         </div>
         <div style="padding: 4px 6px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: 12px;">
           <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Dispatch Sequence</div>
@@ -261,24 +262,24 @@ export const lesson05: Lesson<GanttInput, GanttState> = {
   engine: 'gantt',
   engineClass: AgingGanttEngine,
   lensLabels: {
-    analogy: '\u2708\ufe0f Airport Analogy',
+    analogy: '🍽️ Dinner Table Analogy',
     mechanism: '\u{1F4CA} Priority Timeline',
-    analogyTitle: 'View as airport boarding queue',
+    analogyTitle: 'View as who gets served first at dinner',
     mechanismTitle: 'View as priority scheduling timeline'
   },
   analogy: {
-    domain: 'travel',
-    text: 'Airport boarding groups. The Group 9 passenger who watches four flights board ahead of them is starving — aging is the gate agent quietly bumping them up per hour waited.'
+    domain: 'friends',
+    text: 'Who gets served first at dinner. The little cousin keeps getting skipped while bigger plates go ahead — starving — until mother steps in and moves them up the serving order.'
   },
   concept: 'Priority scheduling assigns each process an integer priority rank where the CPU is allocated to the highest-priority job (lowest integer). However, low-priority processes can suffer from starvation (indefinite blocking) if higher-priority tasks continuously arrive. Aging solves starvation by gradually incrementing the priority of processes waiting in the ready queue, ensuring every job eventually executes.',
-  morphReveals: 'At the gate your group number decides where you stand, and standing still costs you nothing. On the timeline that same position becomes when you start — so every new Group 1 arrival slides a Group 9 passenger further right, and starvation is simply a bar that never gets reached. Aging moves them up the line as they wait.',
+  morphReveals: 'At dinner your serving order decides where you sit in the line, and waiting costs you nothing. On the timeline that same position becomes when you start — so every newly served guest slides the little cousin further right, and starvation is simply a bar that never gets reached. Mother moves them up the line as they wait.',
   morphMode: 'morph',
   analogyMapping: [
-    'Boarding Gate ➔ CPU Core',
-    'Gate Agent ➔ Scheduler Dispatcher',
-    'Boarding Group (1–9) ➔ Priority Rank (1 = Highest Priority)',
-    'Starving Group 9 Traveler ➔ Low-Priority Process (Starvation)',
-    'Priority Upgrade per Hour Waited ➔ Aging Mechanism'
+    'Dinner Table ➔ CPU Core',
+    'Mother Serving ➔ Scheduler Dispatcher',
+    'Serving Order (1–9) ➔ Priority Rank (1 = Highest Priority)',
+    'Skipped Little Cousin ➔ Low-Priority Process (Starvation)',
+    'Mother Moving Them Up ➔ Aging Mechanism'
   ] as any,
   input: {
     processes: [
@@ -290,35 +291,35 @@ export const lesson05: Lesson<GanttInput, GanttState> = {
     ],
     algorithm: 'priority',
     analogy: {
-      domain: 'travel',
-      type: 'airport',
-      serviceLabel: 'Boarding Gate',
-      serviceSublabel: 'Gate Agent (Dispatcher)',
-      queueLabel: 'Boarding Queue',
+      domain: 'friends',
+      type: 'table',
+      serviceLabel: 'Dinner Table',
+      serviceSublabel: 'Mother Serving (Dispatcher)',
+      queueLabel: 'Serving Line',
       items: {
         P1: {
-          customerName: 'Business Traveler',
-          orderText: 'Group 3 · Priority 3 (10m)',
+          customerName: 'Elder Sister',
+          orderText: 'No. 3 · Priority 3 (10m)',
           avatarColor: '#D97706'
         },
         P2: {
-          customerName: 'First Class',
-          orderText: 'Group 1 · Priority 1 (1m)',
+          customerName: 'Father',
+          orderText: 'No. 1 · Priority 1 (1m)',
           avatarColor: '#0284C7'
         },
         P3: {
-          customerName: 'Main Cabin Select',
-          orderText: 'Group 4 · Priority 4 (2m)',
+          customerName: 'Younger Brother',
+          orderText: 'No. 4 · Priority 4 (2m)',
           avatarColor: '#7C3AED'
         },
         P4: {
-          customerName: 'Group 9 Passenger',
-          orderText: 'Group 9 · Priority 9 (1m)',
+          customerName: 'Little Cousin',
+          orderText: 'No. 9 · Priority 9 (1m)',
           avatarColor: '#DC2626'
         },
         P5: {
-          customerName: 'Sky Priority',
-          orderText: 'Group 2 · Priority 2 (5m)',
+          customerName: 'Mother',
+          orderText: 'No. 2 · Priority 2 (5m)',
           avatarColor: '#059669'
         }
       }

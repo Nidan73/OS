@@ -279,7 +279,7 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
     memTitle.setAttribute('font-size', '11');
     memTitle.setAttribute('font-weight', '700');
     memTitle.setAttribute('fill', 'var(--muted)');
-    memTitle.textContent = v < 0.5 ? 'SHARED SLICES LEDGER' : 'SHARED MEMORY & REGISTERS';
+    memTitle.textContent = v < 0.5 ? 'SHARED CAKE LEDGER' : 'SHARED MEMORY & REGISTERS';
 
     this.memoryGroup.append(memBg, memTitle);
 

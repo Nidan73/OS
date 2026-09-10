@@ -120,7 +120,7 @@ describe('Lesson 13 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     // The assertion that matters here: our lesson uses that path (analogy names
     // set, so view<0.5 shows people, not threads).
     const input = atomicLessonInput(DEFAULT_ATOMIC);
-    expect(input.actors.map((a) => a.analogyName)).toEqual(['Friend A', 'Friend B']);
+    expect(input.actors.map((a) => a.analogyName)).toEqual(['Father', 'Mother']);
     expect(input.analogy?.resourceLabel).toContain('HOOK');
   });
 

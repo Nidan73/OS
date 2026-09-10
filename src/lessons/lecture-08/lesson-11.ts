@@ -11,9 +11,9 @@ import {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layout (pure) — the carrying property of the morph is POSITION ITSELF:
-// on the coach, horizontal position is geography (a cubicle barely wider than
-// a person, a long aisle, a wide seat area) and vertical position is posture
-// (standing in the aisle, sitting in a seat). In the protocol picture the
+// at home, horizontal position is rooms (a bathroom barely wider than
+// a person, a long corridor, a wide table area) and vertical position is posture
+// (standing in the corridor, sitting at the table). In the protocol picture the
 // four sections become equal-width lanes and vertical position becomes time.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -45,10 +45,10 @@ export const CS_PROCS = ['P1', 'P2', 'P3'] as const;
 interface Box { x: number; y: number; w: number; h: number }
 
 /**
- * Analogy layout, authored as a coach first (§3C.2a rule 1): a small cubicle,
- * a long aisle where the queue stands shoulder to shoulder, and a wide seat
- * area where remainder passengers sit lower down. Zone widths are UNEQUAL —
- * that is what a coach is like.
+ * Analogy layout, authored as a bathroom first (§3C.2a rule 1): a small room,
+ * a long corridor where the queue stands shoulder to shoulder, and a wide table
+ * area where remainder guests sit lower down. Zone widths are UNEQUAL —
+ * that is what the house is like.
  */
 const ANALOGY: Record<string, Box> = {
   cs: { x: 40, y: 70, w: 90, h: 56 },
@@ -198,12 +198,12 @@ export class CriticalSectionEngine extends AnimationEngine<CSInput, CSStep> impl
   private renderCoach(g: SVGGElement, state: CSStep): void {
     g.appendChild(this.rect(24, 54, 672, 120, 14, 'var(--surface, #fff)', 'var(--hairline)'));
     g.appendChild(this.rect(140, 66, 320, 96, 8, 'var(--surface-alt)', 'var(--hairline)'));
-    g.appendChild(this.text(300, 170, 'the aisle', 9, 'var(--muted)'));
+    g.appendChild(this.text(300, 170, 'the corridor', 9, 'var(--muted)'));
 
     for (let i = 0; i < 3; i++) {
       g.appendChild(this.rect(462 + i * 70, 122, 66, 30, 6, 'var(--surface-alt)', 'var(--hairline)'));
     }
-    g.appendChild(this.text(600, 170, 'the seats', 9, 'var(--muted)'));
+    g.appendChild(this.text(600, 170, 'the table', 9, 'var(--muted)'));
     g.appendChild(this.text(85, 140, 'occupied', 9, state.inside.length > 0 ? 'var(--accent)' : 'var(--muted)'));
   }
 
@@ -233,7 +233,7 @@ export class CriticalSectionEngine extends AnimationEngine<CSInput, CSStep> impl
     const room = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     room.setAttribute('id', 'bar-cs');
     room.appendChild(this.rectAt(geometry.cs, 12, 'var(--surface)', state.inside.length > 1 ? 'var(--waiting)' : 'var(--accent)', state.inside.length > 0 ? 2 : 1));
-    room.appendChild(this.text(geometry.cs.x + geometry.cs.w / 2, geometry.cs.y + geometry.cs.h / 2 + 3, v < 0.5 ? 'toilet' : 'critical', 9, 'var(--ink)'));
+    room.appendChild(this.text(geometry.cs.x + geometry.cs.w / 2, geometry.cs.y + geometry.cs.h / 2 + 3, v < 0.5 ? 'bathroom' : 'critical', 9, 'var(--ink)'));
     g.appendChild(room);
 
     CS_PROCS.forEach(p => {
@@ -352,25 +352,25 @@ export const lesson11: Lesson<CSInput, CSStep> = {
   engine: 'standalone',
   engineClass: CriticalSectionEngine,
   lensLabels: {
-    analogy: '🚽 The coach toilet',
+    analogy: '🚻 The bathroom at home',
     mechanism: '⚙️ The four sections',
-    analogyTitle: 'View as the single toilet on a long-haul coach',
+    analogyTitle: 'View as the one bathroom in the house',
     mechanismTitle: 'View as entry, critical, exit and remainder over time'
   },
   analogy: {
-    domain: 'travel',
-    text: 'The single toilet on a twelve-hour coach. Queue at the door, go in, slide the lock back on the way out, return to your seat. Everything about the problem follows from that room: it holds one person, the little lock is the only thing keeping it that way, and every promise is a promise about the queue at the door.'
+    domain: 'friends',
+    text: 'The one bathroom in the house. Queue at the door, go in, turn the latch back on the way out, return to the table. Everything about the problem follows from that room: it holds one person, the little latch is the only thing keeping it that way, and every promise is a promise about the queue at the door.'
   },
-  concept: 'The critical-section problem asks for a protocol keeping three promises. Mutual exclusion: never two inside at once. Progress: if the section is free and processes are waiting, somebody gets in — a lock left engaged over an empty section breaks it. Bounded waiting: a limit on how many times others may go ahead of you — without it the system is technically making progress and someone still never gets in. Every failure here is computed from one simulation of the same doorway protocol with one promise disabled. A non-preemptive kernel sidesteps the problem by never stopping anyone mid-aisle — race-free by construction, at the cost of responsiveness.',
-  morphReveals: 'On the coach, position is geography and posture: a cubicle barely wider than a person, a long aisle you stand in, seats you sit in lower down. In the protocol picture the four sections become equal lanes and height becomes time — size and posture stop mattering, and what is left is which section each process is in, and when.',
+  concept: 'The critical-section problem asks for a protocol keeping three promises. Mutual exclusion: never two inside at once. Progress: if the section is free and processes are waiting, somebody gets in — a latch left locked over an empty bathroom breaks it. Bounded waiting: a limit on how many times others may go ahead of you — without it the system is technically making progress and someone still never gets in. Every failure here is computed from one simulation of the same bathroom protocol with one promise disabled. A non-preemptive kernel sidesteps the problem by never stopping anyone mid-corridor — race-free by construction, at the cost of responsiveness.',
+  morphReveals: 'At home, position is rooms and posture: a bathroom barely wider than a person, a long corridor you stand in, the table you sit at lower down. In the protocol picture the four sections become equal lanes and height becomes time — size and posture stop mattering, and what is left is which section each process is in, and when.',
   morphMode: 'morph',
   analogyMapping: [
-    'Toilet cubicle ➔ critical section',
+    'Bathroom ➔ critical section',
     'Queue at the door ➔ entry section',
-    'Sliding the lock back on the way out ➔ exit section',
-    'Your seat ➔ remainder section',
-    'The little lock ➔ the shared lock variable',
-    'The three ways the coach fails ➔ the three computed guarantee violations'
+    'Turning the latch back on the way out ➔ exit section',
+    'Your seat at the table ➔ remainder section',
+    'The little latch ➔ the shared lock variable',
+    'The three ways the house fails ➔ the three computed guarantee violations'
   ],
   input: lesson11Input
 };

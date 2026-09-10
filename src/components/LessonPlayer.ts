@@ -85,9 +85,9 @@ export class LessonPlayer {
       return b;
     };
 
-    this.analogyBtn = pillBtn('🍔 Food Truck Analogy', 'View as physical queue');
+    this.analogyBtn = pillBtn('🏠 Family Analogy', 'View as the family scene');
     this.morphBtn = pillBtn('⟷ Morph View', 'Smoothly animate between analogy and mechanism');
-    this.mechBtn = pillBtn('📊 FCFS Mechanism', 'View as CPU timeline');
+    this.mechBtn = pillBtn('📊 OS Mechanism', 'View as the OS mechanism');
 
     // Lessons relabel the lenses through data, never by reaching into the DOM.
     if (this.lensLabels) {
@@ -357,7 +357,7 @@ export class LessonPlayer {
               <span style="font-size: 0.7rem; padding: 1px 4px; border-radius: var(--rounded-pill, 9999px); background: var(--surface); border: 1px solid var(--hairline); font-family: var(--font-mono); font-weight: 600;">${p.burst}ms</span>
             </div>
             <div style="font-size: 0.7rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              ${p.burst >= 20 ? '🍔 Party (24m)' : '☕ Coffee (3m)'}
+              ${p.burst >= 20 ? '🍽️ Full plate' : '🥗 Side dish'} (${p.burst}m)
             </div>
             <div style="display: flex; gap: 4px; margin-top: 2px;">
               <button type="button" class="btn-move-left" data-idx="${idx}" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="flex:1; padding: 2px 4px; border: 1px solid var(--hairline); border-radius: var(--rounded-pill, 9999px); background: var(--surface); font-size: 0.72rem; font-weight: 600;">

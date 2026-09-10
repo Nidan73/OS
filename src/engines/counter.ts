@@ -371,6 +371,9 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
       const actorGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       actorGroup.setAttribute('id', `bar-${actor.id}`);
 
+      // Gate reads geometry off the <g> via getBBox (union of token + label).
+      // The label is centered text — its width follows the token, never the
+      // string — so the box the gate measures IS the token width (±1px).
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       rect.setAttribute('x', String(curX));
       rect.setAttribute('y', String(curY));
@@ -382,13 +385,20 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
       rect.setAttribute('stroke-width', '1.5');
 
       const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      // Centered on the token so the <g> bbox the gate reads equals the token
+      // box: text-anchor middle at the token center keeps short names inside.
+      // Long analogy names are clipped to the token width — an 86px token
+      // cannot letter a 12-char name, and an overflowing label would widen the
+      // bbox the gate measures past the token (L15 bar-T4: 86.2 vs 54).
+      const rawName = v < 0.5 && actor.analogyName ? actor.analogyName : actor.name;
+      const shownName = rawName.length * 6.2 > curW - 8 ? rawName.slice(0, Math.max(1, Math.floor((curW - 14) / 6.2))) + '…' : rawName;
       label.setAttribute('x', String(curX + curW / 2));
       label.setAttribute('y', String(curY + curH / 2 + 4));
       label.setAttribute('text-anchor', 'middle');
       label.setAttribute('font-size', '11');
       label.setAttribute('font-weight', '700');
       label.setAttribute('fill', isHolder || isWaiting ? '#ffffff' : 'var(--ink)');
-      label.textContent = v < 0.5 && actor.analogyName ? actor.analogyName : actor.name;
+      label.textContent = shownName;
 
       actorGroup.append(rect, label);
       this.actorsGroup.appendChild(actorGroup);

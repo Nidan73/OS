@@ -48,7 +48,7 @@ describe('Lesson 11 · the morph is geometric, not cosmetic (§3C.2a)', () => {
       expect(gap).toBeGreaterThan(0);
       expect(gap).toBeLessThan(g[waiting[0]].w);
     }
-    // seated passengers sit lower than anyone in the aisle or the room
+    // guests at the table sit lower than anyone in the corridor or the room
     const seated = CS_PROCS.filter(p => s.phases[p] === 'remainder');
     const standing = CS_PROCS.filter(p => s.phases[p] !== 'remainder');
     for (const p of seated) {

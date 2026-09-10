@@ -54,7 +54,7 @@ function setupLesson07Playground(
             Interactive Playground: Multiprocessor Cores & SMT
           </h3>
           <div style="font-size: 0.74rem; color: var(--muted); margin: 2px 0 0 0;">
-            Add cores and hardware threads to watch memory stall dead-time get absorbed.
+            Add cores and hardware threads to watch memory stall dead-time get covered.
           </div>
         </div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -165,7 +165,7 @@ function setupLesson07Playground(
     if (coresCount === 1 && !smtEnabled) {
       events.push(
         { caption: "T1 dispatched to Core 0. Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall (cache miss). Pipeline sits idle on the storeroom!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { caption: "T1 hits a memory stall (cache miss). The pan simmers — nobody can touch it!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
         { caption: "No alternate hardware thread: the core stays empty through the whole stall.", action: "demote" as const, itemId: "T2", toQueue: "ready" },
         { caption: "Memory returns. T1 resumes on Core 0.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
         { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
@@ -226,24 +226,24 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
   engine: "queue",
   engineClass: SMTQueueEngine,
   lensLabels: {
-    analogy: "\u{1F373} Kitchen Analogy",
-    mechanism: "\u26A1 Multiprocessor SMT",
-    analogyTitle: "View as kitchen order rail and chef prep station",
+    analogy: "🍳 Kitchen Analogy",
+    mechanism: "⚡ Multiprocessor SMT",
+    analogyTitle: "View as one cook versus several, with pans per cook",
     mechanismTitle: "View as multicore hyperthreaded hardware pipeline"
   },
   analogy: {
     domain: "food",
-    text: "One kitchen versus several; a chef idle at the pass waiting on the storeroom. With multiple pans (hardware threads), the chef turns to the other pan while the first simmers, absorbing the memory stall."
+    text: "One cook versus several, and one cook working several pans. When a pan must simmer untouched, the cook turns to the next pan instead of standing idle — and the second pan covers the waiting time."
   },
   concept: "Multiprocessor architectures scale throughput by adding cores and hardware threads (chip multithreading / SMT). When a running task hits a memory stall waiting for a cache miss, the core hardware instantly switches to an alternate hardware thread, masking latency and keeping execution units saturated across two distinct levels of scheduling.",
-  morphReveals: "In the kitchen a gap at the chef's station is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second hardware thread slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
+  morphReveals: "In the kitchen a gap at the cook's counter is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
   morphMode: "morph",
   analogyMapping: [
-    "Chef Prep Stations ➔ Processor Cores",
-    "Multiple Pans per Chef ➔ Hardware Threads (Hyperthreading)",
-    "Storeroom Wait ➔ Memory Stall (Cache Miss)",
-    "Head Chef Assigning Dishes ➔ OS Thread Scheduler (First Level)",
-    "Chef Switching Pans ➔ Core Hardware Thread Switch (Second Level)"
+    "Cooks at Counters ➔ Processor Cores",
+    "Several Pans per Cook ➔ Hardware Threads (Hyperthreading)",
+    "Simmering Untouched ➔ Memory Stall (Cache Miss)",
+    "Mother Assigning Dishes ➔ OS Thread Scheduler (First Level)",
+    "Cook Turning Pans ➔ Core Hardware Thread Switch (Second Level)"
   ],
   input: {
     queues: [
@@ -276,8 +276,8 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
     ],
     analogy: {
       domain: "food",
-      serviceLabel: "Chef Prep Station",
-      queueLabels: { ready: "Order Rail", stall: "Storeroom Wait" }
+      serviceLabel: "Cook Counter",
+      queueLabels: { ready: "Dishes Waiting", stall: "Simmering Pans" }
     }
   }
 };

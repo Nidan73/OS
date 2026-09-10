@@ -21,7 +21,7 @@ export interface GanttAnalogyItem {
 
 export interface GanttAnalogyConfig {
   domain: 'food' | 'travel' | 'friends';
-  type: 'food-truck' | 'cafe' | 'express-lane' | 'karaoke' | 'airport';
+  type: 'food-truck' | 'cafe' | 'express-lane' | 'karaoke' | 'airport' | 'dinner' | 'kitchen' | 'restaurant' | 'car' | 'table';
   serviceLabel?: string;
   serviceSublabel?: string;
   queueLabel?: string;
@@ -316,7 +316,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     coreState.setAttribute('fill', 'var(--muted)');
     coreState.textContent = 'DISPATCH';
 
-    // Analogy: Food Truck storefront
+    // Analogy: family service station (dinner table / kitchen / restaurant / car)
     const truckBox = document.createElementNS(svgNS, 'rect');
     truckBox.setAttribute('id', 'truck-box');
     truckBox.setAttribute('x', '10');
@@ -337,7 +337,14 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     truckTitle.setAttribute('font-weight', '700');
     truckTitle.setAttribute('text-anchor', 'middle');
     truckTitle.setAttribute('fill', 'var(--food)');
-    truckTitle.textContent = 'CHEF PASS';
+    // Analogy service label: default mount text comes from the lesson input.
+    // Lessons that want their own wording overwrite after super.mount().
+    const initialService = this.input.analogy?.serviceLabel ?? null;
+    if (initialService) {
+      truckTitle.textContent = initialService.toUpperCase().slice(0, 14);
+    } else {
+      truckTitle.textContent = 'DINING TABLE';
+    }
 
     const truckState = document.createElementNS(svgNS, 'text');
     truckState.setAttribute('id', 'truck-state');
@@ -347,7 +354,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
     truckState.setAttribute('font-size', '9');
     truckState.setAttribute('text-anchor', 'middle');
     truckState.setAttribute('fill', 'var(--muted)');
-    truckState.textContent = '1-BY-1';
+    truckState.textContent = this.input.analogy?.queueLabel ?? '1-BY-1';
 
     this.serviceStationGroup.append(coreBox, coreTitle, coreState, truckBox, truckTitle, truckState);
 
@@ -567,12 +574,13 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
       if (state.activeProcessId) {
         coreState.textContent = state.activeProcessId;
         coreState.setAttribute('fill', 'var(--running)');
-        truckState.textContent = `Order ${state.activeProcessId}`;
+        const dish = this.input.analogy?.items?.[state.activeProcessId]?.orderText ?? state.activeProcessId;
+        truckState.textContent = dish.length > 14 ? dish.slice(0, 13) + '…' : dish;
         truckState.setAttribute('fill', 'var(--food)');
       } else {
         coreState.textContent = 'IDLE';
         coreState.setAttribute('fill', 'var(--muted)');
-        truckState.textContent = 'WAITING';
+        truckState.textContent = this.input.analogy?.queueLabel ?? 'WAITING';
         truckState.setAttribute('fill', 'var(--muted)');
       }
     }
@@ -695,9 +703,15 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
         trayTxt.setAttribute('font-weight', '600');
         trayTxt.setAttribute('text-anchor', 'middle');
         trayTxt.setAttribute('fill', 'var(--ink)');
-        trayTxt.textContent = width >= 150
-          ? (p.burst >= 20 ? '🍔 × 24' : '☕ 1 coffee')
-          : (p.burst >= 20 ? '🍔 24' : '☕ 1');
+        // Dish tag: read the lesson's own dish names off the input (SPEC §2.1).
+        // Short tag for the 46px tray; the full name sits on the sprite label.
+        const dishTag = (() => {
+          const full = itemInfo?.orderText ?? '';
+          const m = full.match(/\((\d+)\s*min\)/);
+          if (m) return `${m[1]}m dish`;
+          return full.length > 10 ? full.slice(0, 9) + '…' : (full || (p.burst >= 20 ? 'big dish' : 'side dish'));
+        })();
+        trayTxt.textContent = dishTag;
 
         tray.append(trayBg, trayTxt);
         sprite.append(head, eye1, eye2, torso, tray);
@@ -706,6 +720,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
       // Update Label (anchored below sprite in analogy view; centered or stacked in mechanism view)
       const label = procGroup.querySelector(`#label-${p.id}`) as SVGTextElement;
       if (label) {
+        const itemInfo = analogyItems[p.id];
         label.setAttribute('x', String(x + width / 2));
         label.setAttribute('text-anchor', 'middle');
         label.setAttribute('font-weight', '600');
@@ -728,12 +743,16 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
             `;
           }
         } else {
-          // Analogy view: positioned cleanly BELOW the customer sprite (never collides)
+          // Analogy view: positioned cleanly BELOW the family sprite (never collides).
+          // Full dish name, from the lesson's own input — never a hardcoded order.
           label.setAttribute('y', String(y + 98));
           label.setAttribute('font-family', 'var(--font-ui)');
           label.setAttribute('font-size', width >= 160 ? '10.5' : '9.5');
           label.setAttribute('fill', 'var(--ink)');
-          label.textContent = width >= 160 ? `${p.id}: ${p.burst}m order` : `${p.id} (${p.burst}m)`;
+          const who = itemInfo?.customerName ?? p.id;
+          const dish = itemInfo?.orderText ?? `${p.burst}m dish`;
+          const full = `${who}: ${dish}`;
+          label.textContent = full.length > 26 ? full.slice(0, 25) + '…' : full;
         }
       }
 
@@ -791,7 +810,9 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
 
     const labelText = v >= 0.5
       ? `T=${state.playheadTime.toFixed(0)}ms`
-      : (state.activeProcessId ? `Serving ${state.activeProcessId}` : 'Now Serving');
+      : (state.activeProcessId
+        ? (this.input.analogy?.items?.[state.activeProcessId]?.customerName ?? `Serving ${state.activeProcessId}`)
+        : (this.input.analogy?.serviceLabel ?? 'Now Serving'));
     const labelWidth = Math.max(68, labelText.length * 7.5 + 16);
     this.cursorBg.setAttribute('x', String(cursorX - labelWidth / 2));
     this.cursorBg.setAttribute('y', String(this.topMargin - 15));

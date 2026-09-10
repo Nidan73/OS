@@ -21,24 +21,24 @@ import {
 // switch cost and the clock, and the verdict recomputes live.
 //
 // ENGINE VERDICT (a): extend CounterEngine and use its render() unmodified.
-// Why: the lesson IS one holder in a room with a queue at the door —
+// Why: the lesson IS one holder in the bathroom with a queue at the door —
 // exactly the shape CounterEngine renders (meter + holder + waiting,
 // [id^="bar-<actor>"] tokens that widen 54→84px across `view`, analogy labels
 // at view<0.5). The spin-vs-block story is told by WHICH queue the waiters
 // stand in and what the scoreboard computes, not by new geometry.
 // Overriding render() would reimplement identical interpolation for no gain.
 //
-// The carrying property of the morph is OCCUPANCY-AS-WIDTH. At the hotel each
-// token is a person — width means a body, and the queue at the door is
-// shoulder-to-shoulder regardless of how long the occupant stays. In the lock
-// width means the claim on the room (holder wide, waiters compressed); the
+// The carrying property of the morph is OCCUPANCY-AS-WIDTH. At home each
+// token is a person — width means a body, and the queue at the bathroom door
+// is shoulder-to-shoulder regardless of how long the person inside stays. In
+// the lock width means the claim on the bathroom (holder wide, waiters compressed); the
 // stay length is priced in the computed captions and scoreboard, not the
 // width — dragging it moves the spin bill past the wakeup price. Same tokens,
 // same queue — width changes what it means, numbers change what they cost.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface LockParams {
-  /** How long the holder keeps the room, in µs — the dragged quantity. */
+  /** How long the holder keeps the bathroom, in µs — the dragged quantity. */
   csDurationUs: number;
   /** What a sit-down-and-wakeup costs, in µs — a slider, not a default. */
   contextSwitchCostUs: number;
@@ -88,7 +88,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
   return [
     {
       t: 0,
-      caption: 'One key, one room. The holder steps in; the door queue is empty.',
+      caption: 'One bathroom, one latch. Mother steps in; the corridor queue is empty.',
       highlight: [],
       state: {
         stepIndex: 0, value: 1, capacity: 1, activeActorId: null,
@@ -108,12 +108,12 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 2,
-      caption: `The holder takes the key for ${m.csDurationUs}µs.`,
+      caption: `Mother takes the bathroom for ${m.csDurationUs}µs.`,
       highlight: ['T1'],
       state: {
         stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T1',
         holders: ['T1'], waiting: [], action: 'acquire',
-        caption: `The holder takes the key for ${m.csDurationUs}µs.`
+        caption: `Mother takes the bathroom for ${m.csDurationUs}µs.`
       }
     },
     {
@@ -128,7 +128,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 4,
-      caption: `The second waiter queues ${how} behind the first.`,
+      caption: `Father queues ${how} behind the first waiter.`,
       highlight: ['T3'],
       state: {
         stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T3',
@@ -138,7 +138,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 5,
-      caption: `The second waiter settles ${how} — the queue order is now fixed.`,
+      caption: `Father settles ${how} — the queue order is now fixed.`,
       highlight: ['T3'],
       state: {
         stepIndex: 5, value: 0, capacity: 1, activeActorId: 'T3',
@@ -160,7 +160,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 7,
-      caption: `The stay ends — the holder is done, the key is due back.`,
+      caption: `The stay ends — mother is done, the bathroom is due back.`,
       highlight: ['T1'],
       state: {
         stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T1',
@@ -170,12 +170,12 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 8,
-      caption: 'The holder returns the key after its stay.',
+      caption: 'Mother comes out and turns the latch back after her stay.',
       highlight: ['T1'],
       state: {
         stepIndex: 8, value: 1, capacity: 1, activeActorId: 'T1',
         holders: [], waiting: ['T2', 'T3'], action: 'release',
-        caption: 'The holder returns the key.'
+        caption: 'Mother comes out and turns the latch back.'
       }
     },
     {
@@ -192,7 +192,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 10,
-      caption: 'The second waiter is still queued — the handoff order is set.',
+      caption: 'Father is still queued — the handoff order is set.',
       highlight: ['T3'],
       state: {
         stepIndex: 10, value: 1, capacity: 1, activeActorId: 'T3',
@@ -202,7 +202,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 11,
-      caption: 'The key goes to the first waiter in line — nobody is skipped.',
+      caption: 'The bathroom goes to the first waiter in line — nobody is skipped.',
       highlight: ['T2'],
       state: {
         stepIndex: 11, value: 0, capacity: 1, activeActorId: 'T2',
@@ -223,31 +223,31 @@ export function lockLessonInput(p: LockParams): LockLessonInput {
     initial: 1,
     capacity: 1,
     mode: p.mode,
-    resourceLabel: 'THE KEY (1 = ON HOOK)',
+    resourceLabel: 'THE LATCH (1 = FREE)',
     actors: [
-      { id: 'T1', name: 'T1', analogyName: 'Guest A' },
-      { id: 'T2', name: 'T2', analogyName: 'Guest B' },
-      { id: 'T3', name: 'T3', analogyName: 'Guest C' }
+      { id: 'T1', name: 'T1', analogyName: 'Mother' },
+      { id: 'T2', name: 'T2', analogyName: 'Elder Sister' },
+      { id: 'T3', name: 'T3', analogyName: 'Father' }
     ],
     events: [
-      { actorId: 'T1', action: 'acquire', caption: 'The holder takes the key.' },
+      { actorId: 'T1', action: 'acquire', caption: 'Mother takes the bathroom.' },
       { actorId: 'T2', action: 'spin', caption: 'Two waiters queue at the door.' },
-      { actorId: 'T1', action: 'release', caption: 'The holder returns the key.' },
+      { actorId: 'T1', action: 'release', caption: 'Mother comes out and turns the latch back.' },
       { actorId: 'T2', action: 'acquire', caption: 'Handoff to the first waiter.' }
     ],
     analogy: {
-      domain: 'travel',
-      resourceLabel: 'THE KEY (ON THE HOOK?)',
-      holderLabel: 'THE ROOM (OCCUPIED)',
+      domain: 'friends',
+      resourceLabel: 'THE LATCH (FREE?)',
+      holderLabel: 'THE BATHROOM (OCCUPIED)',
       waitingLabel: 'AT THE DOOR (QUEUING)',
-      actorNames: { T1: 'Guest A', T2: 'Guest B', T3: 'Guest C' }
+      actorNames: { T1: 'Mother', T2: 'Elder Sister', T3: 'Father' }
     }
   };
 }
 
 const MODE_SWITCH: Array<{ mode: 'spin' | 'block'; label: string }> = [
   { mode: 'spin', label: 'Jiggle the handle (spin)' },
-  { mode: 'block', label: 'Sit down (block / wakeup)' }
+  { mode: 'block', label: 'Sit on the bench (block / wakeup)' }
 ];
 
 /**
@@ -397,27 +397,27 @@ export const lesson14: Lesson<LockLessonInput, CounterState> = {
   engine: 'counter',
   engineClass: LockCounterEngine,
   lensLabels: {
-    analogy: '🏨 The hotel key',
+    analogy: '🚻 The bathroom at home',
     mechanism: '⚙️ acquire · release · spin vs block',
-    analogyTitle: 'View as one hotel key and a queue at the door',
+    analogyTitle: 'View as one bathroom and a queue at the door',
     mechanismTitle: 'View as the lock and what the wait burns'
   },
   analogy: {
-    domain: 'travel',
-    text: 'One hotel room, one key: take it, use the room, put it back. The waiters either jiggle the handle until it opens or sit down until they are called — and which waste is smaller depends entirely on how long the occupant stays.'
+    domain: 'friends',
+    text: 'One bathroom, one latch: mother goes in, comes out, turns the latch back. The waiters either jiggle the handle until it opens or sit on the corridor bench until they are called — and which waste is smaller depends entirely on how long mother stays.'
   },
   concept:
-    'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the key, use the room, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when the occupant leaves at once; blocking pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price — set it, set the clock, and the verdict recomputes.',
+    'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the bathroom, use it, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when mother comes out at once; sitting on the bench pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price — set it, set the clock, and the verdict recomputes.',
   morphReveals:
-    'At the hotel every token is the same width — a guest at the door — and the queue stays shoulder-to-shoulder however long the occupant stays. In the lock width stops meaning a body and starts meaning the claim on the room: the holder fills it wide while the queued compress behind. The stay itself is priced in numbers, not width — drag it and the spin bill climbs past the wakeup price until sitting down wins.',
+    'At home every token is the same width — a person at the door — and the queue stays shoulder-to-shoulder however long mother stays. In the lock width stops meaning a body and starts meaning the claim on the bathroom: mother fills it wide while the queued compress behind. The stay itself is priced in numbers, not width — drag it and the spin bill climbs past the wakeup price until sitting down wins.',
   morphMode: 'morph',
   analogyMapping: [
-    'One hotel key ➔ the mutex (available or held)',
-    'Taking the key ➔ acquire()',
-    'Putting it back ➔ release()',
+    'One bathroom latch ➔ the mutex (available or held)',
+    'Going in ➔ acquire()',
+    'Turning the latch back ➔ release()',
     'Jiggling the handle ➔ spinning: the processor burns for the whole stay',
-    'Sitting down until called ➔ blocking: one wakeup price, then sleep',
-    'How long the occupant stays ➔ the dragged stay length that flips the verdict'
+    'Sitting on the bench until called ➔ blocking: one wakeup price, then sleep',
+    'How long mother stays ➔ the dragged stay length that flips the verdict'
   ],
   input: lesson14Input
 };
