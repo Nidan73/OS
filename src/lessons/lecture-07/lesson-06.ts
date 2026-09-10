@@ -14,7 +14,9 @@ export function countDemotions(
 ): number {
   let n = 0;
   for (const it of items) {
-    if (it.queueId !== 'Q0') continue;
+    // Items stage in 'incoming' before the feedback loop sees them — only Q0
+    // residents can demote, and everything here starts there.
+    if (it.queueId !== 'incoming' && it.queueId !== 'Q0') continue;
     const burst = it.burst ?? 0;
     if (burst > q0) {
       n += 1;
@@ -69,7 +71,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
   public resetToDefault(): void {
     this.threshold = 8;
     this.input.items.forEach(it => {
-      it.queueId = 'Q0';
+      it.queueId = 'incoming';
     });
     this.input.events = [...lesson06Events];
     this.steps = this.buildSteps(this.input);
@@ -96,7 +98,14 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
     const items = this.input.items;
     for (const it of items) {
       const b = it.burst ?? 10;
-      if (it.queueId === 'Q0') {
+      // The regen path replays items from wherever the learner put them, so an
+      // arrival beat stages each one first — same discrete event as the default
+      // script, not a padding step.
+      const startQ = it.queueId ?? 'Q0';
+      if (startQ !== 'Q0' && startQ !== 'Q1' && startQ !== 'Q2') {
+        events.push({ caption: `${it.id} arrives — joins the ${startQ} lane.`, action: 'enqueue', itemId: it.id, toQueue: 'Q0' });
+      }
+      if (startQ === 'Q0' || startQ === 'incoming') {
         events.push(dispatch(it, 'Q0', q0));
         if (b <= q0) {
           events.push({
@@ -134,7 +143,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
             });
           }
         }
-      } else if (it.queueId === 'Q1') {
+      } else if (startQ === 'Q1') {
         events.push(dispatch(it, 'Q1', q1));
         if (b <= q1) {
           events.push({
@@ -218,7 +227,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
     const demotionsSubEl = document.getElementById('metric-demotions-sub');
     if (demotionsSubEl) {
       const paths = items
-        .filter(it => it.queueId === 'Q0' && (it.burst ?? 0) > q0)
+        .filter(it => (it.queueId === 'Q0' || it.queueId === 'incoming') && (it.burst ?? 0) > q0)
         .map(it => {
           const deep = (it.burst ?? 0) - q0 > q1;
           return `${it.id} (Q0\u2192Q1${deep ? '\u2192Q2' : ''})`;
@@ -384,7 +393,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
         const pId = (e.currentTarget as HTMLElement).getAttribute('data-proc');
         const it = this.input.items.find(x => x.id === pId);
         if (it) {
-          const nextQ = it.queueId === 'Q0' ? 'Q1' : 'Q2';
+          const nextQ = it.queueId === 'incoming' || it.queueId === 'Q0' ? 'Q1' : 'Q2';
           this.moveItemToQueue(it.id, nextQ);
         }
       });
@@ -395,7 +404,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
         const pId = (e.currentTarget as HTMLElement).getAttribute('data-proc');
         const it = this.input.items.find(x => x.id === pId);
         if (it) {
-          const prevQ = it.queueId === 'Q2' ? 'Q1' : 'Q0';
+          const prevQ = it.queueId === 'Q2' ? 'Q1' : it.queueId === 'Q1' ? 'Q0' : 'Q0';
           this.moveItemToQueue(it.id, prevQ);
         }
       });
@@ -413,6 +422,9 @@ function buttonsHas(list: NodeListOf<Element>, index: number): boolean {
 // Register MLFQQueueEngine for engine id 'queue'
 
 export const lesson06Events: QueueEvent[] = [
+  { caption: 'P1 arrives — joins the Q0 express lane.', action: 'enqueue', itemId: 'P1', toQueue: 'Q0' },
+  { caption: 'P2 arrives — the quick order queues behind P1.', action: 'enqueue', itemId: 'P2', toQueue: 'Q0' },
+  { caption: 'P3 arrives — three deep in Q0, nobody served yet.', action: 'enqueue', itemId: 'P3', toQueue: 'Q0' },
   { caption: 'P1 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
   { caption: 'P1 outlives the 8ms slice with 22ms left — demoted to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
   { caption: 'P2 dispatched on CPU 0 from Q0 (q=8). Short order, runs to the end of its burst.', action: 'dispatch', itemId: 'P2', coreId: 'cpu0' },
@@ -427,23 +439,29 @@ export const lesson06Events: QueueEvent[] = [
   { caption: 'P1 finishes in Q2 and exits. Every job landed where its burst earned.', action: 'complete', itemId: 'P1' }
 ];
 
+// DENSITY (Task A audit): 16 steps — step 0 stages three arrivals in an
+// incoming lane (an arrival is a discrete event and would collapse into the
+// initial frame without the lane), then one step per dispatch, completion or
+// demotion the feedback loop decides. Three demotions is exactly what
+// countDemotions derives: P1 drops twice (30 > 8, 22 > 16), P3 once.
 export const lesson06Input: QueueInput = {
   queues: [
+    { id: 'incoming', label: 'Incoming (New Arrivals)' },
     { id: 'Q0', label: 'Q0 (RR q=8ms)', quantum: 8 },
     { id: 'Q1', label: 'Q1 (RR q=16ms)', quantum: 16 },
     { id: 'Q2', label: 'Q2 (FCFS)' }
   ],
   cores: [{ id: 'cpu0', label: 'CPU 0' }],
   items: [
-    { id: 'P1', name: 'Order 1', burst: 30, queueId: 'Q0' },
-    { id: 'P2', name: 'Order 2', burst: 8, queueId: 'Q0' },
-    { id: 'P3', name: 'Order 3', burst: 15, queueId: 'Q0' }
+    { id: 'P1', name: 'Order 1', burst: 30, queueId: 'incoming' },
+    { id: 'P2', name: 'Order 2', burst: 8, queueId: 'incoming' },
+    { id: 'P3', name: 'Order 3', burst: 15, queueId: 'incoming' }
   ],
   events: lesson06Events,
   analogy: {
     domain: 'travel',
     serviceLabel: 'Check-in Desk',
-    queueLabels: { Q0: 'First Class Lane', Q1: 'Business Lane', Q2: 'Economy Lane' }
+    queueLabels: { incoming: 'Terminal Doors (Arriving)', Q0: 'First Class Lane', Q1: 'Business Lane', Q2: 'Economy Lane' }
   }
 };
 

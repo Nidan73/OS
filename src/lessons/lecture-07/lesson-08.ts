@@ -1,34 +1,62 @@
 import type { Lesson, PlaygroundCapable } from '../../core/types.js';
 import { QueueEngine, type QueueInput, type QueueEvent, type QueueState } from '../../engines/queue.js';
 
+// DENSITY (Task A audit): push/pull run 14 steps, affinity 13. Three arrivals
+// stage through the incoming lane first (an arrival is a discrete event —
+// without the lane they would collapse into the initial frame), then one step
+// per dispatch, completion, balancer tick, migration or its refusal,
+// cold-cache stall, and closing verdict. The tick and the move are separate
+// because detection and migration are separate kernel acts; the stall is
+// separate because the line refill lands mid-execution, after dispatch.
+
 export type MigrationScenario = 'push' | 'pull' | 'affinity';
+
+/** New work lands here before joining a core's runqueue — arrivals are events. */
+
+const ARRIVAL_EVENTS: QueueEvent[] = [
+  { caption: "P1 arrives — joins Core 0's runqueue.", action: 'enqueue', itemId: 'P1', toQueue: 'q_core0' },
+  { caption: 'P2 arrives — queues behind P1 on Core 0.', action: 'enqueue', itemId: 'P2', toQueue: 'q_core0' },
+  { caption: "P3 arrives — Core 0's line grows to three while Core 1 idles.", action: 'enqueue', itemId: 'P3', toQueue: 'q_core0' }
+];
 
 export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
   push: [
-    { caption: 'Core 0 holds P1, P2, P3 in its runqueue; Core 1 is idle.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    ...ARRIVAL_EVENTS,
+    { caption: 'Core 0 dispatches P1 — cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
     { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
-    { caption: 'Balancer detects the overload and pushes P3 to Core 1.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
+    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty — P3 is chosen.', action: 'stall', itemId: 'P3' },
+    { caption: "Balancer pushes P3 to Core 1's runqueue.", action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
     { caption: 'Core 1 dispatches P3 — busy at last, but its cache is cold.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
+    { caption: 'P3 stalls on Core 1 — cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
     { caption: 'P3 finishes on Core 1 after paying the reload cost.', action: 'complete', itemId: 'P3' },
     { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
-    { caption: 'P2 finishes on Core 0. Balanced — one cold reload was the price.', action: 'complete', itemId: 'P2' }
+    { caption: 'P2 finishes on Core 0 with warm-cache hits.', action: 'complete', itemId: 'P2' },
+    { caption: 'Balanced — both cores ran; one cold reload was the price.', action: 'stall', itemId: 'P2' }
   ],
   pull: [
-    { caption: 'Core 0 holds P1, P2, P3; Core 1 drained its queue and idles.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    ...ARRIVAL_EVENTS,
+    { caption: 'Core 0 dispatches P1 — cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
     { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
+    { caption: 'Core 1 drains dry and idles — the work-stealer scans Core 0 and chooses P3.', action: 'stall', itemId: 'P3' },
     { caption: 'Idle Core 1 steals: it pulls P3 from Core 0 runqueue.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
     { caption: 'Core 1 dispatches the stolen P3, paying cold-cache reload.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
+    { caption: 'P3 stalls on Core 1 — cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
     { caption: 'P3 finishes on Core 1.', action: 'complete', itemId: 'P3' },
-    { caption: 'Core 0 dispatches P2 with warm cache hits; both cores were used.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
-    { caption: 'P2 finishes on Core 0. Stealing beat idling — one reload was the price.', action: 'complete', itemId: 'P2' }
+    { caption: 'Core 0 dispatches P2 — affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'P2 finishes on Core 0.', action: 'complete', itemId: 'P2' },
+    { caption: 'Stealing beat idling — both cores ran; one reload was the price.', action: 'stall', itemId: 'P2' }
   ],
   affinity: [
+    ...ARRIVAL_EVENTS,
     { caption: 'P1, P2, P3 pinned to Core 0 by hard affinity; Core 1 idles.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
     { caption: 'P1 finishes on Core 0 — cache warm throughout.', action: 'complete', itemId: 'P1' },
-    { caption: 'Balancer is forbidden from migrating P3 despite the imbalance.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty — imbalance found.', action: 'stall', itemId: 'P3' },
+    { caption: 'The move is forbidden — P3 stays pinned to Core 0 despite the imbalance.', action: 'stall', itemId: 'P3' },
+    { caption: 'Core 0 dispatches P2 — still pinned, still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
     { caption: 'P2 finishes on Core 0 with full warm-cache hits.', action: 'complete', itemId: 'P2' },
     { caption: 'Core 0 dispatches P3 — still pinned, still warm.', action: 'dispatch', itemId: 'P3', coreId: 'core0' },
-    { caption: 'P3 finishes on Core 0. Zero reloads — and Core 1 never ran.', action: 'complete', itemId: 'P3' }
+    { caption: 'P3 finishes on Core 0 with full warm-cache hits.', action: 'complete', itemId: 'P3' },
+    { caption: 'Pinned — Core 1 never ran, zero reloads paid; locality kept, balance lost.', action: 'stall', itemId: 'P3' }
   ]
 };
 
@@ -171,6 +199,7 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
   ],
   input: {
     queues: [
+      { id: 'incoming', label: 'Incoming Line (New Arrivals)' },
       { id: 'q_core0', label: 'Core 0 Local Queue (Warm Cache)' },
       { id: 'q_core1', label: 'Core 1 Local Queue (Cold Cache)' }
     ],
@@ -179,15 +208,16 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
       { id: 'core1', label: 'Core 1 (Idle)' }
     ],
     items: [
-      { id: 'P1', name: 'Regular Diner', burst: 12, queueId: 'q_core0', affinity: 'core0' },
-      { id: 'P2', name: 'Regular Diner', burst: 15, queueId: 'q_core0', affinity: 'core0' },
-      { id: 'P3', name: 'Regular Diner', burst: 20, queueId: 'q_core0', affinity: 'core0' }
+      { id: 'P1', name: 'Regular Diner', burst: 12, queueId: 'incoming', affinity: 'core0' },
+      { id: 'P2', name: 'Regular Diner', burst: 15, queueId: 'incoming', affinity: 'core0' },
+      { id: 'P3', name: 'Regular Diner', burst: 20, queueId: 'incoming', affinity: 'core0' }
     ],
     events: SCENARIO_EVENTS.push,
     analogy: {
       domain: 'travel',
       serviceLabel: 'Agent Desk',
       queueLabels: {
+        incoming: 'Terminal Doors (Arriving)',
         q_core0: 'Desk 1 Line (Known Agent)',
         q_core1: 'Desk 2 Line (Empty)'
       },

@@ -117,26 +117,27 @@ describe('Lesson 06 — Queues within queues (MLFQ)', () => {
     engine.init(0);
     const steps = engine.getSteps();
 
-    expect(steps.length).toBe(13); // Initial t=0 + 12 dispatch/demote/complete beats
-    expect(steps[0].state.queues.Q0).toEqual(['P1', 'P2', 'P3']);
+    expect(steps.length).toBe(16); // Initial t=0 + 3 arrivals + 12 dispatch/demote/complete beats
+    expect(steps[0].state.queues.incoming).toEqual(['P1', 'P2', 'P3']);
+    expect(steps[3].state.queues.Q0).toEqual(['P1', 'P2', 'P3']);
 
     // P1 runs its Q0 quantum, then demotes to Q1
-    expect(steps[1].state.cores.cpu0).toBe('P1');
-    expect(steps[2].state.queues.Q1).toContain('P1');
+    expect(steps[4].state.cores.cpu0).toBe('P1');
+    expect(steps[5].state.queues.Q1).toContain('P1');
 
     // P2 runs its Q0 quantum, then completes inside Q0
-    expect(steps[3].state.cores.cpu0).toBe('P2');
-    expect(steps[4].state.completed).toContain('P2');
+    expect(steps[6].state.cores.cpu0).toBe('P2');
+    expect(steps[7].state.completed).toContain('P2');
 
     // P3 runs its Q0 quantum, then demotes to Q1
-    expect(steps[6].state.queues.Q1).toContain('P3');
+    expect(steps[9].state.queues.Q1).toContain('P3');
 
     // P1 runs its Q1 quantum, then demotes to Q2
-    expect(steps[8].state.queues.Q2).toContain('P1');
+    expect(steps[11].state.queues.Q2).toContain('P1');
 
     // P3 runs its Q1 remainder and completes; P1 runs Q2 to completion
-    expect(steps[10].state.completed).toContain('P3');
-    expect(steps[12].state.completed).toContain('P1');
+    expect(steps[13].state.completed).toContain('P3');
+    expect(steps[15].state.completed).toContain('P1');
 
     engine.destroy();
   });

@@ -16,6 +16,12 @@ import { simulateRaceCondition, RACE_INSTRUCTIONS, type RaceSimulationResult } f
 // becomes whose register holds the value. The plate becomes shared memory.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// DENSITY (Task A audit): correct at 7 — the initial frame plus one beat per
+// register-level instruction (read, modify, write × two threads = six). The
+// slide's S0–S5 trace is the complete mechanism; a serial order or a different
+// scenario changes the outcome, not the event count — told by the playground,
+// not by extra beats. Declaring is the brief's own legitimate answer here:
+// inventing a seventh instruction would falsify the trace.
 export const CANVAS_W = 720;
 export const CANVAS_H = 260;
 export const ROW_BASE = 44;
