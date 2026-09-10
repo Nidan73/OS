@@ -46,6 +46,7 @@ const LESSONS_META: LessonMeta[] = [
   { id: 15, slug: 'lesson-15', chapterSlug: 'lecture-09', title: 'Semaphores', blurb: 'Five parking spots and a live count — then forget a signal and deadlock the lot.' },
   { id: 16, slug: 'lesson-16', chapterSlug: 'lecture-10', title: 'Family dinner, two spoons short', blurb: 'Mother and father each grip a spoon and wait on the other — then remove one condition and watch it break.' },
   { id: 17, slug: 'lesson-17', chapterSlug: 'lecture-10', title: 'Seeing it as a graph', blurb: 'Cars blocking each other in the building driveway — draw the ring, then watch a freed car dissolve it.' },
+  { id: 18, slug: 'lesson-18', chapterSlug: 'lecture-10', title: 'Making It Impossible', blurb: 'Four rules at family dinner — remove one necessary condition and the deadlock ring cannot close.' },
   { id: 20, slug: 'lesson-20', chapterSlug: 'lecture-10', title: "The banker's algorithm", blurb: 'Mother lends to P1, then refuses P4 — the safety sweep runs cell by cell.' },
 ];
 
