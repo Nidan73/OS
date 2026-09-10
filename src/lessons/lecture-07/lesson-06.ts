@@ -422,21 +422,21 @@ function buttonsHas(list: NodeListOf<Element>, index: number): boolean {
 // Register MLFQQueueEngine for engine id 'queue'
 
 export const lesson06Events: QueueEvent[] = [
-  { caption: 'P1 arrives, is seated at the Q0 express table.', action: 'enqueue', itemId: 'P1', toQueue: 'Q0' },
-  { caption: 'P2 arrives, the quick order queues behind P1.', action: 'enqueue', itemId: 'P2', toQueue: 'Q0' },
-  { caption: 'P3 arrives, three deep in Q0, nobody served yet.', action: 'enqueue', itemId: 'P3', toQueue: 'Q0' },
-  { caption: 'P1 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
-  { caption: 'P1 outlives the 8ms slice with 22ms left, moved down a tier to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
-  { caption: 'P2 dispatched on CPU 0 from Q0 (q=8). Short order, runs to the end of its burst.', action: 'dispatch', itemId: 'P2', coreId: 'cpu0' },
-  { caption: 'P2 finishes inside Q0 in 8ms and exits, no demotion.', action: 'complete', itemId: 'P2' },
-  { caption: 'P3 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
-  { caption: 'P3 still needs 7ms after 8ms, moved down a tier to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
-  { caption: 'P1 dispatched again, now from Q1 (q=16). It runs its second quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
-  { caption: 'P1 still needs 6ms after 16ms, moved down a tier to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' },
-  { caption: 'P3 dispatched from Q1 (q=16). Its 7ms remainder fits, runs to completion.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
-  { caption: 'P3 finishes in Q1 and exits.', action: 'complete', itemId: 'P3' },
-  { caption: 'P1 dispatched from Q2 (FCFS). The long batch runs to completion.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
-  { caption: 'P1 finishes in Q2 and exits. Every job landed where its burst earned.', action: 'complete', itemId: 'P1' }
+  { caption: 'P1 arrives, is seated at the Q0 express table.', analogyCaption: 'A table sits down and is put at the front, where service is quickest. Everyone starts there.', action: 'enqueue', itemId: 'P1', toQueue: 'Q0' },
+  { caption: 'P2 arrives, the quick order queues behind P1.', analogyCaption: 'A second table arrives and waits behind them, also at the front.', action: 'enqueue', itemId: 'P2', toQueue: 'Q0' },
+  { caption: 'P3 arrives, three deep in Q0, nobody served yet.', analogyCaption: 'And a third. Three tables at the front now, none of them served yet, and the host still has no idea which of them will be quick.', action: 'enqueue', itemId: 'P3', toQueue: 'Q0' },
+  { caption: 'P1 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', analogyCaption: 'The waiter goes to the first table and gives them a short stretch of attention.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
+  { caption: 'P1 outlives the 8ms slice with 22ms left, moved down a tier to Q1.', analogyCaption: 'They are nowhere near done. So the host moves them back a tier, not as a punishment, but because they have now shown what kind of table they are.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
+  { caption: 'P2 dispatched on CPU 0 from Q0 (q=8). Short order, runs to the end of its burst.', analogyCaption: 'The second table gets its stretch of attention.', action: 'dispatch', itemId: 'P2', coreId: 'cpu0' },
+  { caption: 'P2 finishes inside Q0 in 8ms and exits, no demotion.', analogyCaption: 'They finish inside it and leave. They were never moved back, because they never needed to be.', action: 'complete', itemId: 'P2' },
+  { caption: 'P3 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', analogyCaption: 'The third table gets its turn at the front.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
+  { caption: 'P3 still needs 7ms after 8ms, moved down a tier to Q1.', analogyCaption: 'Still not finished, so back a tier they go as well.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
+  { caption: 'P1 dispatched again, now from Q1 (q=16). It runs its second quantum.', analogyCaption: 'Back at the middle tier the first table gets a longer stretch this time, because tables back here are known to need it.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
+  { caption: 'P1 still needs 6ms after 16ms, moved down a tier to Q2.', analogyCaption: 'Still not done. Back one more tier.', action: 'demote', itemId: 'P1', toQueue: 'Q2' },
+  { caption: 'P3 dispatched from Q1 (q=16). Its 7ms remainder fits, runs to completion.', analogyCaption: 'The third table gets the longer stretch and it is enough for them.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
+  { caption: 'P3 finishes in Q1 and exits.', analogyCaption: 'They finish and leave from the middle tier.', action: 'complete', itemId: 'P3' },
+  { caption: 'P1 dispatched from Q2 (FCFS). The long batch runs to completion.', analogyCaption: 'The first table, now at the back, is finally left alone for as long as it takes.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
+  { caption: 'P1 finishes in Q2 and exits. Every job landed where its burst earned.', analogyCaption: 'They finish too. Nobody was ever asked how long they would take. Every table ended up in the tier its own behaviour put it in.', action: 'complete', itemId: 'P1' }
 ];
 
 // DENSITY (Task A audit): 16 steps, step 0 stages three arrivals in an

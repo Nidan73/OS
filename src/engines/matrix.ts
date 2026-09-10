@@ -16,6 +16,8 @@ import type { Step } from '../core/types.js';
 // with state as the sweep reclaims.
 
 export interface MatrixEvent {
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   caption: string;
   /** Cell-by-cell comparison to highlight: [pid, resourceIdx]. */
   probeCells?: Array<[number, number]>;
@@ -89,7 +91,8 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
     for (const ev of input.events ?? []) {
       steps.push({
         t: t++,
-        caption: ev.caption.slice(0, 120),
+        caption: ev.caption.slice(0, 320),
+        analogyCaption: ev.analogyCaption,
         highlight: ev.activeRow !== undefined ? [input.processes[ev.activeRow]] : [],
         state: {
           probeCells: (ev.probeCells ?? []).map(([p, r]) => [p, r] as [number, number]),

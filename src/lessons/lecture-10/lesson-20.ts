@@ -111,7 +111,8 @@ export type Lesson20Mode = 'sweep' | 'request' | 'refuse';
 function needBeats(): MatrixEvent[] {
   const need = needMatrix(L20_MAX, L20_ALLOCATION);
   return L20_PROCESSES.map((pid, i) => ({
-    caption: `${pid} could still ask [${need[i].join(', ')}], ceiling minus drawn.`.slice(0, 120),
+    caption: `${pid} could still ask [${need[i].join(', ')}], which is Max minus Allocation, the Need row.`.slice(0, 320),
+    analogyCaption: `Ammu works out what ${pid} could still come back for: the ceiling they named, minus what they have already taken.`.slice(0, 320),
     probeCells: need[i].map((_, j) => [i, j] as [number, number]),
     work: [...L20_AVAILABLE],
     activeRow: i
@@ -206,7 +207,8 @@ function sweepBeats(
       !alreadyWrappedThisPass
     ) {
       events.push({
-        caption: `Scan wraps past P0, resumes after P${prevPid}, not from the top.`.slice(0, 120),
+        caption: `Scan wraps past P0, resumes after P${prevPid}, not from the top. The scan does not restart after a process finishes.`.slice(0, 320),
+        analogyCaption: `She carries on down the list from where she was, rather than starting again at the first name.`.slice(0, 320),
         work: [...prevWork],
         finishedRows: [...done]
       });
@@ -228,7 +230,8 @@ function sweepBeats(
       // satisfiable process in circular order wins, so P4 beats P0 in pass
       // 3, the selection discipline behind the deck's order, on screen.
       events.push({
-        caption: `P${probe.pid} fits [${probe.need.join(', ')}] too. P${passWinnerOf[si]} came first in this pass.`.slice(0, 120),
+        caption: `P${probe.pid} fits [${probe.need.join(', ')}] too. P${passWinnerOf[si]} came first in this pass, and the sweep takes the first satisfiable process it finds.`.slice(0, 320),
+        analogyCaption: `They could be paid off too, but Ammu takes the first name on the list that works, so this one waits its turn.`.slice(0, 320),
         probeCells: cells,
         finishedRows: [...done],
         work: [...prevWork],
@@ -243,7 +246,8 @@ function sweepBeats(
         .filter(Boolean)
         .join('; ');
       events.push({
-        caption: `P${probe.pid} waits, ${lacking}.`.slice(0, 120),
+        caption: `P${probe.pid} waits, ${lacking}. The sweep moves on without funding it.`.slice(0, 320),
+        analogyCaption: `Not this one. ${lacking}, so Ammu passes over the name and keeps going.`.slice(0, 320),
         probeCells: cells,
         finishedRows: [...done],
         work: [...prevWork],
@@ -262,7 +266,8 @@ export function sweepEvents(): MatrixEvent[] {
     ...needBeats(),
     ...events,
     {
-      caption: `Safe, the sweep drains ⟨${order}⟩. Lending stays open.`.slice(0, 120),
+      caption: `The state is SAFE. A safe sequence exists, ⟨${order}⟩, so every process can still be brought to completion.`.slice(0, 320),
+      analogyCaption: `There is an order that works: ⟨${order}⟩. Ammu can keep lending, because she has a way through.`.slice(0, 320),
       finishedRows: [0, 1, 2, 3, 4],
       work: [10, 5, 7]
     }
@@ -284,13 +289,15 @@ export function requestEvents(): MatrixEvent[] {
   }
   const events: MatrixEvent[] = [
     {
-      caption: `P1 asks (1, 0, 2), inside its ceiling [${need1.join(', ')}].`.slice(0, 120),
+      caption: `P1 requests (1, 0, 2). First test: the request must be within its Need, which is [${need1.join(', ')}]. It is.`.slice(0, 320),
+      analogyCaption: `Arijit asks for a little more. Ammu checks it against what he said he might need, and it is inside what he declared.`.slice(0, 320),
       probeCells: [[1, 0], [1, 1], [1, 2]],
       work: [...L20_AVAILABLE],
       activeRow: 1
     },
     {
-      caption: `Cash [${L20_AVAILABLE.join(', ')}] covers it, pretend the loan.`.slice(0, 120),
+      caption: `Second test: the request must fit in Available, which is [${L20_AVAILABLE.join(', ')}]. It does, so the grant is pretended and the state is tested.`.slice(0, 320),
+      analogyCaption: `There is enough in the envelope. So she does not hand it over yet. She writes down what things would look like if she had.`.slice(0, 320),
       work: [2, 3, 0],
       finishedRows: []
     }
@@ -305,7 +312,8 @@ export function requestEvents(): MatrixEvent[] {
   // req.granted is true (guarded above): the caption states the computed
   // outcome unconditionally, no fallback text that could disagree with it.
   events.push({
-    caption: `Granted, the pretended sweep drains ⟨${order}⟩.`.slice(0, 120),
+    caption: `Granted, the pretended sweep drains ⟨${order}⟩, so the state stays safe and the request is committed for real.`.slice(0, 320),
+    analogyCaption: `On paper it still works out, and everyone could still be paid off in some order. So she hands over the money.`.slice(0, 320),
     finishedRows: [0, 1, 2, 3, 4],
     work: [10, 5, 7]
   });
@@ -327,18 +335,21 @@ export function refuseEvents(): MatrixEvent[] {
   }
   const events: MatrixEvent[] = [
     {
-      caption: `P4 asks (3, 3, 0), inside its ceiling [${need4.join(', ')}].`.slice(0, 120),
+      caption: `P4 requests (3, 3, 0), which is within its Need of [${need4.join(', ')}]. The first test passes.`.slice(0, 320),
+      analogyCaption: `Now someone else asks, and again it is inside what they declared they might need.`.slice(0, 320),
       probeCells: [[4, 0], [4, 1], [4, 2]],
       work: [...L20_AVAILABLE],
       activeRow: 4
     },
     {
-      caption: `Cash [${L20_AVAILABLE.join(', ')}] covers it, pretend the loan.`.slice(0, 120),
+      caption: `Second test: the request must fit in Available, which is [${L20_AVAILABLE.join(', ')}]. It does, so the grant is pretended and the state is tested.`.slice(0, 320),
+      analogyCaption: `There is enough in the envelope. So she does not hand it over yet. She writes down what things would look like if she had.`.slice(0, 320),
       work: [0, 0, 2],
       finishedRows: []
     },
     {
-      caption: `Pretended cash [0, 0, 2] fits no Need row, the sweep stalls empty.`.slice(0, 120),
+      caption: `In the pretended state Available is [0, 0, 2], which satisfies no process's Need. The sweep stalls with nobody funded, so no safe sequence exists.`.slice(0, 320),
+      analogyCaption: `But look what the envelope would hold afterwards. Nobody could be finished off with what is left, so there is no order that gets everyone through.`.slice(0, 320),
       probeCells: [[0, 0], [0, 1], [0, 2]],
       work: [0, 0, 2],
       activeRow: 0
@@ -346,7 +357,8 @@ export function refuseEvents(): MatrixEvent[] {
     {
       // req is refused (guarded above): the caption states the computed
       // outcome unconditionally, the refusal staged as the algorithm working.
-      caption: `Refused, and that is the algorithm working, not failing.`.slice(0, 120),
+      caption: `Refused, and that is the algorithm working, not failing. The resources are free, but granting would move the state from safe to unsafe.`.slice(0, 320),
+      analogyCaption: `So she says no, with the notes sitting right there on the table. Saying no is the point of the whole exercise, not a failure of it.`.slice(0, 320),
       work: [0, 0, 2],
       finishedRows: []
     }

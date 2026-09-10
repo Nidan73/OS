@@ -14,34 +14,34 @@ export type MigrationScenario = 'push' | 'pull' | 'affinity';
 
 const ARRIVAL_EVENTS: QueueEvent[] = [
   { caption: "P1 arrives, joins Core 0's runqueue.", action: 'enqueue', itemId: 'P1', toQueue: 'q_core0' },
-  { caption: 'P2 arrives, queues behind P1 on Core 0.', action: 'enqueue', itemId: 'P2', toQueue: 'q_core0' },
+  { caption: 'P2 arrives, queues behind P1 on Core 0.', analogyCaption: 'A second table sits down in the same section, behind the one already waiting.', action: 'enqueue', itemId: 'P2', toQueue: 'q_core0' },
   { caption: "P3 arrives. Core 0's line grows to three while Core 1 idles.", action: 'enqueue', itemId: 'P3', toQueue: 'q_core0' }
 ];
 
 export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
   push: [
     ...ARRIVAL_EVENTS,
-    { caption: 'Core 0 dispatches P1, cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
-    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty. P3 is chosen.', action: 'stall', itemId: 'P3' },
+    { caption: 'Core 0 dispatches P1, cache warm from the start.', analogyCaption: 'The waiter takes the first table. It is his own section, so he already knows them.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'P1 runs its slice on Core 0 with a warm cache.', analogyCaption: 'That table is served quickly, because nothing had to be asked twice.', action: 'complete', itemId: 'P1' },
+    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty. P3 is chosen.', analogyCaption: 'The manager looks up and sees one waiter with two tables waiting and the other with none. He picks the third table to hand over.', action: 'stall', itemId: 'P3' },
     { caption: "Balancer pushes P3 to Core 1's runqueue.", action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
-    { caption: 'Core 1 dispatches P3, busy at last, but its cache is cold.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-    { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
-    { caption: 'P3 finishes on Core 1 after paying the reload cost.', action: 'complete', itemId: 'P3' },
-    { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
-    { caption: 'P2 finishes on Core 0 with warm-cache hits.', action: 'complete', itemId: 'P2' },
-    { caption: 'Balanced, both cores ran; one cold reload was the price.', action: 'stall', itemId: 'P2' }
+    { caption: 'Core 1 dispatches P3, busy at last, but its cache is cold.', analogyCaption: 'The second waiter takes that table. He is busy now, but he is starting from nothing: he does not know the order, the allergies, or what is already late.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
+    { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', analogyCaption: 'So he stands there asking all of it again, and nothing moves while he does.', action: 'stall', itemId: 'P3' },
+    { caption: 'P3 finishes on Core 1 after paying the reload cost.', analogyCaption: 'That table is served in the end, but it took longer than it would have with the waiter who already knew them.', action: 'complete', itemId: 'P3' },
+    { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', analogyCaption: 'Meanwhile the first waiter takes his second table, still in his own section, still knowing everything.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'P2 finishes on Core 0 with warm-cache hits.', analogyCaption: 'Served fast, for the same reason as the first one.', action: 'complete', itemId: 'P2' },
+    { caption: 'Balanced, both cores ran; one cold reload was the price.', analogyCaption: 'Both waiters ended up working, which is what the manager wanted. The bill for it was one table served slowly by someone who had to start from scratch.', action: 'stall', itemId: 'P2' }
   ],
   pull: [
     ...ARRIVAL_EVENTS,
-    { caption: 'Core 0 dispatches P1, cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
-    { caption: 'Core 1 drains dry and idles, the work-stealer scans Core 0 and chooses P3.', action: 'stall', itemId: 'P3' },
-    { caption: 'Idle Core 1 steals: it pulls P3 from Core 0 runqueue.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
+    { caption: 'Core 0 dispatches P1, cache warm from the start.', analogyCaption: 'The waiter takes the first table. It is his own section, so he already knows them.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'P1 runs its slice on Core 0 with a warm cache.', analogyCaption: 'That table is served quickly, because nothing had to be asked twice.', action: 'complete', itemId: 'P1' },
+    { caption: 'Core 1 drains dry and idles, the work-stealer scans Core 0 and chooses P3.', analogyCaption: 'This time nobody tells the quiet waiter anything. He simply runs out of tables, looks across at the busy section himself, and picks one.', action: 'stall', itemId: 'P3' },
+    { caption: 'Idle Core 1 steals: it pulls P3 from Core 0 runqueue.', analogyCaption: 'He walks over and takes it. Nobody asked him to, and the cost is exactly the same as before: he arrives knowing nothing about them.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
     { caption: 'Core 1 dispatches the stolen P3, paying cold-cache reload.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-    { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
+    { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', analogyCaption: 'So he stands there asking all of it again, and nothing moves while he does.', action: 'stall', itemId: 'P3' },
     { caption: 'P3 finishes on Core 1.', action: 'complete', itemId: 'P3' },
-    { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', analogyCaption: 'Meanwhile the first waiter takes his second table, still in his own section, still knowing everything.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
     { caption: 'P2 finishes on Core 0.', action: 'complete', itemId: 'P2' },
     { caption: 'Stealing beat idling, both cores ran; one reload was the price.', action: 'stall', itemId: 'P2' }
   ],

@@ -183,10 +183,12 @@ describe('Lesson 22 · copy agrees with the mechanism', () => {
     expect(copy).not.toMatch(/§\s*\d|Atlas unit|isomorph|morphMode|SPEC\.md|ABSORBS/i);
   });
 
-  it('every caption fits the 120-char rail', () => {
+  it('every caption fits the caption rail', () => {
     for (const s of Object.keys(SCENARIO_LABELS) as Lesson22Scenario[]) {
       for (const r of scenarioInput(s).reveals) {
-        expect(r.caption.length).toBeLessThanOrEqual(120);
+        // rail is 320 since captions became story beats; see the note above
+        expect(r.caption.length).toBeLessThanOrEqual(320);
+        expect((r.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
     }
   });

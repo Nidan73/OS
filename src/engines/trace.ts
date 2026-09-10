@@ -81,6 +81,7 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
     steps.push({
       t: 0,
       caption: `Initial state: Shared memory = [${Object.entries(memory).map(([k, v]) => `${k}:${v}`).join(', ')}]. Threads ready.`,
+      analogyCaption: `Nothing has happened yet. ${Object.entries(memory).map(([k, v]) => `${input.analogy?.labels?.[k] ?? k} is ${v}`).join(', ')}, and both sides are about to act at once.`,
       highlight: input.threads.map(t => t.id),
       state: {
         stepIndex: 0,

@@ -156,46 +156,46 @@ export function spareEvents(): GraphEvent[] {
   };
   const out: GraphEvent[] = [
     take('Ammu parks in driveway R1, one of two slots.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('Elder sister takes the second R1 slot, the lane is full.', { from: 'R1', to: 'T3', kind: 'assignment' }),
+    take('Afra takes the second R1 slot, the lane is full.', { from: 'R1', to: 'T3', kind: 'assignment' }),
     take('Abbu parks in driveway R2, one of two slots.', { from: 'R2', to: 'T1', kind: 'assignment' }),
-    take('Younger brother takes the second R2 slot, both lanes full.', { from: 'R2', to: 'T4', kind: 'assignment' }),
+    take('Arijit takes the second R2 slot, both lanes full.', { from: 'R2', to: 'T4', kind: 'assignment' }),
     take('Abbu needs R1 out, both slots are blocked.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('Elder sister needs R2 out, both blocked. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
+    take('Afra needs R2 out, both blocked. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   const rel1 = { from: 'R1', to: 'T2' };
   edges.splice(edges.findIndex((e) => e.from === rel1.from && e.to === rel1.to), 1);
   out.push({
-    caption: 'Ammu drives out and frees her R1 slot.'.slice(0, 120),
+    caption: 'A process releases an instance of R1, so Available for R1 becomes one.', analogyCaption: 'Ammu drives out and frees her R1 slot.'.slice(0, 120),
     removeEdge: { ...rel1 }
   });
-  out.push({ caption: 'The ring breaks. R1 has a free slot, Abbu can move.'.slice(0, 120), clearCycle: true });
+  out.push({ caption: 'With an instance free, the request edge on R1 can be satisfied and the cycle is broken.', analogyCaption: 'The ring breaks. R1 has a free slot, Abbu can move.'.slice(0, 120), clearCycle: true });
   const grant1 = { from: 'R1', to: 'T1', kind: 'assignment' as const };
   edges.push({ ...grant1 });
-  out.push({ caption: 'Abbu pulls into the freed R1 slot.'.slice(0, 120), addEdge: { ...grant1 } });
+  out.push({ caption: 'The request edge becomes an assignment edge: the process now holds R1.', analogyCaption: 'Abbu pulls into the freed R1 slot.'.slice(0, 120), addEdge: { ...grant1 } });
   const rel2 = { from: 'R2', to: 'T4' };
   edges.splice(edges.findIndex((e) => e.from === rel2.from && e.to === rel2.to), 1);
   out.push({
-    caption: 'Younger brother drives out and frees his R2 slot.'.slice(0, 120),
+    caption: 'Another process releases an instance of R2.', analogyCaption: 'Arijit drives out and frees his R2 slot.'.slice(0, 120),
     removeEdge: { ...rel2 }
   });
   const req2 = { from: 'T3', to: 'R2', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req2.from && e.to === req2.to), 1);
   out.push({
-    caption: 'With a slot free, the R2 wait is over, sister stops asking.'.slice(0, 120),
+    caption: 'The outstanding request on R2 is satisfiable, so that wait ends.', analogyCaption: 'With a slot free, the R2 wait is over, Afra stops asking.'.slice(0, 120),
     removeEdge: { from: req2.from, to: req2.to }
   });
   const grant2 = { from: 'R2', to: 'T3', kind: 'assignment' as const };
   edges.push({ ...grant2 });
-  out.push({ caption: 'Elder sister pulls into the freed R2 slot.'.slice(0, 120), addEdge: { ...grant2 } });
+  out.push({ caption: 'That request edge becomes an assignment edge too.', analogyCaption: 'Afra pulls into the freed R2 slot.'.slice(0, 120), addEdge: { ...grant2 } });
   const req1 = { from: 'T1', to: 'R1', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req1.from && e.to === req1.to), 1);
   out.push({
-    caption: 'Abbu stops asking too, the freed slot answered it.'.slice(0, 120),
+    caption: 'The last request edge is satisfied and removed.', analogyCaption: 'Abbu stops asking too, the freed slot answered it.'.slice(0, 120),
     removeEdge: { from: req1.from, to: req1.to }
   });
   out.push({
-    caption: 'Everyone finishes, the ring dissolved. A cycle is not a deadlock.'.slice(0, 120),
+    caption: 'No process is blocked. With several instances of a resource, a cycle in the graph is necessary for deadlock but not sufficient: this cycle resolved itself.', analogyCaption: 'Everyone finishes, the ring dissolved. A cycle is not a deadlock.'.slice(0, 120),
     clearCycle: true
   });
   return out;
@@ -211,10 +211,10 @@ export function deadlockEvents(): GraphEvent[] {
   };
   const out: GraphEvent[] = [
     take('Ammu blocks the only R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('Elder sister blocks the only R2 exit.', { from: 'R2', to: 'T3', kind: 'assignment' }),
+    take('Afra blocks the only R2 exit.', { from: 'R2', to: 'T3', kind: 'assignment' }),
     take('Abbu blocks the only R3 exit.', { from: 'R3', to: 'T1', kind: 'assignment' }),
     take('Abbu needs R1, Ammu blocks it.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('Ammu needs R2, sister blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
+    take('Ammu needs R2, Afra blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
     take('Sister needs R3, Abbu blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
@@ -234,7 +234,7 @@ export function chainEvents(): GraphEvent[] {
     take('Ammu takes the second R2 slot.', { from: 'R2', to: 'T2', kind: 'assignment' }),
     take('Ammu needs R3 out.', { from: 'T2', to: 'R3', kind: 'request' }),
     take('Sister holds the R3 exit.', { from: 'R3', to: 'T3', kind: 'assignment' }),
-    { caption: 'No ring on the map, a chain waits, but nobody waits in a circle.'.slice(0, 120) }
+    { caption: 'The wait relation is a chain, not a cycle, so no deadlock is possible here.', analogyCaption: 'No ring on the map, a chain waits, but nobody waits in a circle.'.slice(0, 120) }
   ];
 }
 

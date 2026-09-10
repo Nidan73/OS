@@ -87,7 +87,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
   return [
     {
       t: 0,
-      caption: 'One bathroom, one latch. Ammu steps in; the corridor queue is empty.',
+      caption: 'The lock is free. One thread acquires it and enters its critical section. No waiters yet.',
+      analogyCaption: 'One bathroom, one latch. Ammu steps in, and the corridor is empty.',
       highlight: [],
       state: {
         stepIndex: 0, value: 1, capacity: 1, activeActorId: null,
@@ -97,7 +98,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 1,
-      caption: `The holder arrives and asks for the key.`,
+      caption: `A thread calls acquire() on a free lock and takes it.`,
+      analogyCaption: `The holder arrives and asks for the key.`,
       highlight: ['T1'],
       state: {
         stepIndex: 1, value: 1, capacity: 1, activeActorId: 'T1',
@@ -107,7 +109,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 2,
-      caption: `Ammu takes the bathroom for ${m.csDurationUs}µs.`,
+      caption: `The lock is held for a critical section of ${m.csDurationUs}µs.`,
+      analogyCaption: `Ammu takes the bathroom for ${m.csDurationUs}µs.`,
       highlight: ['T1'],
       state: {
         stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T1',
@@ -117,7 +120,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 3,
-      caption: `The first waiter arrives and ${arriveCaption}`,
+      caption: `A second thread calls acquire() on a held lock and cannot proceed.`,
+      analogyCaption: `The first waiter arrives and ${arriveCaption}`,
       highlight: ['T2'],
       state: {
         stepIndex: 3, value: 0, capacity: 1, activeActorId: 'T2',
@@ -127,7 +131,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 4,
-      caption: `Abbu queues ${how} behind the first waiter.`,
+      caption: `A third thread blocks on the same lock, behind the second.`,
+      analogyCaption: `Abbu queues ${how} behind the first waiter.`,
       highlight: ['T3'],
       state: {
         stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T3',
@@ -137,7 +142,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 5,
-      caption: `Abbu settles ${how}, the queue order is now fixed.`,
+      caption: `The wait queue keeps arrival order, which is what bounded waiting requires.`,
+      analogyCaption: `Abbu settles ${how}, and the queue order is now fixed.`,
       highlight: ['T3'],
       state: {
         stepIndex: 5, value: 0, capacity: 1, activeActorId: 'T3',
@@ -159,7 +165,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 7,
-      caption: `The stay ends, Ammu is done, the bathroom is due back.`,
+      caption: `The holder finishes its critical section and is about to release.`,
+      analogyCaption: `The stay ends, Ammu is done, and the bathroom is due back.`,
       highlight: ['T1'],
       state: {
         stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T1',
@@ -169,7 +176,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 8,
-      caption: 'Ammu comes out and turns the latch back after her stay.',
+      caption: 'release() is called. The lock is free again.',
+      analogyCaption: 'Ammu comes out and turns the latch back after her stay.',
       highlight: ['T1'],
       state: {
         stepIndex: 8, value: 1, capacity: 1, activeActorId: 'T1',
@@ -191,7 +199,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 10,
-      caption: 'Abbu is still queued, the handoff order is set.',
+      caption: 'One thread is still blocked, and which one goes next is already decided.',
+      analogyCaption: 'Abbu is still queued, and the handoff order is set.',
       highlight: ['T3'],
       state: {
         stepIndex: 10, value: 1, capacity: 1, activeActorId: 'T3',
@@ -201,7 +210,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 11,
-      caption: 'The bathroom goes to the first waiter in line, nobody is skipped.',
+      caption: 'The lock passes to the longest waiting thread, so no thread is starved.',
+      analogyCaption: 'The bathroom goes to the first waiter in line, and nobody is skipped.',
       highlight: ['T2'],
       state: {
         stepIndex: 11, value: 0, capacity: 1, activeActorId: 'T2',

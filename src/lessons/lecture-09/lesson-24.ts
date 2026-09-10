@@ -216,7 +216,8 @@ export class Lesson24TraceEngine extends TraceEngine {
       caption: string,
       activeThreadIndex: number | null,
       ev: { visible: { x: number; flag: number }; pending: PendingStore[]; printed: number | null; kind: BarrierEvent['kind'] },
-      highlight: string[]
+      highlight: string[],
+      analogy?: string
     ): Step<TraceState> => {
       const state: BarrierTraceState = {
         stepIndex: t,
@@ -232,16 +233,23 @@ export class Lesson24TraceEngine extends TraceEngine {
         visibleFlag: ev.visible.flag,
         eventKind: ev.kind
       };
-      return { t, caption: caption.slice(0, 120), highlight, state };
+      return {
+        t,
+        caption: caption.slice(0, 320),
+        analogyCaption: analogy?.slice(0, 320),
+        highlight,
+        state
+      };
     };
 
     const steps: Step<TraceState>[] = [
       snapshot(
         0,
-        'The dish is empty and nobody has called. Both sides are already running.',
+        'x = 0 and flag = 0. Both threads are running concurrently from here.',
         null,
         { visible: { x: 0, flag: 0 }, pending: [], printed: null, kind: 'spin' },
-        ['T1', 'T2']
+        ['T1', 'T2'],
+        'The dish is empty and nobody has called. Both sides are already running.'
       )
     ];
 
@@ -252,7 +260,7 @@ export class Lesson24TraceEngine extends TraceEngine {
       if (ev.kind !== 'drain') {
         pointers[idx] = Math.min(program.length, pointers[idx] + 1);
       }
-      steps.push(snapshot(ev.step, this.captionFor(ev), idx, ev, [ev.actor]));
+      steps.push(snapshot(ev.step, this.mechanismFor(ev), idx, ev, [ev.actor], this.captionFor(ev)));
     }
 
     const verdictT = run.events.length + 1;
@@ -260,8 +268,8 @@ export class Lesson24TraceEngine extends TraceEngine {
       snapshot(
         verdictT,
         run.correct
-          ? `She served ${run.printed}. Everything that had happened was visible in time.`
-          : `She served ${run.printed}. The work was done, it just could not be seen yet.`,
+          ? `T1 printed ${run.printed}. Every store was visible before it was read.`
+          : `T1 printed ${run.printed}. The store to x had executed, but it was not visible to T1 at the moment of the read.`,
         null,
         {
           // after every store has drained the visible state is the same in
@@ -271,11 +279,38 @@ export class Lesson24TraceEngine extends TraceEngine {
           printed: run.printed,
           kind: 'print'
         },
-        ['T1', 'T2']
+        ['T1', 'T2'],
+        run.correct
+          ? `She served ${run.printed}. Everything that had happened was visible in time.`
+          : `She served ${run.printed}. The work was done, it just could not be seen yet.`
       )
     );
 
     return steps;
+  }
+
+  /** The mechanism sentence for a beat, in the words the exam will use. */
+  private mechanismFor(ev: BarrierEvent): string {
+    switch (ev.kind) {
+      case 'issue':
+        return `T2 executes ${ev.action}. The model is strongly ordered, so the write is immediately visible to every other processor.`;
+      case 'buffer':
+        return `T2 executes ${ev.action}, but under a weakly ordered model the store sits in this processor's buffer and is not yet visible to T1.`;
+      case 'barrier':
+        return 'memory_barrier() forces every change already made to be propagated to all other processors before execution continues.';
+      case 'drain':
+        return ev.action.startsWith('x')
+          ? 'The buffered store to x becomes globally visible.'
+          : 'The buffered store to flag becomes globally visible.';
+      case 'spin':
+        return 'T1 re-reads flag. while (!flag) is a repeated load, not a single test, and it sees only what is visible to it.';
+      case 'pass':
+        return 'T1 observes flag set and leaves the spin loop.';
+      case 'print':
+        return `T1 executes print x and outputs ${ev.printed}, which is the value visible to T1, not necessarily the value already written.`;
+      default:
+        return ev.caption;
+    }
   }
 
   /** The deck's instruction, said in the room it is happening in. */

@@ -67,6 +67,7 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
     steps.push({
       t: 0,
       caption: `Initial state: Resource count = ${value} (capacity ${input.capacity}). No active contenders.`,
+      analogyCaption: `${value} of ${input.capacity} free to start with, and nobody has taken one yet.`,
       highlight: [],
       state: {
         stepIndex: 0,

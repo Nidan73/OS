@@ -149,9 +149,9 @@ function abortAllReveals(): DiagramReveal[] {
   const totalWork = CANDIDATES.reduce((sum, c) => sum + c.computedMinutes, 0);
   const held = CANDIDATES.reduce((sum, c) => sum + c.heldUnits, 0);
   return [
-    { caption: 'Three cars block each other in. Nobody can leave.', highlightNodeIds: [] },
+    { caption: 'Detection has confirmed a deadlocked set. Every process in it is blocked on a resource held by another in the same set.', analogyCaption: 'Three cars block each other in. Nobody can leave.', highlightNodeIds: [] },
     {
-      caption: 'The blunt fix: move every blocked car out at once. The ring cannot survive it.',
+      caption: 'Recovery by process termination, first variant: abort every deadlocked process. The cycle cannot survive it.', analogyCaption: 'The blunt fix: move every blocked car out at once. The ring cannot survive it.',
       highlightNodeIds: CANDIDATES.map((c) => c.id.replace(' ', '-'))
     },
     {
@@ -160,11 +160,11 @@ function abortAllReveals(): DiagramReveal[] {
       metrics: { 'work lost (min)': totalWork, 'spots freed': held }
     },
     {
-      caption: 'It always works, and it is the most expensive thing the guard can do.',
+      caption: 'It is guaranteed to work and it discards all the partial work every one of those processes had done.', analogyCaption: 'It always works, and it is the most expensive thing the guard can do.',
       highlightNodeIds: []
     },
     {
-      caption: 'So the real question is which single car to move, and by what rule.',
+      caption: 'The second variant aborts one process at a time, which means choosing a victim and re-running detection after each abort.', analogyCaption: 'So the real question is which single car to move, and by what rule.',
       highlightNodeIds: []
     }
   ];
@@ -178,7 +178,7 @@ function oneAtATimeReveals(): DiagramReveal[] {
   );
   const id = (s: string) => s.replace(' ', '-');
   return [
-    { caption: 'Move one car at a time until the ring breaks, but which one?', highlightNodeIds: [] },
+    { caption: 'Victim selection weighs priority, how long the process has run, the resources it holds and how many it still needs.', analogyCaption: 'Move one car at a time until the ring breaks, but which one?', highlightNodeIds: [] },
     {
       caption: `Priority first: ${dearest.id} matters most, so moving it costs the most.`,
       highlightNodeIds: [id(dearest.id)],
@@ -204,7 +204,7 @@ function oneAtATimeReveals(): DiagramReveal[] {
       badgeText: 'moved',
       metrics: { cost: chosen.total }
     },
-    { caption: 'One car out and the ring is open, everyone else drives away.', highlightNodeIds: [] }
+    { caption: 'One rollback breaks the cycle and the remaining processes proceed.', analogyCaption: 'One car out and the ring is open, everyone else drives away.', highlightNodeIds: [] }
   ];
 }
 

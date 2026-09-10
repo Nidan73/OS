@@ -28,6 +28,8 @@ export interface GraphNodeInput {
 
 export interface GraphEvent {
   caption: string;
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   addEdge?: RagEdge;
   removeEdge?: { from: string; to: string };
   /** Ordered node ids of the highlighted cycle path. */
@@ -86,9 +88,14 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
     const steps: Step<GraphState>[] = [];
     let t = 0;
 
-    const snapshot = (caption: string, highlight: string[]): Step<GraphState> => ({
+    const snapshot = (
+      caption: string,
+      highlight: string[],
+      analogyCaption?: string
+    ): Step<GraphState> => ({
       t: t++,
-      caption: caption.slice(0, 120),
+      caption: caption.slice(0, 320),
+      analogyCaption: analogyCaption?.slice(0, 320),
       highlight,
       state: {
         edges: edges.map((e) => ({ ...e })),
@@ -110,7 +117,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
       if (ev.clearCycle) cycleIds = [];
       if (ev.setCycle) cycleIds = [...ev.setCycle];
       const hl = ev.setCycle ?? ev.activeNodes ?? [];
-      steps.push(snapshot(ev.caption, hl));
+      steps.push(snapshot(ev.caption, hl, ev.analogyCaption));
     }
 
     return steps;

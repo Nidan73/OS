@@ -152,7 +152,7 @@ export function collapseEvents(): GraphEvent[] {
   // The collapse: cars drop out, only the waiting is left (unit 84).
   const waits = waitForEdges(COLLAPSE_NODES, edges);
   out.push({
-    caption: 'The guard rubs out the spots and keeps only who waits on whom.',
+    caption: 'The resource-allocation graph collapses into a WAIT-FOR GRAPH: resource nodes are removed and an edge Pi to Pj means Pi is waiting on something Pj holds.', analogyCaption: 'The guard rubs out the spots and keeps only who waits on whom.',
     removeEdges: edges.map((e) => ({ from: e.from, to: e.to })),
     addEdges: waits,
     clearCycle: true
@@ -167,11 +167,11 @@ export function collapseEvents(): GraphEvent[] {
     setCycle: waitRing
   });
   out.push({
-    caption: 'Flat 4 never parked, so no arrow touches it, it is not stuck.',
+    caption: 'A process with no edges in the wait-for graph is waiting on nothing, so it cannot be part of a cycle.', analogyCaption: 'Flat 4 never parked, so no arrow touches it, it is not stuck.',
     activeNodes: ['H4']
   });
   out.push({
-    caption: 'One closed loop of neighbours is the whole thing the guard checks.',
+    caption: 'With one instance per resource, a cycle in the wait-for graph is necessary AND sufficient for deadlock, so detecting the cycle is the whole algorithm.', analogyCaption: 'One closed loop of neighbours is the whole thing the guard checks.',
     activeNodes: waitRing
   });
   return out;
@@ -359,7 +359,7 @@ export function cadenceEvents(deadlockedCount: number): GraphEvent[] {
   const tight = cadenceOf(CADENCE_SAMPLES[0], deadlockedCount);
   const loose = cadenceOf(CADENCE_SAMPLES[1], deadlockedCount);
   return [
-    { caption: 'The guard has one shift. How often should he walk the driveway?' },
+    { caption: 'Detection has to be scheduled. Running it costs processor time, and not running it leaves processes blocked for longer.', analogyCaption: 'The guard has one shift. How often should he walk the driveway?' },
     {
       caption: `Every ${tight.everyMinutes} min: ${tight.sweepsPerHour} walks an hour, ${tight.detectionOpsPerHour} checks, the shift is spent walking.`
     },
@@ -375,7 +375,7 @@ export function cadenceEvents(deadlockedCount: number): GraphEvent[] {
         : 'Walking constantly still costs less than the jams it catches.'
     },
     {
-      caption: 'Neither end is free, the cadence is the trade, and you set it.'
+      caption: 'Sweeping constantly burns the processor; sweeping rarely raises the mean time a deadlock goes undetected. The interval is a real cost decision, not a default.', analogyCaption: 'Neither end is free, the cadence is the trade, and you set it.'
     }
   ];
 }

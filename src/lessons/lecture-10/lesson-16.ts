@@ -166,7 +166,7 @@ export function storyEvents(): GraphEvent[] {
   const rel = { from: 'M1', to: 'T1' };
   edges.splice(edges.findIndex((e) => e.from === rel.from && e.to === rel.to), 1);
   out.push({
-    caption: 'A puts M1 back, every use ends in release.'.slice(0, 120),
+    caption: 'Every acquire is matched by a release. Without that the resource never returns and nothing else can be reasoned about.', analogyCaption: 'A puts M1 back, every use ends in release.'.slice(0, 120),
     removeEdge: { ...rel }
   });
   out.push(
@@ -183,12 +183,12 @@ export function storyEvents(): GraphEvent[] {
   out.push({ caption: ringCaption('story', edges), setCycle: ringCycle('story', edges) });
   out.push(
     {
-      caption: 'Mutual exclusion, one spoon serves one person; neither splits.'.slice(0, 120),
+      caption: 'Mutual exclusion holds: the resource is non-shareable, so only one process can hold it at a time.', analogyCaption: 'Mutual exclusion, one spoon serves one person; neither splits.'.slice(0, 120),
       activeNodes: ['M1', 'M2'],
       clearCycle: true
     },
     {
-      caption: 'Hold and wait, each grips one while asking for the other.'.slice(0, 120),
+      caption: 'Hold and wait holds: each process keeps what it has while requesting what it does not.', analogyCaption: 'Hold and wait, each grips one while asking for the other.'.slice(0, 120),
       activeNodes: ['T1', 'T2']
     },
     {
@@ -196,7 +196,7 @@ export function storyEvents(): GraphEvent[] {
       activeNodes: ['T1', 'M1']
     },
     {
-      caption: 'Circular wait, Ammu waits on Abbu waits on Ammu; the ring closes.'.slice(0, 120),
+      caption: 'Circular wait holds: the wait relation closes into a cycle, and with no preemption that makes all four conditions true at once.', analogyCaption: 'Circular wait, Ammu waits on Abbu waits on Ammu; the ring closes.'.slice(0, 120),
       setCycle: ringCycle('story', edges)
     }
   );

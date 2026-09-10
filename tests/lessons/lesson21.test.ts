@@ -222,10 +222,16 @@ describe('Lesson 21 · copy agrees with the mechanism', () => {
     expect(copy).not.toMatch(/§\s*\d|Atlas unit|isomorph|morphMode|SPEC\.md|ABSORBS/i);
   });
 
-  it('every caption fits the 120-char rail', () => {
+  it('every caption fits the caption rail', () => {
     for (const id of ['collapse', 'sweep-t0', 'sweep-t1', 'cadence'] as Lesson21Scenario[]) {
       for (const ev of scenarioInput(id).events) {
-        expect(ev.caption.length).toBeLessThanOrEqual(120);
+        // The rail is 320, not 120. Captions became story beats and the
+        // layout was changed to hold them: morphReveals moved out from above
+        // the animation, which put a four-line caption at y=819 to 897, above
+        // the fold at 1440x900. Measured, not assumed. 320 is still a rail:
+        // it is roughly four lines and it is enforced here.
+        expect(ev.caption.length).toBeLessThanOrEqual(320);
+        expect((ev.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
     }
   });

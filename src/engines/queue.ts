@@ -27,6 +27,8 @@ export interface ProcessorCore {
 }
 
 export interface QueueEvent {
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   t?: number;
   caption: string;
   action: 'enqueue' | 'dispatch' | 'demote' | 'promote' | 'migrate' | 'complete' | 'stall' | 'resume';
@@ -143,6 +145,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
             steps.push({
               t: ev.t ?? curT++,
               caption: ev.caption,
+              analogyCaption: ev.analogyCaption,
               state: {
                 time: curT,
                 queues: cloneQueues(),
@@ -179,6 +182,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
         steps.push({
           t: ev.t ?? curT++,
           caption: ev.caption,
+          analogyCaption: ev.analogyCaption,
           state: {
             time: curT,
             queues: cloneQueues(),

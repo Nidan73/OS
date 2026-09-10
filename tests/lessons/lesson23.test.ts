@@ -238,8 +238,11 @@ describe('L23 · engine', () => {
 
   it('derives the average before the engine summary states it', () => {
     const steps = engine.getSteps();
-    const derived = steps.findIndex((s) => s.caption.includes('minutes each'));
-    const stated = steps.findIndex((s) => s.caption.includes('Avg Wait'));
+    // both lenses are student-facing; the tally wording lives on the analogy side
+    const both = (st: { caption: string; analogyCaption?: string }) =>
+      `${st.caption} ${st.analogyCaption ?? ''}`;
+    const derived = steps.findIndex((s) => both(s).includes('minutes each'));
+    const stated = steps.findIndex((s) => both(s).includes('Avg Wait'));
     expect(derived).toBeGreaterThan(-1);
     expect(stated).toBeGreaterThan(-1);
     expect(derived).toBeLessThan(stated);
@@ -252,16 +255,18 @@ describe('L23 · engine', () => {
 
   it('reads the running total off the schedule, so the tally sums to the average', () => {
     const steps = engine.getSteps();
-    const divide = steps.find((s) => s.caption.includes('minutes each'))!;
+    const divide = steps.find((s) => `${s.caption} ${s.analogyCaption ?? ''}`.includes('minutes each'))!;
     const result = engine.getScheduleResult();
     const total = Object.values(result.waiting).reduce((a, b) => a + b, 0);
-    expect(divide.caption).toContain(String(total));
+    expect(`${divide.caption} ${divide.analogyCaption ?? ''}`).toContain(String(total));
     expect(divide.state.averages.avgWaiting).toBe(result.avgWaiting);
     expect(divide.state.averages.avgWaiting).toBe(28);
     // and the running totals actually accumulate to it, beat by beat
-    const tally = steps.filter((s) => s.caption.includes('Running total'));
+    const tally = steps.filter((s) => `${s.caption} ${s.analogyCaption ?? ''}`.includes('Running total'));
     expect(tally).toHaveLength(5);
-    expect(tally[tally.length - 1].caption).toContain(String(total));
+    expect(
+      `${tally[tally.length - 1].caption} ${tally[tally.length - 1].analogyCaption ?? ''}`
+    ).toContain(String(total));
   });
 
   it('moves the highlight to a different party on each tally beat', () => {
@@ -410,7 +415,7 @@ describe('L23 · the prose agrees with the burst data', () => {
     e.applyScenario('sjf');
     const tally = e
       .getSteps()
-      .filter((s) => s.caption.includes('Running total'))
+      .filter((s) => `${s.caption} ${s.analogyCaption ?? ''}`.includes('Running total'))
       .map((s) => s.state.activeProcessId);
     const barOrder = Array.from(new Set(e.getScheduleResult().bars.map((b) => b.id)));
     expect(tally).toEqual(barOrder);

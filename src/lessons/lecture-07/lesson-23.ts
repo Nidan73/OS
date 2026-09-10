@@ -237,7 +237,8 @@ export class Lesson23GanttEngine extends GanttEngine {
       t += 0.8;
       tally.push({
         t: Number(t.toFixed(2)),
-        caption: `${PARTY_NAMES[id]} waited ${wait} min before the food came. Running total ${running}.`.slice(0, 120),
+        caption: `${id} waiting time = ${wait}. Running total ${running}.`.slice(0, 320),
+        analogyCaption: `${PARTY_NAMES[id]} waited ${wait} minutes before the food came. Running total ${running}.`.slice(0, 320),
         highlight: [id],
         state: {
           ...last.state,
@@ -250,9 +251,13 @@ export class Lesson23GanttEngine extends GanttEngine {
     t += 0.8;
     tally.push({
       t: Number(t.toFixed(2)),
-      caption: `${running} minutes of waiting across ${order.length} tables, ${result.avgWaiting} minutes each.`.slice(
+      caption: `Total waiting time ${running} over ${order.length} processes gives an average waiting time of ${result.avgWaiting}. That is the figure deterministic modelling produces, and it holds for this workload only.`.slice(
         0,
-        120
+        320
+      ),
+      analogyCaption: `${running} minutes of waiting across ${order.length} tables, so ${result.avgWaiting} minutes each. That is the number Ammu can prove, for last Friday.`.slice(
+        0,
+        320
       ),
       highlight: order,
       state: {
