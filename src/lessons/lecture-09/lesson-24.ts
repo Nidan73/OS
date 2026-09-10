@@ -1,3 +1,4 @@
+// ANALOGY: re-cast
 import type { Lesson, Step } from '../../core/types.js';
 import { TraceEngine, type TraceInput, type TraceState } from '../../engines/trace.js';
 import {
@@ -77,7 +78,7 @@ import {
 // "x = 100 can be read" come apart with nothing on screen to warn you, and
 // that is the entire reason the deck needs a barrier.
 // ─────────────────────────────────────────────────────────────────────────────
-
+//
 // DENSITY: one beat per discrete mechanism event, and the event set here is
 // genuinely uneven — that unevenness IS the content. Strongly ordered runs are
 // short because nothing can go wrong: 6 beats, and the buffer is never used.
@@ -133,7 +134,7 @@ export function programFor(actor: 'T1' | 'T2', barriers: boolean): string[] {
 
 /** The same three lines said in the kitchen's words. Index-matched to above. */
 export const T1_ANALOGY = ['listen for the call', 'let the room catch up', 'carry out the dish'];
-export const T2_ANALOGY = ['put the biryani in the dish', 'wait till it is really out there', 'call "ready!"'];
+export const T2_ANALOGY = ['dish the biryani', 'wait for the room', 'call "ready!"'];
 
 export function analogyProgramFor(actor: 'T1' | 'T2', barriers: boolean): string[] {
   const full = actor === 'T1' ? T1_ANALOGY : T2_ANALOGY;
@@ -142,13 +143,13 @@ export function analogyProgramFor(actor: 'T1' | 'T2', barriers: boolean): string
 
 /** The scene, in the kitchen's words. Ids stay bound to the deck's threads. */
 export const ACTOR_NAMES: Record<'T1' | 'T2', string> = {
-  T1: 'At the table',
-  T2: 'In the kitchen'
+  T1: 'Thread 1',
+  T2: 'Thread 2'
 };
 
 export const ACTOR_ANALOGY: Record<'T1' | 'T2', string> = {
-  T1: 'Ammu, waiting',
-  T2: 'The kitchen'
+  T1: 'At the table',
+  T2: 'In the kitchen'
 };
 
 /** What each shared variable is, on the dining-room side. */
@@ -171,10 +172,10 @@ export const BUFFER_X = 420;
 export const BUFFER_STRIDE = 24;
 export const BUFFER_TOKEN_W = 92;
 
-/** Short enough to fit the token box — measured, not guessed. */
+/** Short enough to fit the token box at any morph interpolation. */
 export const TOKEN_ANALOGY: Record<'x' | 'flag', string> = {
-  x: 'the dish, still coming',
-  flag: 'the call, still carrying'
+  x: 'dish on its way',
+  flag: 'call on its way'
 };
 
 /** Unit 47, slide 3 — the cores a masked interrupt does not protect. */
@@ -318,11 +319,6 @@ export class Lesson24TraceEngine extends TraceEngine {
 
   /**
    * TraceEngine's render, plus the one thing it has no concept of: a write
-   * that has happened and cannot be read. The tokens sit in the gap between
-   * the two columns, and that gap is the carrying property of the morph.
-   */
-  /**
-   * TraceEngine's render, plus the one thing it has no concept of: a write
    * that has happened and cannot yet be read.
    *
    * The lane sits in the band below the two columns, because the horizontal
@@ -352,7 +348,7 @@ export class Lesson24TraceEngine extends TraceEngine {
     label.setAttribute('font-weight', '700');
     label.setAttribute('letter-spacing', '0.06em');
     label.setAttribute('fill', 'var(--muted)');
-    label.textContent = v < 0.5 ? 'THE HALLWAY' : "THE KITCHEN'S STORE BUFFER";
+    label.textContent = v < 0.5 ? 'THE HALLWAY' : 'T2 STORE BUFFER';
     g.appendChild(label);
 
     if (pending.length === 0) {
@@ -468,7 +464,7 @@ export class Lesson24TraceEngine extends TraceEngine {
     host.innerHTML = `
       <div style="display: flex; gap: calc(var(--step) * 2); flex-wrap: wrap; align-items: baseline;">
         <div>
-          <div style="font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">She serves</div>
+          <div style="font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">Output (T1)</div>
           <div style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: ${tone};">${run.printed}</div>
         </div>
         <div>

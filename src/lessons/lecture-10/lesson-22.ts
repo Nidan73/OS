@@ -17,6 +17,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L22 · Getting out (ATLAS units 88–89, slides 42–43)
 //
+// ANALOGY: mechanism-fixed — the recovery choices (abort all vs victim selection,
+// rollback, starvation) are strictly dictated by slide 42–43.
+//
 // LESSONS.md: L22 — units 88, 89. Choosing whose trip to cancel, or towing one
 // car back to the last junction it was safe at. Playground: pick a victim by
 // different criteria and watch the cost — then pick the same one repeatedly
@@ -307,28 +310,49 @@ export class Lesson22DiagramEngine extends DiagramEngine implements PlaygroundCa
     this.paintScoreboard();
   }
 
+  protected render(state: DiagramState, view: number): void {
+    if (this.scenario === 'rollback') {
+      const stepIdx = this.getCurrentIndex();
+      const run = runFor('rollback');
+      const currentTally = emptyTally();
+      const steps = this.getSteps();
+      const isFinalStep = steps.length > 0 && stepIdx >= steps.length - 1;
+      const countPricedIn = isFinalStep ? run.picks.length : Math.max(0, stepIdx - 1);
+      for (let i = 0; i < countPricedIn && i < run.picks.length; i++) {
+        currentTally[run.picks[i]] = (currentTally[run.picks[i]] ?? 0) + 1;
+      }
+      this.input.nodes = nodesFor(true, currentTally);
+    }
+    super.render(state, view);
+  }
+
   private paintScoreboard(): void {
     const host = this.scoreboardHost;
     if (!host) return;
+    const isAbortAll = this.scenario === 'abort-all';
     const rounds = this.scenario === 'starve' || this.scenario === 'rollback';
     const run = runFor(this.scenario);
-    const tone = rounds && run.starved ? 'var(--waiting)' : 'var(--running)';
-    const label = !rounds
-      ? selectVictim(CANDIDATES, false).id
-      : run.starved
-        ? `${run.starvedId} starved`
-        : 'Tows shared out';
-    const detail = !rounds
-      ? `cost ${selectVictim(CANDIDATES, false).total}`
-      : run.picks.join(' → ');
+    const tone = isAbortAll ? 'var(--accent)' : rounds && run.starved ? 'var(--waiting)' : 'var(--running)';
+    const label = isAbortAll
+      ? 'All 3 flats'
+      : !rounds
+        ? selectVictim(CANDIDATES, false).id
+        : run.starved
+          ? `${run.starvedId} starved`
+          : 'Tows shared out';
+    const detail = isAbortAll
+      ? 'abort cost 183 · 6 spots freed'
+      : !rounds
+        ? `cost ${selectVictim(CANDIDATES, false).total}`
+        : run.picks.join(' → ');
     host.innerHTML = `
       <div style="display: flex; gap: calc(var(--step) * 2); flex-wrap: wrap; align-items: baseline;">
         <div>
-          <div style="font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">${rounds ? `${ROUNDS} nights` : 'Cheapest to move'}</div>
+          <div style="font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">${isAbortAll ? 'Policy' : rounds ? `${ROUNDS} nights` : 'Cheapest to move'}</div>
           <div style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: ${tone};">${label}</div>
         </div>
         <div>
-          <div style="font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">${rounds ? 'Order of tows' : 'Cost'}</div>
+          <div style="font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);">${isAbortAll ? 'Total impact' : rounds ? 'Order of tows' : 'Cost'}</div>
           <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink);">${detail}</div>
         </div>
       </div>

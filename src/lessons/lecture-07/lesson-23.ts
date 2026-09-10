@@ -15,7 +15,11 @@ import {
 // L23 · Guessing before you build (ATLAS units 31–33, Lecture 7 slides 24–30)
 //
 // LESSONS.md: L23 — units 31–33. Deterministic modelling → queueing models →
-// simulation. Playground: n = λ × W computed in all three directions, drag any
+//
+// ANALOGY: mechanism-fixed — deterministic scheduling, Little's formula, and
+// simulation are structurally dictated by Lecture 7 slides 24–30.
+//
+// Playground: n = λ × W computed in all three directions, drag any
 // two and the third settles; then change the snapshot and watch the
 // deterministic winner change with it. The point is that a fast exact answer
 // only holds for one snapshot.
@@ -221,7 +225,10 @@ export class Lesson23GanttEngine extends GanttEngine {
     const body = steps.slice(0, -1);
     const last = body[body.length - 1];
     let t = last.t;
-    const order = input.processes.map((p) => p.id);
+    const seenBars = Array.from(new Set(result.bars.map((b) => b.id)));
+    const order = seenBars.length === input.processes.length
+      ? seenBars
+      : [...seenBars, ...input.processes.map((p) => p.id).filter((id) => !seenBars.includes(id))];
     let running = 0;
     const tally: Step<GanttState>[] = [];
 
@@ -326,6 +333,11 @@ export class Lesson23GanttEngine extends GanttEngine {
     this.input.analogy = next.analogy;
     this.reorderProcesses(next.processes);
     this.paintScoreboard();
+    this.container.ownerDocument?.querySelectorAll('.l23-scenario').forEach((btn) => {
+      const active = (btn as HTMLElement).dataset.scenario === id;
+      (btn as HTMLElement).style.borderColor = active ? 'var(--accent)' : 'var(--hairline)';
+      (btn as HTMLElement).style.color = active ? 'var(--accent)' : 'var(--ink)';
+    });
   }
 
   public getScenario(): Lesson23Scenario {
@@ -340,14 +352,21 @@ export class Lesson23GanttEngine extends GanttEngine {
     if (which === this.littleSolve) return;
     const cur = this.little;
     this.littleSolve = which;
+    const safeW = cur.w === 0 ? 1 : cur.w;
+    const safeLambda = cur.lambda === 0 ? 1 : cur.lambda;
     this.little =
       which === 'n'
         ? littlesLaw({ lambda: cur.lambda, w: cur.w })
         : which === 'lambda'
-          ? littlesLaw({ n: cur.n, w: cur.w })
-          : littlesLaw({ n: cur.n, lambda: cur.lambda });
+          ? littlesLaw({ n: cur.n, w: safeW })
+          : littlesLaw({ n: cur.n, lambda: safeLambda });
     const host = this.container.ownerDocument.querySelector('#l23-little')?.parentElement?.parentElement;
     if (host instanceof HTMLElement) this.paintLittle(host);
+    this.container.ownerDocument?.querySelectorAll('.l23-solve').forEach((btn) => {
+      const active = (btn as HTMLElement).dataset.solve === which;
+      (btn as HTMLElement).style.borderColor = active ? 'var(--accent)' : 'var(--hairline)';
+      (btn as HTMLElement).style.color = active ? 'var(--accent)' : 'var(--muted)';
+    });
   }
 
   /** Set one of the two supplied terms; the derived term follows. */
@@ -495,7 +514,7 @@ export const lesson23: Lesson<GanttInput, GanttState> = {
   concept:
     'Choosing a scheduling algorithm means fixing your criteria first and then evaluating candidates against them. Deterministic modelling takes one predetermined workload and computes each algorithm\'s performance exactly — on the deck\'s five processes it gives FCFS 28 ms, non-preemptive SJF 13 ms and round robin 23 ms. It is simple and fast, and its weakness is in the definition: it needs exact numbers as input and its answer applies only to those inputs. Queueing models go the other way, describing arrivals and bursts probabilistically and computing averages; Little\'s formula, n = λ × W, says that in steady state the average queue length is the arrival rate times the average wait, and it holds for any scheduling algorithm and any arrival distribution. Simulation buys back accuracy by programming a model of the system with the clock as a variable, driven by random numbers or by trace tapes of real events, at much higher cost. Implementation is more accurate still and costs the most of all, and even then environments vary — which is why the most flexible schedulers can be tuned per site.',
   morphReveals:
-    'At the door every party takes up one place in the line: the widths are equal, because a booking is a booking and one table is one table. Redraw the same five on a time axis and width stops meaning a place and starts meaning kitchen minutes — the engagement party alone is wider than the other four together, and the little tea order that looked equal at the door is a sliver. That change of meaning is the whole of deterministic modelling: it is only once width is time that the 28 minutes exists at all, and it is a fact about this Friday\'s ordering, not about the rule.',
+    'At the door every party takes up one place in the line: the widths are equal, because a booking is a booking and one table is one table. Redraw the same five on a time axis and width stops meaning a place and starts meaning kitchen minutes — the engagement party alone is almost as wide as the other four together (29 vs 32 minutes), and the little tea order that looked equal at the door is a sliver. That change of meaning is the whole of deterministic modelling: it is only once width is time that the 28 minutes exists at all, and it is a fact about this Friday\'s ordering, not about the rule.',
   morphMode: 'morph',
   analogyMapping: [
     'A table seated at eight ➔ a process arriving at time 0',

@@ -21,6 +21,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L21 · Spotting a deadlock (ATLAS units 84–87, slides 34–41)
 //
+// ANALOGY: mechanism-fixed — the wait-for collapse and detection sweep are
+// structurally dictated by graph theory and slide 39's matrices.
+//
 // LESSONS.md: L21 — units 84–87. A traffic officer collapsing the map down to
 // "who is blocking whom" and looking for a closed loop. Playground: run the
 // detection sweep on the slide-39 snapshot, then add P2's request for one more
@@ -209,7 +212,7 @@ export const SWEEP_NODES: GraphNodeInput[] = [
     kind: 'process' as const,
     label,
     analogyLabel: label,
-    analogyX: 60 + i * 150,
+    analogyX: 50 + i * 135,
     analogyY: 48
   })),
   ...THING_NAMES.map((label, j) => ({
@@ -257,14 +260,47 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
     addEdges: [...sweepAssignments(), ...sweepRequests(request)]
   } as GraphEvent);
 
+  // Identify the winner of each pass:
+  const isWinner: boolean[] = new Array(result.steps.length).fill(false);
+  const passWinnerOf: number[] = new Array(result.steps.length).fill(-1);
+  let stepIdx = 0;
+  while (stepIdx < result.steps.length) {
+    let winnerStep = -1;
+    let winnerPid = -1;
+    let passEnd = stepIdx;
+    while (passEnd < result.steps.length) {
+      const p = result.steps[passEnd];
+      if (p.satisfied && winnerStep < 0) {
+        winnerStep = passEnd;
+        winnerPid = p.pid;
+      }
+      passEnd++;
+      if (passEnd < result.steps.length && result.steps[passEnd].pid <= p.pid) {
+        break;
+      }
+    }
+    if (winnerStep >= 0) {
+      isWinner[winnerStep] = true;
+      for (let s = stepIdx; s < passEnd; s++) {
+        passWinnerOf[s] = winnerPid;
+      }
+    }
+    stepIdx = passEnd;
+  }
+
   // One beat per probe — the sweep IS the lesson (units 85, 86).
   let lastGranted = -1;
-  result.steps.forEach((probe) => {
+  result.steps.forEach((probe, si) => {
     const who = FLAT_NAMES[probe.pid];
-    if (probe.satisfied) {
+    if (isWinner[si]) {
       lastGranted = probe.pid;
       out.push({
         caption: `${who} asks for nothing more than is free — it finishes and hands everything back.`,
+        activeNodes: [`P${probe.pid}`]
+      });
+    } else if (probe.satisfied) {
+      out.push({
+        caption: `${who} fits too — but ${FLAT_NAMES[passWinnerOf[si]]} came first in this pass, so ${who} finishes next.`,
         activeNodes: [`P${probe.pid}`]
       });
     } else {
