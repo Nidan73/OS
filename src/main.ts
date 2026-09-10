@@ -241,6 +241,19 @@ function renderChapter(chSlug: string): HTMLElement {
   });
 
   if (ch.id === 6) {
+    const ref6Item = document.createElement('li');
+    ref6Item.innerHTML = `
+      <a href="#/lecture-06/reference" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2.5); background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px); text-decoration: none; margin-top: calc(var(--step));">
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Chapter Reference · Slides 6–7</span>
+          <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-top: 2px;">Scheduling Criteria & The Five Metrics</div>
+          <div style="font-size: 0.88rem; color: var(--muted); margin-top: 2px;">Definitions, optimisation criteria (CPU utilisation, throughput, turnaround, waiting, response), and the household kitchen register.</div>
+        </div>
+        <span style="color: var(--ink); font-weight: 600; font-size: 0.88rem; padding: 7px 16px; border-radius: var(--rounded-pill, 9999px); background: var(--surface); border: 1px solid var(--hairline); white-space: nowrap;">Read Reference &rarr;</span>
+      </a>
+    `;
+    list.appendChild(ref6Item);
+
     // Unit 7
     const unit7Item = document.createElement('li');
     unit7Item.innerHTML = `
@@ -253,6 +266,21 @@ function renderChapter(chSlug: string): HTMLElement {
       </a>
     `;
     list.appendChild(unit7Item);
+  }
+
+  if (ch.id === 7) {
+    const ref7Item = document.createElement('li');
+    ref7Item.innerHTML = `
+      <a href="#/lecture-07/reference" style="display: flex; align-items: center; justify-content: space-between; padding: calc(var(--step)*2.5); background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px); text-decoration: none; margin-top: calc(var(--step));">
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Chapter Reference · Slides 7–8, 23</span>
+          <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-top: 2px;">Thread Scheduling (PCS vs SCS), Pthreads API & Real-World Schedulers</div>
+          <div style="font-size: 0.88rem; color: var(--muted); margin-top: 2px;">Process-contention vs system-contention scope, POSIX API rules, and Linux CFS, Windows & Solaris survey.</div>
+        </div>
+        <span style="color: var(--ink); font-weight: 600; font-size: 0.88rem; padding: 7px 16px; border-radius: var(--rounded-pill, 9999px); background: var(--surface); border: 1px solid var(--hairline); white-space: nowrap;">Read Reference &rarr;</span>
+      </a>
+    `;
+    list.appendChild(ref7Item);
   }
 
   container.append(heading, desc, list);
@@ -491,6 +519,19 @@ async function handleRoute(): Promise<void> {
     const parts = hash.split('/').filter(Boolean);
     if (parts.length === 1) {
       app.appendChild(renderChapter(parts[0]));
+    } else if (parts[1] === 'reference') {
+      if (parts[0] === 'lecture-06') {
+        const { renderLecture06Reference } = await import('./reference/lecture-06.js');
+        app.appendChild(renderLecture06Reference());
+      } else if (parts[0] === 'lecture-07') {
+        const { renderLecture07Reference } = await import('./reference/lecture-07.js');
+        app.appendChild(renderLecture07Reference());
+      } else {
+        const notFound = document.createElement('main');
+        notFound.style.padding = 'calc(var(--step) * 4)';
+        notFound.innerHTML = `<h2>Reference Not Found</h2><p><a href="#/">Back to home</a></p>`;
+        app.appendChild(notFound);
+      }
     } else {
       const mainContainer = document.createElement('main');
       mainContainer.className = 'unit-layout';
