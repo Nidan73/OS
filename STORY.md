@@ -70,11 +70,14 @@ key. If a lesson needs a second bathroom, the lesson is wrong, not the flat.
 The family's Chinese restaurant, twenty minutes away. One kitchen, one stove, one cook at the
 pass. Tables out front, a takeaway counter downstairs on the street.
 
-The food here is what a Dhaka Chinese place actually serves: fried rice, chilli chicken, chow
-mein, hot and sour soup, beef sizzling, prawn crackers. **Home is Bengali and the restaurant is
-Chinese**, which is ordinary for a family like this one and is also useful: the moment a lesson
-mentions chow mein you know you are at Yum Cha, and the moment it mentions biryani you know you
-are in the flat.
+**The dish this place is known for is chicken nanban.** Fried chicken, sweet vinegar, tartar
+sauce over the top. It is what people come for, it is what the kitchen is judged on, and it is
+what most of the tickets in these lessons are for. Around it sit the ordinary things a pan
+Asian place in Dhaka serves: ramen, gyoza, fried rice, miso soup, edamame.
+
+**Home is Bengali and the restaurant is Asian**, which is ordinary for a family like this one
+and is also useful. The food tells her which place she is standing in without a word of
+explanation: chicken nanban means Yum Cha, biryani means the flat.
 
 Ammu decides the serving rule. Friday night is the busy night, and there is a spike of tickets
 from last Friday that she keeps in a drawer, which is how the course gets a fixed workload to
@@ -117,11 +120,12 @@ life where holding what you have and waiting for what you need traps everybody a
 | L21 | building | Kabir chacha | He rubs out the cars and keeps only who waits on whom. |
 | L22 | building | Kabir chacha | Move the cheapest car, then watch it be the same car every night. |
 | L23 | Yum Cha | Ammu | Last Friday's tickets, three serving rules, and one answer that only held for that Friday. |
-
-**Food placement is a continuity check, not decoration.** Yum Cha serves Chinese. The flat cooks
-Bengali. L24's biryani is in the flat's kitchen and stays. L23's orders are at Yum Cha and are
-Chinese. If a lesson set at Yum Cha mentions kacchi, the lesson has drifted.
 | L24 | flat, kitchen | the kitchen, Ammu | The call of "ready" travels faster than the dish does. |
+
+**Food placement is a continuity check, not decoration.** Yum Cha serves chicken nanban, the
+flat cooks Bengali. L24's biryani is in the flat's kitchen and stays exactly as it is. L23's
+orders are at Yum Cha and are built around the nanban. If a lesson set at Yum Cha mentions
+kacchi, it has drifted.
 
 **Callbacks are allowed and encouraged where they are true.** L20 is the same envelope as L19.
 L21 and L22 are the same driveway as L17. L14 is the same bathroom as L11. L24 is the same
