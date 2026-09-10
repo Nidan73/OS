@@ -45,7 +45,7 @@ const SHARED: Record<Exclude<EngineId, 'standalone'>, unknown> = {
 /**
  * The declared `engine` field must match what engineClass actually extends.
  * `standalone` (direct AnimationEngine subclass) is legitimate when no
- * shared engine's state shape fits — but it must be said, not the default.
+ * shared engine's state shape fits, but it must be said, not the default.
  */
 describe('engine taxonomy: declared engine id matches the real inheritance', () => {
   const lessons: Lesson<any, any>[] = [
@@ -86,7 +86,7 @@ describe('engine taxonomy: declared engine id matches the real inheritance', () 
         expect(
           (lesson.engineClass as new (...args: never[]) => unknown).prototype instanceof
             (base as new (...args: never[]) => unknown),
-          `${lesson.slug} declares standalone but actually extends a shared engine — declare the engine`
+          `${lesson.slug} declares standalone but actually extends a shared engine, declare the engine`
         ).toBe(false);
       }
     }

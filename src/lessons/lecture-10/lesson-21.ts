@@ -21,10 +21,10 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L21 · Spotting a deadlock (ATLAS units 84–87, slides 34–41)
 //
-// ANALOGY: mechanism-fixed — the wait-for collapse and detection sweep are
+// ANALOGY: mechanism-fixed, the wait-for collapse and detection sweep are
 // structurally dictated by graph theory and slide 39's matrices.
 //
-// LESSONS.md: L21 — units 84–87. A traffic officer collapsing the map down to
+// LESSONS.md: L21, units 84–87. A traffic officer collapsing the map down to
 // "who is blocking whom" and looking for a closed loop. Playground: run the
 // detection sweep on the slide-39 snapshot, then add P2's request for one more
 // C and watch the same system tip into deadlock.
@@ -34,18 +34,18 @@ import {
 // |      and looks for a loop. Resources drop out; only the waiting matters.
 // | 85 | The same ledger sweep as the safety check, but using what people are
 // |      actually asking for right now instead of their declared ceilings.
-// | 86 | Reclaim what P0 holds and everyone still finishes — until P2 asks for
+// | 86 | Reclaim what P0 holds and everyone still finishes, until P2 asks for
 // |      one more C, and the same system tips into deadlock.
 // | 87 | How often should the officer check the roundabout? Check constantly
 // |      and you burn the whole shift; check rarely and cars sit locked.
 //
-// SCENE: the same driveway L17 established and L19 kept — cars parked in
+// SCENE: the same driveway L17 established and L19 kept, cars parked in
 // behind one another in the building. Not a third deadlock scene; the guard's
 // clipboard is the wait-for graph seen from above.
 //
 // ENGINE VERDICT (a): extend GraphEngine and use its render() unmodified.
-// Why: unit 84 IS a graph collapse — assignment and request edges removed,
-// waits-on edges added — and units 85/86 are the same driveway with instance
+// Why: unit 84 IS a graph collapse, assignment and request edges removed,
+// waits-on edges added, and units 85/86 are the same driveway with instance
 // counts, which GraphEngine already renders as dots. Overriding render() would
 // reimplement identical interpolation.
 //
@@ -53,7 +53,7 @@ import {
 // driveway an arrow is a car: it points from the spot to the family holding
 // its key, or from a family to the spot they are waiting on, and it is about
 // vehicles. On the wait-for clipboard every arrow points family-to-family and
-// the cars are gone — an arrow stops meaning a car and starts meaning "this
+// the cars are gone, an arrow stops meaning a car and starts meaning "this
 // household cannot leave until that one moves." Deadlock becomes a closed
 // loop of neighbours, which is the only thing the officer needs to see.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ import {
 // with new words. `collapse` is 11 (four keys taken, three blocks formed, the
 // ring verdict, the single collapse beat, the wait-for verdict, and the
 // officer's read). `sweep-t0` and `sweep-t1` are one beat per detection probe
-// plus the reclaim beats and the computed verdict — 12 and 11 respectively,
+// plus the reclaim beats and the computed verdict, 12 and 11 respectively,
 // because the t1 sweep stalls earlier and has fewer probes to run, not because
 // beats were dropped. `cadence` is 6: the question, two sample cadences at
 // each extreme, the crossover, and the verdict.
@@ -92,7 +92,7 @@ const COLLAPSE_REQUEST: RagEdge[] = [
   { from: 'H3', to: 'S1', kind: 'request' }
 ];
 
-/** Wait-for arrows, computed by waitForGraph — never listed by hand. */
+/** Wait-for arrows, computed by waitForGraph, never listed by hand. */
 export function waitForEdges(nodes: GraphNodeInput[], edges: RagEdge[]): RagEdge[] {
   const graph: RagGraph = {
     nodes: nodes.map((n) => ({
@@ -112,7 +112,7 @@ export function waitForEdges(nodes: GraphNodeInput[], edges: RagEdge[]): RagEdge
   return out;
 }
 
-/** Cycle path over whatever edge set is passed — detectCycle, not stored. */
+/** Cycle path over whatever edge set is passed, detectCycle, not stored. */
 export function ringOf(nodes: GraphNodeInput[], edges: RagEdge[]): string[] {
   const graph: RagGraph = {
     nodes: nodes.map((n) => ({
@@ -134,9 +134,9 @@ export function collapseEvents(): GraphEvent[] {
   };
 
   take('Flat 1 parks in Spot A and keeps the key.', COLLAPSE_ASSIGN[0]);
-  take('Flat 2 takes Spot B — the middle of the driveway.', COLLAPSE_ASSIGN[1]);
+  take('Flat 2 takes Spot B, the middle of the driveway.', COLLAPSE_ASSIGN[1]);
   take('Flat 3 takes Spot C, and the driveway is full.', COLLAPSE_ASSIGN[2]);
-  take('Flat 1 now needs Spot B to get out — Flat 2 is in it.', COLLAPSE_REQUEST[0]);
+  take('Flat 1 now needs Spot B to get out. Flat 2 is in it.', COLLAPSE_REQUEST[0]);
   take('Flat 2 needs Spot C. Flat 3 is parked there.', COLLAPSE_REQUEST[1]);
   take('Flat 3 needs Spot A, which Flat 1 has not moved.', COLLAPSE_REQUEST[2]);
 
@@ -145,7 +145,7 @@ export function collapseEvents(): GraphEvent[] {
     caption:
       ring.length > 0
         ? `The map closes a ring: ${ring.join(' → ')}. Nobody can move first.`
-        : 'No ring on the map — every car can still get out.',
+        : 'No ring on the map, every car can still get out.',
     setCycle: ring
   });
 
@@ -167,7 +167,7 @@ export function collapseEvents(): GraphEvent[] {
     setCycle: waitRing
   });
   out.push({
-    caption: 'Flat 4 never parked, so no arrow touches it — it is not stuck.',
+    caption: 'Flat 4 never parked, so no arrow touches it, it is not stuck.',
     activeNodes: ['H4']
   });
   out.push({
@@ -188,7 +188,7 @@ export const SWEEP_ALLOCATION = [
   [2, 1, 1],
   [0, 0, 2]
 ];
-/** Slide 39 requests — the T0 snapshot. */
+/** Slide 39 requests, the T0 snapshot. */
 export const SWEEP_REQUEST_T0 = [
   [0, 0, 0],
   [2, 0, 2],
@@ -230,7 +230,7 @@ export function sweepOf(request: number[][]): DetectionResult {
   return detectionAlgorithm(SWEEP_AVAILABLE, SWEEP_ALLOCATION, request);
 }
 
-/** Held-things edges — one per allocated unit, so width reads as holdings. */
+/** Held-things edges, one per allocated unit, so width reads as holdings. */
 function sweepAssignments(): RagEdge[] {
   const out: RagEdge[] = [];
   SWEEP_ALLOCATION.forEach((row, i) => {
@@ -262,7 +262,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
 
   // WHICH PROBE ACTUALLY RECLAIMS.
   // detectionAlgorithm scans P0→Pn every pass and takes the FIRST satisfiable
-  // process, but it does not stop scanning — so several probes in one pass can
+  // process, but it does not stop scanning, so several probes in one pass can
   // report satisfied while only one of them is reclaimed. Captioning every
   // satisfied probe as "it finishes" was the original defect. The pass split
   // below is derived from the pid sequence: a pass ends where the pid stops
@@ -289,7 +289,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
 
   /**
    * When this flat is actually reclaimed, relative to the probe being
-   * captioned. Returns null if it never finishes — which is the deadlock case
+   * captioned. Returns null if it never finishes, which is the deadlock case
    * and must not be described as finishing at all.
    */
   const finishesAfter = (pid: number): string | null => {
@@ -298,25 +298,25 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
     return FLAT_NAMES[reclaimOrder[at - 1]];
   };
 
-  // One beat per probe — the sweep IS the lesson (units 85, 86).
+  // One beat per probe, the sweep IS the lesson (units 85, 86).
   let lastGranted = -1;
   result.steps.forEach((probe, si) => {
     const who = FLAT_NAMES[probe.pid];
     if (isWinner[si]) {
       lastGranted = probe.pid;
       out.push({
-        caption: `${who} asks for nothing more than is free — it finishes and hands everything back.`,
+        caption: `${who} asks for nothing more than is free, it finishes and hands everything back.`,
         activeNodes: [`P${probe.pid}`]
       });
     } else if (probe.satisfied) {
       // It fits, but it is not the one reclaimed this pass. Say only what is
-      // true: when it is actually reclaimed, read off the reclaim order — or
+      // true: when it is actually reclaimed, read off the reclaim order, or
       // that it never is.
       const after = finishesAfter(probe.pid);
       out.push({
         caption: after
-          ? `${who} fits too, but the sweep takes the first it finds — ${who} gets its turn after ${after}.`
-          : `${who} fits too, but the sweep takes the first it finds — and it never gets a turn.`,
+          ? `${who} fits too, but the sweep takes the first it finds, ${who} gets its turn after ${after}.`
+          : `${who} fits too, but the sweep takes the first it finds, and it never gets a turn.`,
         activeNodes: [`P${probe.pid}`]
       });
     } else {
@@ -325,7 +325,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
         .filter(Boolean)
         .join(' and ');
       out.push({
-        caption: `${who} still wants ${short} that nobody has returned — it waits.`,
+        caption: `${who} still wants ${short} that nobody has returned, it waits.`,
         activeNodes: [`P${probe.pid}`]
       });
     }
@@ -335,7 +335,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
   out.push({
     caption:
       stuck.length === 0
-        ? 'Every flat finished — the driveway clears on its own, no deadlock.'
+        ? 'Every flat finished, the driveway clears on its own, no deadlock.'
         : `${stuck.join(', ')} never finish: deadlock, and the guard has found it.`,
     activeNodes: result.deadlocked.length > 0 ? result.deadlocked : [`P${lastGranted}`]
   });
@@ -361,7 +361,7 @@ export function cadenceEvents(deadlockedCount: number): GraphEvent[] {
   return [
     { caption: 'The guard has one shift. How often should he walk the driveway?' },
     {
-      caption: `Every ${tight.everyMinutes} min: ${tight.sweepsPerHour} walks an hour, ${tight.detectionOpsPerHour} checks — the shift is spent walking.`
+      caption: `Every ${tight.everyMinutes} min: ${tight.sweepsPerHour} walks an hour, ${tight.detectionOpsPerHour} checks, the shift is spent walking.`
     },
     {
       caption: `Every ${loose.everyMinutes} min: only ${loose.sweepsPerHour} walks, but a jam sits ${loose.meanUndetectedMinutes} min unseen.`
@@ -375,7 +375,7 @@ export function cadenceEvents(deadlockedCount: number): GraphEvent[] {
         : 'Walking constantly still costs less than the jams it catches.'
     },
     {
-      caption: 'Neither end is free — the cadence is the trade, and you set it.'
+      caption: 'Neither end is free, the cadence is the trade, and you set it.'
     }
   ];
 }
@@ -427,7 +427,7 @@ export class Lesson21GraphEngine extends GraphEngine implements PlaygroundCapabl
   private scoreboardHost: HTMLElement | null = null;
   private scoreUnsub: (() => void) | null = null;
 
-  /** Batched edge support — a collapse moves many arrows in one motion. */
+  /** Batched edge support, a collapse moves many arrows in one motion. */
   protected override buildSteps(input: GraphInput): Step<GraphState>[] {
     if (!input.nodes || input.nodes.length === 0) {
       throw new Error('GraphEngine: input.nodes must not be empty');
@@ -469,7 +469,7 @@ export class Lesson21GraphEngine extends GraphEngine implements PlaygroundCapabl
     this.scoreboardHost = scoreboardHost ?? null;
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Run the check — then add one more request</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Run the check, then add one more request</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(SCENARIO_LABELS) as Lesson21Scenario[])
             .map(
@@ -480,7 +480,7 @@ export class Lesson21GraphEngine extends GraphEngine implements PlaygroundCapabl
             .join('')}
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">Every verdict, ring and cost below is computed — the wait-for collapse, the detection sweep, the cadence trade.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">Every verdict, ring and cost below is computed, the wait-for collapse, the detection sweep, the cadence trade.</div>
     `;
     host.querySelectorAll('.l21-scenario').forEach((el) => {
       el.addEventListener('click', () => {
@@ -589,12 +589,17 @@ export const lesson21: Lesson<GraphInput, GraphState> = {
   },
   analogy: {
     domain: 'travel',
-    text: 'Cars are parked in behind one another in the building driveway. The night guard does not care which car is which — he writes down only who cannot leave until whom, and looks for a closed loop of neighbours.'
+    text: 
+      'Kabir chacha does not know which cars are deadlocked. He knows something is wrong, because three families have come down and none of them have left.\n\n' +
+      'So he walks the driveway with his register and stops recording cars altogether. He writes only pairs: this family cannot leave until that family moves. Nothing about number plates, nothing about which spot, just who is waiting on whom.\n\n' +
+      'Then he looks for a loop in what he wrote, and if he finds one he has proof.\n\n' +
+      'That works when every spot holds one car. When there are several of a thing, a loop is not proof any more, and he has to do something slower: go through the list again and again, each time asking whether anybody can finish with what is currently free, and giving back what they were holding when they do. Whoever is still on the list when he stops making progress is genuinely stuck.\n\n' +
+      'And there is a real question underneath all this, which is how often he should be walking the driveway at all.'
   },
   concept:
-    'Detection lets the system enter deadlock and then finds it. With one instance of each resource, collapse the resource-allocation graph into a wait-for graph — resources drop out, and an edge means one process is waiting on another; a cycle is then conclusive. With several instances a cycle is not enough, so the same sweep the safety check uses runs again, except it compares what each process is actually requesting now instead of its declared ceiling. Whatever is still unfinished when the sweep stalls is deadlocked. How often to run it is a real cost: sweeping constantly burns the processor, sweeping rarely leaves processes blocked for longer.',
+    'Detection lets the system enter deadlock and then finds it. With one instance of each resource, collapse the resource-allocation graph into a wait-for graph, resources drop out, and an edge means one process is waiting on another; a cycle is then conclusive. With several instances a cycle is not enough, so the same sweep the safety check uses runs again, except it compares what each process is actually requesting now instead of its declared ceiling. Whatever is still unfinished when the sweep stalls is deadlocked. How often to run it is a real cost: sweeping constantly burns the processor, sweeping rarely leaves processes blocked for longer.',
   morphReveals:
-    'In the driveway an arrow is a car: it runs from a spot to the family holding its key, or from a family to the spot they are waiting on. On the wait-for graph the spots are rubbed out and every arrow points family to family — an arrow stops meaning a car and starts meaning "this household cannot leave until that one moves." The ring survives the rubbing out, which is why the guard only needs the loop.',
+    'In the driveway an arrow is a car: it runs from a spot to the family holding its key, or from a family to the spot they are waiting on. On the wait-for graph the spots are rubbed out and every arrow points family to family, an arrow stops meaning a car and starts meaning "this household cannot leave until that one moves." The ring survives the rubbing out, which is why the guard only needs the loop.',
   morphMode: 'morph',
   analogyMapping: [
     'Parking spot ➔ resource node, one dot per instance',

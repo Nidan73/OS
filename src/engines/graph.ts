@@ -8,10 +8,10 @@ import type { RagEdge, RagNode } from '../algorithms/deadlock.js';
 // L21). Nodes, directed edges, request vs assignment vs claim types, cycle
 // highlighting, edges appearing and disappearing across steps.
 //
-// Geometry contract (§3C.2a — the Wave 2 lesson): the engine computes
+// Geometry contract (§3C.2a, the Wave 2 lesson): the engine computes
 // mechanism widths from the graph itself, so no lesson can inherit a reskin.
-// Analogy: every token the same width — bodies around a table, cars in a lot.
-// Mechanism: width means holdings — a resource is as wide as its instances,
+// Analogy: every token the same width, bodies around a table, cars in a lot.
+// Mechanism: width means holdings, a resource is as wide as its instances,
 // a process as wide as what it currently holds. Both differ per entity, and
 // process widths move with state as edges appear.
 
@@ -60,7 +60,7 @@ const CANVAS_H = 260;
 const ANALOGY_W = 64;
 const ANALOGY_H = 40;
 
-// Mechanism widths, computed from the graph — never typed per lesson.
+// Mechanism widths, computed from the graph, never typed per lesson.
 const RES_BASE_W = 40;
 const RES_PER_INSTANCE_W = 18;
 const PROC_BASE_W = 56;
@@ -97,7 +97,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
       }
     });
 
-    steps.push(snapshot('The system starts idle — nodes placed, no requests yet.', []));
+    steps.push(snapshot('The system starts idle, nodes placed, no requests yet.', []));
 
     for (const ev of input.events ?? []) {
       if (ev.addEdge) edges.push({ ...ev.addEdge });
@@ -131,7 +131,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
     }));
   }
 
-  /** Holdings per process in a state — the quantity process widths encode. */
+  /** Holdings per process in a state, the quantity process widths encode. */
   public holdingsOf(state: GraphState): Map<string, number> {
     const held = new Map<string, number>();
     for (const e of state.edges) {

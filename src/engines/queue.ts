@@ -136,7 +136,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
         } else if (ev.action === 'demote' || ev.action === 'promote' || ev.action === 'migrate' || ev.action === 'enqueue' || ev.action === 'stall' || ev.action === 'resume') {
           const toQ = ev.toQueue ?? input.queues[0].id;
           // A tick that names no new queue is still an event (the scan fired,
-          // the refill landed) — record the beat without moving the item.
+          // the refill landed), record the beat without moving the item.
           const isTick = ev.action === 'stall' || ev.action === 'resume';
           const alreadyThere = queueMap[toQ]?.includes(ev.itemId) || itemLocations[ev.itemId]?.coreId !== null;
           if (isTick && (!ev.toQueue || alreadyThere)) {

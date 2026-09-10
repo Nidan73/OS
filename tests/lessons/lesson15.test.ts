@@ -36,12 +36,12 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
     }
     const last = run.steps[run.steps.length - 1];
     // one release wakes one waiter; one traveller is still seated, so the
-    // count stays negative — the sign keeps meaning "waiters here"
+    // count stays negative, the sign keeps meaning "waiters here"
     expect(last.value).toBeLessThan(0);
     expect(last.waitingQueue.length).toBeGreaterThan(0);
   });
 
-  it('mapped steps carry the simulation 1:1 — count, holders, seated queue', () => {
+  it('mapped steps carry the simulation 1:1, count, holders, seated queue', () => {
     const run = semaphoreRun(DEFAULT_SEM);
     const steps = semaphoreSteps(DEFAULT_SEM);
     // one step per op plus the computed room verdict at the end
@@ -77,14 +77,14 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
     const double = semaphoreRun({ ...DEFAULT_SEM, mistake: 'double' });
     const omit = semaphoreRun({ ...DEFAULT_SEM, mistake: 'omit' });
     const intact = semaphoreRun(DEFAULT_SEM);
-    // all three differ from the intact run — none is a canned animation.
+    // all three differ from the intact run, none is a canned animation.
     // (swap lands on the same final number by a different road: one phantom
-    // release, one extra take — so compare traces, not just finals)
+    // release, one extra take, so compare traces, not just finals)
     expect(swap.steps.map((s) => s.action)).not.toStrictEqual(intact.steps.map((s) => s.action));
     expect(swap.steps[0].value).toBe(DEFAULT_SEM.initial + 1);
     expect(omit.deadlocked).toBe(true);
     expect(intact.deadlocked).toBe(false);
-    // double holds two ports on one traveller — the room disagrees with the
+    // double holds two ports on one traveller, the room disagrees with the
     // board even where the final numbers coincide
     expect(double.steps.some((s) => s.holders.filter((h) => h === 'T1').length > 1)).toBe(true);
   });
@@ -119,10 +119,10 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
   it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
     const strip = (s: string): string => s.replace(/slides?\s*\d[\d–-]*/gi, '');
     const digits = (s: string): string[] => [...strip(s).matchAll(/\d+/g)].map((m) => m[0]);
-    // the analogy names no count at all — the lot slider owns the number
+    // the analogy names no count at all, the lot slider owns the number
     expect(digits(lesson15.analogy.text)).toEqual([]);
     // concept/morph name only the slider endpoints (five/one) and the slide
-    // number — never a live outcome
+    // number, never a live outcome
     for (const copy of [lesson15.concept, lesson15.morphReveals]) {
       for (const d of digits(copy)) {
         expect(['5', '22', '1'].includes(d)).toBe(true);
@@ -130,7 +130,7 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
     }
   });
 
-  it('the negative-count claim is conditional on overflow — true in every state', () => {
+  it('the negative-count claim is conditional on overflow, true in every state', () => {
     expect(lesson15.analogy.text).toMatch(/When every spot is taken|past zero/i);
     expect(lesson15.concept).toMatch(/negative|waiting|bench|token/i);
   });
@@ -159,7 +159,7 @@ describe('Lesson 15 · lesson wiring', () => {
     expect(lesson15.slug).toBe('lesson-15');
   });
 
-  it('opens on five spots with seven contenders — overflow is one run away', () => {
+  it('opens on five spots with seven contenders, overflow is one run away', () => {
     expect(lesson15Input.params).toStrictEqual(DEFAULT_SEM);
     expect(DEFAULT_SEM.initial).toBe(5);
     const run = semaphoreRun(lesson15Input.params);
@@ -197,7 +197,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     host.remove();
     return steps;
   };
-  // A step where the lot holds AND waits — wide holders against narrow waiting.
+  // A step where the lot holds AND waits, wide holders against narrow waiting.
   const occupiedStep = (): number =>
     mountSteps().findIndex((s) => s.state.holders.length > 0 && s.state.waiting.length > 0);
 
@@ -212,8 +212,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     const step = occupiedStep();
     expect(step).toBeGreaterThanOrEqual(0);
     const states = mountSteps()[step].state;
-    // Crowded lots shrink to fit, but the holder:waiter RATIO survives —
-    // assert the ratio, not the absolute pixel constants.
+    // Crowded lots shrink to fit, but the holder:waiter RATIO survives, // assert the ratio, not the absolute pixel constants.
     const w = widthsAt(1, step);
     const holder = states.holders[0];
     const waiter = states.waiting[0];
@@ -221,7 +220,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w[holder]).toBeGreaterThan(w[waiter]);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const step = occupiedStep();
     for (const id of IDS) {
       const a = widthsAt(0, step)[id];

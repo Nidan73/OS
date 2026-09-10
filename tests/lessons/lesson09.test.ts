@@ -109,7 +109,7 @@ describe('Lesson 09 · every displayed number is computed', () => {
 });
 
 describe('Lesson 09 · the morph is geometric, not cosmetic (§3C.2a)', () => {
-  it('analogy layout is native: the scene is placed, not timed — latencies cannot move it', () => {
+  it('analogy layout is native: the scene is placed, not timed, latencies cannot move it', () => {
     const a = realtimeGeometry(0, PARAM_CASES[0]);
     for (const p of PARAM_CASES.slice(1)) {
       expect(realtimeGeometry(0, p)).toStrictEqual(a);
@@ -142,7 +142,7 @@ describe('Lesson 09 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(m3.gate.x - m1.gate.x).toBeCloseTo(PX_PER_MS, 9);
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     for (const p of PARAM_CASES) {
       for (const id of IDS) {
         const a = realtimeGeometry(0, p)[id];
@@ -179,7 +179,7 @@ describe('Lesson 09 · copy agrees with the mechanism', () => {
     expect(digits(lesson09.morphReveals)).toEqual([]);
   });
 
-  it('soft-vs-hard wording holds in every reachable state — no outcome is asserted', () => {
+  it('soft-vs-hard wording holds in every reachable state, no outcome is asserted', () => {
     expect(lesson09.concept.toLowerCase()).toContain('soft');
     expect(lesson09.concept.toLowerCase()).toContain('hard');
     const fixed = `${lesson09.analogy.text} ${lesson09.concept} ${lesson09.morphReveals}`;

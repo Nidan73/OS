@@ -28,7 +28,11 @@ const walk = (dir: string): string[] =>
 
 const rel = (f: string) => path.relative(path.resolve(HERE, '..'), f);
 
-const EM_DASH = '—';
+// U+2014, written as an escape so a search-and-replace sweep over this
+// repository can never silently rewrite the very character this test looks
+// for. It did exactly that once, and the test then started matching hyphens
+// and reported 4172 offenders.
+const EM_DASH = '\u2014';
 
 describe('prose rule: no em dashes anywhere in src', () => {
   const offenders = walk(SRC)

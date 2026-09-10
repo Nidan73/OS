@@ -744,7 +744,7 @@ export class GanttEngine extends AnimationEngine<GanttInput, GanttState> {
           }
         } else {
           // Analogy view: positioned cleanly BELOW the family sprite (never collides).
-          // Full dish name, from the lesson's own input — never a hardcoded order.
+          // Full dish name, from the lesson's own input, never a hardcoded order.
           label.setAttribute('y', String(y + 98));
           label.setAttribute('font-family', 'var(--font-ui)');
           label.setAttribute('font-size', width >= 160 ? '10.5' : '9.5');

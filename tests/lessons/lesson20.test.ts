@@ -23,7 +23,7 @@ import {
 const MODES: Lesson20Mode[] = ['sweep', 'request', 'refuse'];
 
 describe('Lesson 20 · every number is computed', () => {
-  it('the T0 ledger transcribes the deck — Need derives cell by cell', () => {
+  it('the T0 ledger transcribes the deck. Need derives cell by cell', () => {
     expect(needMatrix(L20_MAX, L20_ALLOCATION)).toEqual([
       [7, 4, 3],
       [1, 2, 2],
@@ -33,7 +33,7 @@ describe('Lesson 20 · every number is computed', () => {
     ]);
   });
 
-  it('the sweep arc shows one beat per probe — 15 beats for 15 probes', () => {
+  it('the sweep arc shows one beat per probe, 15 beats for 15 probes', () => {
     const sweep = safetyAlgorithm(L20_AVAILABLE, L20_MAX, L20_ALLOCATION);
     expect(sweep.sequence).toEqual([1, 3, 4, 0, 2]);
     const host = document.createElement('div');
@@ -43,10 +43,10 @@ describe('Lesson 20 · every number is computed', () => {
     const steps = engine.getSteps();
     // One beat per Task B probe: a different Work vector is a different
     // event, so every examination gets its own caption quoting its own
-    // Need-vs-Work comparison — see the DENSITY comment in lesson-20.ts.
+    // Need-vs-Work comparison, see the DENSITY comment in lesson-20.ts.
     // Funded rows appear exactly when the probe satisfies, in deck order.
     const probeSteps = steps.filter(
-      (s) => s.caption.includes('fits [') || s.caption.includes('waits —')
+      (s) => s.caption.includes('fits [') || s.caption.includes('waits, ')
     );
     expect(sweep.steps.length).toBe(15);
     expect(probeSteps.length).toBe(15);
@@ -67,13 +67,13 @@ describe('Lesson 20 · every number is computed', () => {
     host.remove();
   });
 
-  it('the verdict names the computed sequence — never a stored answer', () => {
+  it('the verdict names the computed sequence, never a stored answer', () => {
     const steps = sweepEvents();
     const last = steps[steps.length - 1];
     expect(last.caption).toContain('⟨P1, P3, P4, P0, P2⟩');
   });
 
-  it('the request arc guards the deck answer — P1 (1,0,2) granted', () => {
+  it('the request arc guards the deck answer. P1 (1,0,2) granted', () => {
     const req = requestAlgorithm(
       { available: L20_AVAILABLE, max: L20_MAX, allocation: L20_ALLOCATION },
       1,
@@ -85,7 +85,7 @@ describe('Lesson 20 · every number is computed', () => {
     expect(events[events.length - 1].caption).toContain('⟨P1, P3, P4, P0, P2⟩');
   });
 
-  it('the refusal arc guards the Task B proof — P4 (3,3,0) refused, unsafe', () => {
+  it('the refusal arc guards the Task B proof. P4 (3,3,0) refused, unsafe', () => {
     const req = requestAlgorithm(
       { available: L20_AVAILABLE, max: L20_MAX, allocation: L20_ALLOCATION },
       4,
@@ -97,17 +97,17 @@ describe('Lesson 20 · every number is computed', () => {
     expect(events[events.length - 1].caption).toMatch(/working, not failing/);
   });
 
-  it('loser beats name the selection discipline — P4 beats P0 in pass 3', () => {
+  it('loser beats name the selection discipline. P4 beats P0 in pass 3', () => {
     const steps = sweepEvents();
     const losers = steps.filter((s) => s.caption.includes('came first in this pass'));
     // Pass 1: P3 loses to P1. Pass 2: P4 loses to P3. Pass 3: P0 and P2
-    // lose to P4 — the two examinations a restart-from-P0 scan would have
+    // lose to P4, the two examinations a restart-from-P0 scan would have
     // taken instead. Pass 4: P2 loses to P0.
     expect(losers.map((s) => s.caption.slice(0, 2))).toEqual(['P3', 'P4', 'P0', 'P2', 'P2']);
     expect(losers[2].caption).toMatch(/P4 came first/);
   });
 
-  it('mode scripts are complete event sets — sweep 22, request 19, refuse 4', () => {
+  it('mode scripts are complete event sets, sweep 22, request 19, refuse 4', () => {
     expect(sweepEvents().length).toBe(22);
     expect(requestEvents().length).toBe(19);
     expect(refuseEvents().length).toBe(4);
@@ -121,7 +121,7 @@ describe('Lesson 20 · the wrap beat earns its place', () => {
     expect(wraps[0].caption).toMatch(/after P4, not from the top/);
   });
 
-  it('a restart-from-P0 scan would take P0 third — the wrap is the difference', () => {
+  it('a restart-from-P0 scan would take P0 third, the wrap is the difference', () => {
     // The documented Task B divergence, re-asserted where the learner sees it:
     // circular order gives P4 third, restart gives P0 third.
     expect(safetyAlgorithm(L20_AVAILABLE, L20_MAX, L20_ALLOCATION).sequence[2]).toBe(4);
@@ -150,7 +150,7 @@ describe('Lesson 20 · the playground reaches grant and refusal', () => {
 });
 
 describe('Lesson 20 · copy agrees with the mechanism', () => {
-  it('the refusal is staged as the algorithm working — never as failure', () => {
+  it('the refusal is staged as the algorithm working, never as failure', () => {
     expect(lesson20.concept).toMatch(/refusal is the algorithm working|working, not failing/i);
     expect(refuseEvents()[refuseEvents().length - 1].caption).toMatch(/working, not failing/);
     expect(lesson20.concept.toLowerCase()).not.toMatch(/error|fails|broken/);
@@ -182,7 +182,7 @@ describe('Lesson 20 · lesson wiring', () => {
     expect(lesson20.slug).toBe('lesson-20');
   });
 
-  it('opens on the T0 sweep — the ledger before any loan', () => {
+  it('opens on the T0 sweep, the ledger before any loan', () => {
     expect(lesson20Input.available).toEqual(L20_AVAILABLE);
     expect(lesson20.input.events.length).toBeGreaterThan(0);
   });
@@ -215,7 +215,7 @@ describe('Lesson 20 · geometry on actual coordinates (§3C.2c)', () => {
   });
 
   it('mechanism layout encodes the quantity: live claims wider than settled rows', () => {
-    // Seek mid-sweep — P1 funded, P4 still claiming — so settled and live
+    // Seek mid-sweep. P1 funded, P4 still claiming, so settled and live
     // rows coexist. At the close every row is dimmed and widths equalize,
     // which is the sweep's own doing, not a reskin.
     const host = document.createElement('div');
@@ -236,7 +236,7 @@ describe('Lesson 20 · geometry on actual coordinates (§3C.2c)', () => {
     host.remove();
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     for (const id of Object.keys(widthsAt(0, 'sweep'))) {
       const a = widthsAt(0, 'sweep')[id];
       const mid = widthsAt(0.5, 'sweep')[id];

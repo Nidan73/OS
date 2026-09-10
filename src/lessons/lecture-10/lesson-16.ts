@@ -16,58 +16,55 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L16 · Family dinner, two people and too few serving spoons (units 63–68, slides 3–7)
 //
-// LESSONS.md: L16 — units 63–68. Family dinner, two people and too few serving spoons.
+// LESSONS.md: L16, units 63–68. Family dinner, two people and too few serving spoons.
 // The founding scene. Morphs from the dinner table into the four necessary
 // conditions, each highlighted on the same picture. Playground: remove any one
 // condition and watch deadlock become impossible."
 //
 // ATLAS rows (deck wording, kept for provenance):
-// | 63 | `diagram` | System Model — request, use, release | slide 3 | food |
+// | 63 | `diagram` | System Model, request, use, release | slide 3 | food |
 // |    |           | Ask for the salt, use the salt, put the salt back. Every |
 // |    |           | resource interaction in the course is these three steps. |
 // | 64 | `graph` | Deadlock in a Multithreaded Application | slides 4–6 | food |
 // |    |         | Two friends, two chopsticks, one each. Both are polite, both |
 // |    |         | are patient, and neither will ever eat. The two-mutex code |
 // |    |         | runs alongside the scene. |
-// | 65 | `diagram` | Condition 1 — Mutual Exclusion | slide 7 | food | A chopstick
-// |    |           | can't be split in half. Non-shareable by nature — this is the
+// | 65 | `diagram` | Condition 1. Mutual Exclusion | slide 7 | food | A chopstick
+// |    |           | can't be split in half. Non-shareable by nature, this is the
 // |    |           | condition you almost never get to remove. |
-// | 66 | `diagram` | Condition 2 — Hold and Wait | slide 7 | food | Gripping one
+// | 66 | `diagram` | Condition 2. Hold and Wait | slide 7 | food | Gripping one
 // |    |           | chopstick while waiting for the second. Nobody gives anything
-// |    |           | up while they wait — that's what turns waiting into deadlock. |
-// | 67 | `diagram` | Condition 3 — No Preemption | slide 7 | food | You can't snatch
+// |    |           | up while they wait, that's what turns waiting into deadlock. |
+// | 67 | `diagram` | Condition 3. No Preemption | slide 7 | food | You can't snatch
 // |    |           | the chopstick out of your friend's hand. It's released
 // |    |           | voluntarily or not at all. |
-// | 68 | `graph` | Condition 4 — Circular Wait | slide 7 | food | A round table where
+// | 68 | `graph` | Condition 4. Circular Wait | slide 7 | food | A round table where
 // |    |         | every person waits on the one to their left. Trace the ring and
-// |    |         | it closes — all four conditions must hold at once. |
+// |    |         | it closes, all four conditions must hold at once. |
 //
 // ENGINE VERDICT (a): extend GraphEngine and use its render() unmodified.
-// Why: every unit lives on one picture — the request/use/release triple is an
+// Why: every unit lives on one picture, the request/use/release triple is an
 // edge lifecycle (ask, take, return), the deadlock is a ring of holds and
 // asks, and each condition is a highlight on that same graph. That is exactly
 // what GraphEngine renders (bipartite nodes, request vs assignment edges,
 // cycle highlight, [id^="bar-*"] widths computed from instances and holdings).
 // Overriding render() would reimplement identical interpolation for no gain.
 // The ATLAS `diagram` labels on units 63/65/66/67 describe slide prose, not a
-// second picture — LESSONS.md says each condition is highlighted "on the same
+// second picture. LESSONS.md says each condition is highlighted "on the same
 // picture", so one engine serves all six units honestly.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position).
-// Around the table every parent and every spoon takes the same space —
-// position is just where they sat. On the map width stops meaning a body and
+// Around the table every parent and every spoon takes the same space, // position is just where they sat. On the map width stops meaning a body and
 // starts meaning holdings: a mutex is as wide as its instances, a parent as
 // wide as what they grip.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// DENSITY (Task A rule, applied from the start): the story arc is 13 steps —
-// the idle frame, the request/use/release triple (unit 63: a satisfied ask is
-// taken up, not left pending — leaving it would re-ring later), the four
+// DENSITY (Task A rule, applied from the start): the story arc is 13 steps, // the idle frame, the request/use/release triple (unit 63: a satisfied ask is
+// taken up, not left pending, leaving it would re-ring later), the four
 // takes-and-asks that close the ring (unit 64), the computed ring verdict,
 // and the four condition beats (units 65–68), each naming its condition on
 // the same picture. No beat repeats a state with new words. The four removal
-// alternates are complete event sets, not cuts: share 10 (declared correct —
-// four takes, four returns, one verdict; nothing else happens when nobody
+// alternates are complete event sets, not cuts: share 10 (declared correct, // four takes, four returns, one verdict; nothing else happens when nobody
 // ever waits), atomic 12, preempt 14, ordered 12.
 
 export type Lesson16Mode = 'story' | 'share' | 'atomic' | 'preempt' | 'ordered';
@@ -115,18 +112,18 @@ function requireVerdict(
   if (v.deadlocked !== wantDeadlock) {
     throw new Error(
       `L16 ${where}: expected deadlocked=${wantDeadlock}, computed ${v.deadlocked} ` +
-        `(cycles ${v.cycles.length}) — the scene disagrees with the mechanism`
+        `(cycles ${v.cycles.length}), the scene disagrees with the mechanism`
     );
   }
 }
 
-/** Verdict caption, branched on the computed isDeadlock — never typed. */
+/** Verdict caption, branched on the computed isDeadlock, never typed. */
 function ringCaption(mode: Lesson16Mode, edges: RagEdge[]): string {
   const v = isDeadlock(ragOf(MODE_NODES[mode], edges));
   if (v.deadlocked) {
-    return `Both wait on what the other grips — deadlock. Neither will ever eat.`.slice(0, 120);
+    return `Both wait on what the other grips, deadlock. Neither will ever eat.`.slice(0, 120);
   }
-  return `Nobody waits in a ring — without all four, deadlock is impossible.`.slice(0, 120);
+  return `Nobody waits in a ring, without all four, deadlock is impossible.`.slice(0, 120);
 }
 
 function ringCycle(mode: Lesson16Mode, edges: RagEdge[]): string[] {
@@ -134,7 +131,7 @@ function ringCycle(mode: Lesson16Mode, edges: RagEdge[]): string[] {
   return cycles.length > 0 ? [...cycles[0]] : [];
 }
 
-/** A satisfied ask is taken up in the same beat — never left pending. */
+/** A satisfied ask is taken up in the same beat, never left pending. */
 function takeEdge(caption: string, req: { from: string; to: string }): GraphEvent {
   return {
     caption: caption.slice(0, 120),
@@ -156,27 +153,27 @@ export function storyEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    ask('Ammu asks for spoon M1 — every use starts as a request.', {
+    ask('Ammu asks for spoon M1, every use starts as a request.', {
       from: 'T1',
       to: 'M1',
       kind: 'request'
     })
   ];
-  const use = takeEdge("M1 lands in Ammu's hand — the ask becomes a hold.", { from: 'T1', to: 'M1' });
+  const use = takeEdge("M1 lands in Ammu's hand, the ask becomes a hold.", { from: 'T1', to: 'M1' });
   edges.splice(edges.findIndex((e) => e.from === 'T1' && e.to === 'M1'), 1);
   edges.push({ from: 'M1', to: 'T1', kind: 'assignment' });
   out.push(use);
   const rel = { from: 'M1', to: 'T1' };
   edges.splice(edges.findIndex((e) => e.from === rel.from && e.to === rel.to), 1);
   out.push({
-    caption: 'A puts M1 back — every use ends in release.'.slice(0, 120),
+    caption: 'A puts M1 back, every use ends in release.'.slice(0, 120),
     removeEdge: { ...rel }
   });
   out.push(
     ask('Ammu grips spoon M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
     ask('Abbu grips spoon M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
-    ask('Ammu asks for M2 — Abbu is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
-    ask('Abbu asks for M1 — Ammu is holding it. The ring closes.', {
+    ask('Ammu asks for M2, Abbu is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
+    ask('Abbu asks for M1, Ammu is holding it. The ring closes.', {
       from: 'T2',
       to: 'M1',
       kind: 'request'
@@ -186,20 +183,20 @@ export function storyEvents(): GraphEvent[] {
   out.push({ caption: ringCaption('story', edges), setCycle: ringCycle('story', edges) });
   out.push(
     {
-      caption: 'Mutual exclusion — one spoon serves one person; neither splits.'.slice(0, 120),
+      caption: 'Mutual exclusion, one spoon serves one person; neither splits.'.slice(0, 120),
       activeNodes: ['M1', 'M2'],
       clearCycle: true
     },
     {
-      caption: 'Hold and wait — each grips one while asking for the other.'.slice(0, 120),
+      caption: 'Hold and wait, each grips one while asking for the other.'.slice(0, 120),
       activeNodes: ['T1', 'T2']
     },
     {
-      caption: "No preemption — Ammu's grip breaks only when she lets go.".slice(0, 120),
+      caption: "No preemption, Ammu's grip breaks only when she lets go.".slice(0, 120),
       activeNodes: ['T1', 'M1']
     },
     {
-      caption: 'Circular wait — Ammu waits on Abbu waits on Ammu; the ring closes.'.slice(0, 120),
+      caption: 'Circular wait, Ammu waits on Abbu waits on Ammu; the ring closes.'.slice(0, 120),
       setCycle: ringCycle('story', edges)
     }
   );
@@ -207,7 +204,7 @@ export function storyEvents(): GraphEvent[] {
   return out;
 }
 
-/** Without mutual exclusion: spoons that split — nobody ever waits. */
+/** Without mutual exclusion: spoons that split, nobody ever waits. */
 export function shareEvents(): GraphEvent[] {
   const edges: RagEdge[] = [];
   const take = (caption: string, edge: RagEdge): GraphEvent => {
@@ -219,14 +216,14 @@ export function shareEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), removeEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    take('A takes an M1 half — one of two.', { from: 'M1', to: 'T1', kind: 'assignment' }),
-    take('B takes the other M1 half — no asking needed.', {
+    take('A takes an M1 half, one of two.', { from: 'M1', to: 'T1', kind: 'assignment' }),
+    take('B takes the other M1 half, no asking needed.', {
       from: 'M1',
       to: 'T2',
       kind: 'assignment'
     }),
     take('A takes an M2 half.', { from: 'M2', to: 'T1', kind: 'assignment' }),
-    take('B takes the other M2 half — both can eat.', {
+    take('B takes the other M2 half, both can eat.', {
       from: 'M2',
       to: 'T2',
       kind: 'assignment'
@@ -242,7 +239,7 @@ export function shareEvents(): GraphEvent[] {
 }
 
 /**
- * Without hold-and-wait: whoever asks holds nothing — T2 waits empty-handed
+ * Without hold-and-wait: whoever asks holds nothing. T2 waits empty-handed
  * while T1 eats, then takes both. No step holds one while asking for another.
  */
 export function atomicEvents(): GraphEvent[] {
@@ -260,16 +257,16 @@ export function atomicEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), removeEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    ask('B asks for M1 first — holding nothing.', { from: 'T2', to: 'M1', kind: 'request' }),
+    ask('B asks for M1 first, holding nothing.', { from: 'T2', to: 'M1', kind: 'request' }),
     take('A takes M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
-    take('A takes M2 — nothing asked, nothing waited on.', {
+    take('A takes M2, nothing asked, nothing waited on.', {
       from: 'M2',
       to: 'T1',
       kind: 'assignment'
     }),
     give('A finishes and returns M1.', { from: 'M1', to: 'T1' }),
     give('A returns M2.', { from: 'M2', to: 'T1' }),
-    give('M1 is free — B stops asking.', { from: 'T2', to: 'M1' }),
+    give('M1 is free. B stops asking.', { from: 'T2', to: 'M1' }),
     take('B takes M1.', { from: 'M1', to: 'T2', kind: 'assignment' }),
     take('B takes M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
     give('B finishes and returns M1.', { from: 'M1', to: 'T2' }),
@@ -281,7 +278,7 @@ export function atomicEvents(): GraphEvent[] {
 }
 
 /**
- * Without no-preemption: M1 is taken back mid-wait — T1 waits holding
+ * Without no-preemption: M1 is taken back mid-wait. T1 waits holding
  * nothing, T2 eats, then T1 takes both and eats.
  */
 export function preemptEvents(): GraphEvent[] {
@@ -297,9 +294,9 @@ export function preemptEvents(): GraphEvent[] {
   const out: GraphEvent[] = [
     step('A grips M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
     step('B grips M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
-    step('A asks for M2 — B is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
+    step('A asks for M2. B is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
     step(
-      'M1 is taken back — A now waits holding nothing.',
+      'M1 is taken back, A now waits holding nothing.',
       undefined,
       { from: 'M1', to: 'T1' }
     ),
@@ -307,7 +304,7 @@ export function preemptEvents(): GraphEvent[] {
     step('B finishes and returns M1.', undefined, { from: 'M1', to: 'T2' }),
     step('B returns M2.', undefined, { from: 'M2', to: 'T2' }),
     step('A takes M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
-    step('M2 is free — A stops asking.', undefined, { from: 'T1', to: 'M2' }),
+    step('M2 is free, A stops asking.', undefined, { from: 'T1', to: 'M2' }),
     step('A takes M2.', { from: 'M2', to: 'T1', kind: 'assignment' }),
     step('A finishes and returns M1.', undefined, { from: 'M1', to: 'T1' }),
     step('A returns M2.', undefined, { from: 'M2', to: 'T1' })
@@ -318,7 +315,7 @@ export function preemptEvents(): GraphEvent[] {
 }
 
 /**
- * Without circular wait: the spoons are numbered — both reach for M1
+ * Without circular wait: the spoons are numbered, both reach for M1
  * first, so T2 waits holding nothing and the ring never closes.
  */
 export function orderedEvents(): GraphEvent[] {
@@ -332,12 +329,12 @@ export function orderedEvents(): GraphEvent[] {
     return ev;
   };
   const out: GraphEvent[] = [
-    step('A takes M1 — lowest number first.', { from: 'M1', to: 'T1', kind: 'assignment' }),
-    step('B asks for M1 — holding nothing.', { from: 'T2', to: 'M1', kind: 'request' }),
+    step('A takes M1, lowest number first.', { from: 'M1', to: 'T1', kind: 'assignment' }),
+    step('B asks for M1, holding nothing.', { from: 'T2', to: 'M1', kind: 'request' }),
     step('A takes M2.', { from: 'M2', to: 'T1', kind: 'assignment' }),
     step('A finishes and returns M1.', undefined, { from: 'M1', to: 'T1' }),
     step('A returns M2.', undefined, { from: 'M2', to: 'T1' }),
-    step('M1 is free — B stops asking.', undefined, { from: 'T2', to: 'M1' }),
+    step('M1 is free. B stops asking.', undefined, { from: 'T2', to: 'M1' }),
     step('B takes M1.', { from: 'M1', to: 'T2', kind: 'assignment' }),
     step('B takes M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
     step('B finishes and returns M1.', undefined, { from: 'M1', to: 'T2' }),
@@ -372,17 +369,17 @@ export function modeInput(mode: Lesson16Mode): GraphInput {
   };
 }
 
-/** The two-mutex code beside the scene — lock order per mode, from the mode. */
+/** The two-mutex code beside the scene, lock order per mode, from the mode. */
 export const MODE_CODE: Record<Lesson16Mode, { t1: string[]; t2: string[]; note: string }> = {
   story: {
     t1: ['lock(M1)', 'lock(M2)'],
     t2: ['lock(M2)', 'lock(M1)'],
-    note: 'opposite order — the ring can close'
+    note: 'opposite order, the ring can close'
   },
   share: {
     t1: ['lock(M1)', 'lock(M2)'],
     t2: ['lock(M2)', 'lock(M1)'],
-    note: 'same code — but each mutex admits two holders'
+    note: 'same code, but each mutex admits two holders'
   },
   atomic: {
     t1: ['take both, or wait holding nothing'],
@@ -392,12 +389,12 @@ export const MODE_CODE: Record<Lesson16Mode, { t1: string[]; t2: string[]; note:
   preempt: {
     t1: ['lock(M1)', 'lock(M2)'],
     t2: ['lock(M2)', 'lock(M1)'],
-    note: 'same code — but a held mutex may be taken back'
+    note: 'same code, but a held mutex may be taken back'
   },
   ordered: {
     t1: ['lock(M1)', 'lock(M2)'],
     t2: ['lock(M1)', 'lock(M2)'],
-    note: 'numbered order — both reach for M1 first'
+    note: 'numbered order, both reach for M1 first'
   }
 };
 
@@ -410,21 +407,21 @@ const MODE_LABELS: Record<Lesson16Mode, string> = {
 };
 
 const CONDITIONS_HELD: Record<Lesson16Mode, string> = {
-  story: 'all four hold — deadlock',
+  story: 'all four hold, deadlock',
   share: 'mutual exclusion removed',
   atomic: 'hold-and-wait removed',
   preempt: 'no-preemption removed',
   ordered: 'circular-wait removed'
 };
 
-/** The RAG behind any step state — what the scoreboard verdict computes from. */
+/** The RAG behind any step state, what the scoreboard verdict computes from. */
 export function ragOfState(mode: Lesson16Mode, state: GraphState): RagGraph {
   return ragOf(MODE_NODES[mode], state.edges);
 }
 
 /**
  * Lesson 16's engine, scoped to this lesson. Uses GraphEngine.render()
- * unchanged — the lesson adds the founding scene: the request/use/release
+ * unchanged, the lesson adds the founding scene: the request/use/release
  * triple, the ring that closes, the four conditions on the same picture, and
  * a playground where removing any one condition breaks the deadlock.
  */
@@ -448,14 +445,14 @@ export class Lesson16GraphEngine extends GraphEngine implements PlaygroundCapabl
       `<div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink);">${who}: ${ops.join(' → ')}</div>`;
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Remove one condition — deadlock becomes impossible</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Remove one condition, deadlock becomes impossible</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(MODE_LABELS) as Lesson16Mode[]).map((id) => `
             <button type="button" class="l16-mode" data-mode="${id}" data-primary-control="true" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${this.mode === id ? 'var(--accent)' : 'var(--hairline)'}; color: ${this.mode === id ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">${MODE_LABELS[id]}</button>
           `).join('')}
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">Four conditions must hold at once — break any one and the same scene ends fed.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">Four conditions must hold at once, break any one and the same scene ends fed.</div>
       <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
         ${codeLine('T1', code.t1)}
         ${codeLine('T2', code.t2)}
@@ -492,12 +489,12 @@ export class Lesson16GraphEngine extends GraphEngine implements PlaygroundCapabl
     const end = isDeadlock(ragOfState(this.mode, finalState));
     const badge = (v: { deadlocked: boolean; cycles: string[][] }): string => {
       if (v.deadlocked) {
-        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);">🔴 Stuck — neither will ever eat</div>`;
+        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);">🔴 Stuck, neither will ever eat</div>`;
       }
       if (v.cycles.length > 0) {
-        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(0, 102, 204, 0.08); color: var(--accent); border: 1px solid var(--accent);">🔵 Ring — but someone still eats</div>`;
+        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(0, 102, 204, 0.08); color: var(--accent); border: 1px solid var(--accent);">🔵 Ring, but someone still eats</div>`;
       }
-      return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);">🟢 Fed — no ring, no deadlock</div>`;
+      return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);">🟢 Fed, no ring, no deadlock</div>`;
     };
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
@@ -545,13 +542,17 @@ export const lesson16: Lesson<GraphInput, GraphState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'Ammu and Abbu share two serving spoons at family dinner. Each grips one and waits on the other — both are polite, both are patient, and neither will ever eat.'
+    text: 
+      'Ammu and Abbu sit down to eat and there are two serving spoons on the table between them.\n\n' +
+      'You need both to serve yourself properly, one to hold the dish steady and one to serve. Ammu picks up the one nearest her. Abbu, at the same moment, picks up the one nearest him.\n\n' +
+      'Now each of them is holding one spoon and waiting for the other. Neither will put theirs down, because putting it down means starting again and they have already got one. Neither will grab the other\'s, because that is not how anyone behaves at a family dinner.\n\n' +
+      'They are both being polite. They are both being patient. They will both sit there indefinitely, and the food will go cold, and nothing about either of their behaviour is wrong. That is what makes this worth a whole lecture.'
   },
   concept:
-    'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each spoon serves one person, each parent grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one — bring extra spoons, take both or wait empty-handed, allow snatching, number the order — and the same scene ends fed. Each removal below is computed, not staged.'  +
+    'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each spoon serves one person, each parent grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one, bring extra spoons, take both or wait empty-handed, allow snatching, number the order, and the same scene ends fed. Each removal below is computed, not staged.'  +
     '  This is the DINING-PHILOSOPHERS PROBLEM, the standard illustration of deadlock in the literature: several diners sit around a table with one chopstick between each pair, each needs two to eat, and each picks up the one on their left first. Every one of them is following a perfectly reasonable rule and the result is that nobody eats. The point of the problem is not the philosophers. It is that a deadlock can be produced by rules that are individually correct.',
   morphReveals:
-    'Around the table every parent and every spoon takes the same space — position is just where they sat. On the map width stops meaning a body and starts meaning holdings: a mutex is as wide as its instances, a parent as wide as what they grip — so the stuck ring reads wide all round while a freed parent narrows.',
+    'Around the table every parent and every spoon takes the same space, position is just where they sat. On the map width stops meaning a body and starts meaning holdings: a mutex is as wide as its instances, a parent as wide as what they grip, so the stuck ring reads wide all round while a freed parent narrows.',
   morphMode: 'morph',
   analogyMapping: [
     'Parent ➔ thread',
@@ -559,7 +560,7 @@ export const lesson16: Lesson<GraphInput, GraphState> = {
     'Asking for a spoon ➔ request edge, parent to spoon',
     'Gripping a spoon ➔ assignment edge, spoon to parent',
     'Ask, use, give back ➔ the edge lifecycle: request, hold, release',
-    'Everyone waiting in a ring ➔ deadlock — and removing any condition breaks it'
+    'Everyone waiting in a ring ➔ deadlock, and removing any condition breaks it'
   ],
   input: lesson16Input
 };

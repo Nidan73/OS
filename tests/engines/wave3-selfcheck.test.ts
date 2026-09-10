@@ -9,7 +9,7 @@ import { MatrixEngine, type MatrixInput } from '../../src/engines/matrix.js';
 // 0.5 and 1 the way widthsAt() does in tests/lessons/lesson13.test.ts, and
 // assert that at view 1 DIFFERENT ENTITIES HAVE DIFFERENT GEOMETRY. Both
 // TraceEngine and CounterEngine shipped a render() whose view changed only
-// uniform sizes and passed the gate — this check runs first so Wave 3
+// uniform sizes and passed the gate, this check runs first so Wave 3
 // lessons cannot inherit that.
 
 const GRAPH_FIXTURE: GraphInput = {
@@ -23,7 +23,7 @@ const GRAPH_FIXTURE: GraphInput = {
   events: [
     { caption: 'T1 asks for the last chopstick.', addEdge: { from: 'T1', to: 'R1', kind: 'request' } },
     {
-      caption: 'T2 takes two — the ring closes.',
+      caption: 'T2 takes two, the ring closes.',
       addEdge: { from: 'R1', to: 'T2', kind: 'assignment' },
       setCycle: ['T1', 'R1', 'T2', 'R2']
     }
@@ -46,13 +46,13 @@ const MATRIX_FIXTURE: MatrixInput = {
   ],
   events: [
     {
-      caption: 'P0 needs more than is free — refused.',
+      caption: 'P0 needs more than is free, refused.',
       probeCells: [[0, 0], [0, 1], [0, 2]],
       work: [3, 3, 2],
       activeRow: 0
     },
     {
-      caption: 'P1 fits — reclaim its row.',
+      caption: 'P1 fits, reclaim its row.',
       probeCells: [[1, 0], [1, 1], [1, 2]],
       finishedRows: [1],
       work: [5, 3, 2],
@@ -88,21 +88,21 @@ describe('B4 · GraphEngine is not a reskin', () => {
     return { engine };
   };
 
-  it('analogy tokens share one footprint — the scene is native', () => {
+  it('analogy tokens share one footprint, the scene is native', () => {
     const w = widthsAt(mount, 0);
     expect(Object.keys(w).length).toBeGreaterThanOrEqual(4);
     expect(Math.max(...Object.values(w)) - Math.min(...Object.values(w))).toBeLessThan(1);
   });
 
-  it('mechanism widths differ per entity — holdings and instances encoded', () => {
+  it('mechanism widths differ per entity, holdings and instances encoded', () => {
     const w = widthsAt(mount, 1);
     const widths = Object.values(w);
-    // R2 (3 instances) is wider than R1 (1); T2 (holds R1) wider than T1 (holds R2: 1 each — so check resource spread).
+    // R2 (3 instances) is wider than R1 (1); T2 (holds R1) wider than T1 (holds R2: 1 each, so check resource spread).
     expect(Math.max(...widths) - Math.min(...widths)).toBeGreaterThan(1);
     expect(w['bar-R2']).toBeGreaterThan(w['bar-R1']);
   });
 
-  it('geometry interpolates — every entity moves monotonically', () => {
+  it('geometry interpolates, every entity moves monotonically', () => {
     for (const id of ['bar-T1', 'bar-T2', 'bar-R1', 'bar-R2']) {
       const a = widthsAt(mount, 0)[id];
       const mid = widthsAt(mount, 0.5)[id];
@@ -136,13 +136,13 @@ describe('B4 · MatrixEngine is not a reskin', () => {
     return { engine };
   };
 
-  it('analogy cells share one footprint — the slips are native', () => {
+  it('analogy cells share one footprint, the slips are native', () => {
     const w = widthsAt(mount, 0);
     expect(Object.keys(w).length).toBeGreaterThanOrEqual(9);
     expect(Math.max(...Object.values(w)) - Math.min(...Object.values(w))).toBeLessThan(1);
   });
 
-  it('mechanism widths differ per cell — amount encoded, not uniform', () => {
+  it('mechanism widths differ per cell, amount encoded, not uniform', () => {
     const w = widthsAt(mount, 1);
     const widths = Object.values(w);
     expect(Math.max(...widths) - Math.min(...widths)).toBeGreaterThan(1);
@@ -150,7 +150,7 @@ describe('B4 · MatrixEngine is not a reskin', () => {
     expect(w['bar-need-P0-A']).toBeGreaterThan(w['bar-need-P1-A']);
   });
 
-  it('geometry interpolates — every entity moves monotonically', () => {
+  it('geometry interpolates, every entity moves monotonically', () => {
     const ids = Object.keys(widthsAt(mount, 0));
     for (const id of ids) {
       const a = widthsAt(mount, 0)[id];

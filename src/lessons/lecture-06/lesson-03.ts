@@ -1,7 +1,7 @@
 import type { Lesson } from '../../core/types.js';
 import type { GanttInput } from '../../engines/gantt.js';
 
-// DENSITY (Task A audit): correct at 10 — four dispatches, four completions,
+// DENSITY (Task A audit): correct at 10, four dispatches, four completions,
 // the arrival frame and the computed 7 ms summary. The deck's units 9–11
 // (SJF, the slide-11 discrepancy, burst prediction, SRTF) live in the concept
 // copy and the playground's SRTF toggle, not the timeline: prediction has no
@@ -10,7 +10,7 @@ import type { GanttInput } from '../../engines/gantt.js';
 // SJF event set.
 
 /**
- * Lesson 03: Shortest Job First — and Why You Can't Have It
+ * Lesson 03: Shortest Job First, and Why You Can't Have It
  * Absorbs Atlas Units 9, 10, 11 (Slides 10–15).
  *
  * CRITICAL SLIDE 11 DISCREPANCY RESOLUTION:
@@ -27,16 +27,20 @@ export const lesson03: Lesson<GanttInput> = {
   id: 3,
   lecture: 6,
   slug: 'lesson-03',
-  title: "Shortest Job First — and Why You Can't Have It",
+  title: "Shortest Job First, and Why You Can't Have It",
   absorbsUnits: [9, 10, 11],
   slides: 'slides 10–15',
   engine: 'gantt',
   analogy: {
     domain: 'food',
-    text: 'The kitchen sends quick plates to the table before the big order is ready. Guests waiting on one small side dish are served in minutes while the full dinner keeps cooking — but the cook cannot know how long each dish will take without starting it.'
+    text: 
+      'Ammu is watching the pass at Yum Cha with four tickets in front of her, and she has decided to try something. Instead of cooking in the order they arrived, she is going to send out the quickest plate first, then the next quickest, and so on.\n\n' +
+      'It works beautifully. The tables with small orders are eating within minutes. The average wait across all four tables drops to a number she can be proud of, and she can prove it is the lowest possible.\n\n' +
+      'Then she tries to use the same rule tomorrow and discovers the problem. To send the shortest order first she has to know how long each order will take, and she does not. She has a new cook, a ticket she has never seen before, and a kitchen that will only tell her how long something takes by cooking it.\n\n' +
+      'That gap between "provably the best rule" and "impossible to actually follow" is the whole lesson.'
   },
   concept: "Shortest-Job-First (SJF) associates each process with the length of its next CPU burst, scheduling the shortest job first to provably minimize average waiting time. Because the operating system cannot know future burst lengths in advance, systems approximate SJF using exponential averaging to predict bursts from past behavior, or use preemptive Shortest-Remaining-Time-First (SRTF) when new jobs arrive. Note on Lecture Slide 11: Although the slide table mentions staggered arrivals 0, 2, 4, and 5, the published 7 ms average wait time mathematically requires all processes to be present at t=0; this lesson displays the true 7 ms schedule without showing misleading arrival offsets that the algorithm would ignore.",
-  morphReveals: 'At the table each guest holds one plate. On a schedule width is cooking time — sending the quick plates first minimizes the whole table wait.',
+  morphReveals: 'At the table each guest holds one plate. On a schedule width is cooking time, sending the quick plates first minimizes the whole table wait.',
   morphMode: 'morph',
   analogyMapping: [
     'Restaurant Kitchen ➔ CPU Core',

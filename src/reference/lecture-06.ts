@@ -3,7 +3,7 @@ import { fcfs, type Process } from '../algorithms/scheduling.js';
 /**
  * Renders the reference page for Lecture 6: Scheduling Criteria.
  *
- * Topic: Scheduling Criteria — The Five Metrics & Optimization Criteria.
+ * Topic: Scheduling Criteria. The Five Metrics & Optimization Criteria.
  * Follows full density standards from DESIGN.md: generous typography,
  * alternating section surfaces, 80px vertical rhythm, and pure-algorithm backing.
  */

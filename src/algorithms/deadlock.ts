@@ -1,10 +1,9 @@
-// src/algorithms/deadlock.ts — Pure deadlock algorithms (§2.1)
+// src/algorithms/deadlock.ts. Pure deadlock algorithms (§2.1)
 //
 // Every number the Wave 3 lessons show comes from here: cycle detection over
 // resource-allocation graphs, the Banker's safety sweep with its cell-by-cell
 // record, the pretend-grant request check, the detection sweep over current
-// requests, and the wait-for collapse. Tested against the Lecture 10 deck —
-// slides 30–32 (the five-process ledger) and slides 39–40 (detection).
+// requests, and the wait-for collapse. Tested against the Lecture 10 deck, // slides 30–32 (the five-process ledger) and slides 39–40 (detection).
 
 // ── 1. Resource-allocation graph ──
 
@@ -36,7 +35,7 @@ export interface RagGraph {
 
 /**
  * All directed cycles over request + assignment edges (claim edges are
- * may-request annotations, not waits — they never close a ring).
+ * may-request annotations, not waits, they never close a ring).
  * Iterative DFS from every vertex; each cycle returned once, rotated to start
  * at its lexicographically smallest id so repeats compare equal.
  */
@@ -110,7 +109,7 @@ export interface DeadlockVerdict {
  * T1→R1→T3→R2→T1 exists, yet nobody is stuck). Nor is a fully-claimed ring
  * enough: on slide 11 every resource on the cycle is fully held, but R1 is
  * also held by T2, which waits on nothing, finishes, and breaks the ring.
- * Topology alone cannot see that an off-cycle holder will release — the
+ * Topology alone cannot see that an off-cycle holder will release, the
  * detection sweep can. So: enumerate cycles topologically, then reduce the
  * graph to allocation/request/available matrices and run the detection
  * sweep (§6 below); only processes it cannot finish are deadlocked. This
@@ -168,7 +167,7 @@ export interface BankerState {
 export interface SafetyProbe {
   /** Process examined this probe. */
   pid: number;
-  /** Need[pid] vs Work at probe time — the cell-by-cell comparison. */
+  /** Need[pid] vs Work at probe time, the cell-by-cell comparison. */
   need: number[];
   work: number[];
   /** Per-resource verdicts, so the animation highlights cell by cell. */
@@ -179,7 +178,7 @@ export interface SafetyProbe {
 
 export interface SafetyResult {
   safe: boolean;
-  /** The order that drains, in P-index terms — computed, never typed. */
+  /** The order that drains, in P-index terms, computed, never typed. */
   sequence: number[];
   /** One probe per examination, so the animation replays the sweep. */
   steps: SafetyProbe[];
@@ -194,11 +193,10 @@ export function needMatrix(max: number[][], allocation: number[][]): number[][] 
 /**
  * Deck slide 28, verbatim: Work = Available; Finish[i] = false; repeatedly
  * find an unfinished i with Need[i] <= Work, reclaim its allocation, repeat.
- * Safe iff every process finishes. The probe log records each examination —
- * including failed ones — so L20 replays the sweep, not a summary.
+ * Safe iff every process finishes. The probe log records each examination, * including failed ones, so L20 replays the sweep, not a summary.
  *
  * Selection order is the deck's own: each pass scans circularly from after
- * the last satisfied process and takes the FIRST satisfiable one — pass 3
+ * the last satisfied process and takes the FIRST satisfiable one, pass 3
  * therefore meets P4 before wrapping to P0, which is exactly why ⟨P1, P3,
  * P4, P0, P2⟩ falls out. A restart-from-P0 scan would take P0 third
  * ([1,3,0,2,4]) and contradict the deck; the deck's walkthrough is the spec.
@@ -248,7 +246,7 @@ export function safetyAlgorithm(
 
 export interface RequestResult {
   granted: boolean;
-  /** Why, in one computed sentence — the lesson quotes it, never rewords it. */
+  /** Why, in one computed sentence, the lesson quotes it, never rewords it. */
   reason: string;
   /** Safety sweep on the pretended state (present iff checks 1–2 passed). */
   safety: SafetyResult | null;
@@ -264,14 +262,14 @@ export function requestAlgorithm(
   if (request.some((v, j) => v > need[j])) {
     return {
       granted: false,
-      reason: `P${pid} asked for more than its declared ceiling — exceeds Need.`,
+      reason: `P${pid} asked for more than its declared ceiling, exceeds Need.`,
       safety: null
     };
   }
   if (request.some((v, j) => v > state.available[j])) {
     return {
       granted: false,
-      reason: `P${pid} must wait — the resources are not available.`,
+      reason: `P${pid} must wait, the resources are not available.`,
       safety: null
     };
   }
@@ -284,13 +282,13 @@ export function requestAlgorithm(
   if (!safety.safe) {
     return {
       granted: false,
-      reason: `P${pid} must wait — granting it would leave the system unsafe.`,
+      reason: `P${pid} must wait, granting it would leave the system unsafe.`,
       safety
     };
   }
   return {
     granted: true,
-    reason: `P${pid} granted — the system stays safe.`,
+    reason: `P${pid} granted, the system stays safe.`,
     safety
   };
 }
@@ -300,7 +298,7 @@ export function requestAlgorithm(
 export interface DetectionState {
   available: number[];
   allocation: number[][];
-  /** Current outstanding requests (NOT declared ceilings — cf. Banker's Need). */
+  /** Current outstanding requests (NOT declared ceilings, cf. Banker's Need). */
   request: number[][];
 }
 
@@ -386,7 +384,7 @@ export function waitForGraph(graph: RagGraph): Map<string, string[]> {
   return out;
 }
 
-// ── 7. Detection cadence — when and how often to run it (L21, unit 87) ──
+// ── 7. Detection cadence, when and how often to run it (L21, unit 87) ──
 
 export interface CadenceCost {
   /** Minutes between detection sweeps. */
@@ -442,13 +440,13 @@ export function evaluateDetectionCadence(
   };
 }
 
-// ── 8. Recovery — victim selection, rollback and starvation (L22, units 88–89) ──
+// ── 8. Recovery, victim selection, rollback and starvation (L22, units 88–89) ──
 
 export interface VictimCandidate {
   id: string;
   /** Higher priority costs more to abort (deck slide 42, first criterion). */
   priority: number;
-  /** Minutes already computed — work thrown away by aborting. */
+  /** Minutes already computed, work thrown away by aborting. */
   computedMinutes: number;
   /** Units of resource currently held. */
   heldUnits: number;
@@ -469,7 +467,7 @@ export interface VictimCost {
 
 /**
  * Deck slide 42 lists the abort-ordering criteria and slide 43 adds the one
- * that matters most: "Starvation — same process may always be picked as
+ * that matters most: "Starvation, same process may always be picked as
  * victim, include number of rollback in the cost factor."
  *
  * countRollbacks is that final term. With it off the cost of a candidate never
@@ -509,7 +507,7 @@ export interface RecoveryRun {
   costs: number[];
   /** Rollback tally per candidate id at the end of the run. */
   rollbacks: Record<string, number>;
-  /** True when one process absorbed every rollback — slide 43's starvation. */
+  /** True when one process absorbed every rollback, slide 43's starvation. */
   starved: boolean;
   /** The starved id, when there is one. */
   starvedId: string | null;

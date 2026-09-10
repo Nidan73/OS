@@ -491,7 +491,7 @@ export function renderLecture07Reference(): HTMLElement {
             <div class="pill-item">
               <span class="pill-bullet" style="background: var(--food);"></span>
               <div>
-                <strong>Process-Contention Scope (PCS) — Internal Family Turn-Taking:</strong>
+                <strong>Process-Contention Scope (PCS). Internal Family Turn-Taking:</strong>
                 Inside your family's private booth, Abbu, Ammu, and children decide among themselves whose story
                 is shared first over dinner. Abbu might graciously yield his turn to Arijit so she can share
                 her university exam results. This entire conversational negotiation is contained entirely within your booth.
@@ -501,7 +501,7 @@ export function renderLecture07Reference(): HTMLElement {
             <div class="pill-item">
               <span class="pill-bullet" style="background: var(--accent);"></span>
               <div>
-                <strong>System-Contention Scope (SCS) — Central Kitchen Order Rail:</strong>
+                <strong>System-Contention Scope (SCS). Central Kitchen Order Rail:</strong>
                 When ordering dishes from the kitchen, individual dining preferences leave the booth.
                 Your table's order ticket for kacchi biryani and chicken roast is clipped onto the head chef's central order rail.
                 Here, your family's order competes head-to-head against order tickets submitted by Table 3, Table 8,
@@ -747,7 +747,7 @@ export function renderLecture07Reference(): HTMLElement {
               <span class="ref-code-dot" style="background: #eab308;"></span>
               <span class="ref-code-dot" style="background: #22c55e;"></span>
             </div>
-            <span class="ref-code-title">pthread_scope_demo.c — CSC 2209 Slide 8 Reference Implementation</span>
+            <span class="ref-code-title">pthread_scope_demo.c. CSC 2209 Slide 8 Reference Implementation</span>
             <span style="font-size: 0.78rem; color: #64748b; font-family: var(--font-mono);">C99 / POSIX.1c</span>
           </div>
           <pre class="ref-code-pre"><code><span class="c-comment">/**

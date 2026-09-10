@@ -8,10 +8,10 @@ import type { Step } from '../core/types.js';
 // the safety sweep cell by cell. Row/column emphasis, and a pretend-grant
 // overlay on the committed state.
 //
-// Geometry contract (§3C.2a — the Wave 2 lesson): the engine computes
+// Geometry contract (§3C.2a, the Wave 2 lesson): the engine computes
 // mechanism widths from the ledger itself, so no lesson can inherit a reskin.
-// Analogy: every cell the same width — travellers' declared ceilings on
-// identical slips. Mechanism: width means amount — a Need cell is as wide as
+// Analogy: every cell the same width, travellers' declared ceilings on
+// identical slips. Mechanism: width means amount, a Need cell is as wide as
 // the units it still claims. Both differ per entity, and Need widths move
 // with state as the sweep reclaims.
 
@@ -56,7 +56,7 @@ const CANVAS_H = 300;
 const ANALOGY_CELL_W = 44;
 const ANALOGY_CELL_H = 26;
 
-// Mechanism: base slot plus per-unit width — computed from the ledger.
+// Mechanism: base slot plus per-unit width, computed from the ledger.
 const MECH_BASE_W = 26;
 const MECH_PER_UNIT_W = 9;
 const MECH_CELL_H = 26;
@@ -77,7 +77,7 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
     let t = 0;
     steps.push({
       t: t++,
-      caption: 'The ledger opens — ceilings declared, holdings drawn, cash on hand.',
+      caption: 'The ledger opens, ceilings declared, holdings drawn, cash on hand.',
       highlight: [...input.processes],
       state: {
         probeCells: [],

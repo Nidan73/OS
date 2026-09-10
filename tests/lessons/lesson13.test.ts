@@ -33,12 +33,12 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
       expect(got).toStrictEqual(expected);
       expect(got.mechanism).toBe(c.mechanism);
       expect(got.atomic).toBe(c.atomic);
-      // deck slides 8/10: the lock is 0 free, 1 held — never anything else
+      // deck slides 8/10: the lock is 0 free, 1 held, never anything else
       for (const s of got.steps) expect([0, 1]).toContain(s.lock);
     }
   });
 
-  it('split modes corrupt, fused modes hold — both primitives', () => {
+  it('split modes corrupt, fused modes hold, both primitives', () => {
     expect(simulateAtomicSteps('tas', false).bothEnteredCS).toBe(true);
     expect(simulateAtomicSteps('tas', true).bothEnteredCS).toBe(false);
     expect(simulateAtomicSteps('cas', false).bothEnteredCS).toBe(true);
@@ -50,7 +50,7 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
     expect(simulateCompareAndSwap(true).bothEnteredCS).toBe(false);
   });
 
-  it('CAS refuses on a stale expectation — the slide-9 rule, executed', () => {
+  it('CAS refuses on a stale expectation, the slide-9 rule, executed', () => {
     const r = simulateCompareAndSwap(true);
     expect(r.thread1Acquired).toBe(true);
     expect(r.thread2Acquired).toBe(false);
@@ -68,7 +68,7 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
     expect(r.retriesCAS).toBe(1);
   });
 
-  it('mapped steps carry the trace 1:1 — lock, holders, waiting, captions', () => {
+  it('mapped steps carry the trace 1:1, lock, holders, waiting, captions', () => {
     for (const c of COMBOS) {
       const trace = simulateAtomicSteps(c.mechanism, c.atomic);
       const steps = atomicSteps(c);
@@ -89,7 +89,7 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
     }
   });
 
-  it('the tally beats carry simulateAtomicIncrement 1:1 — plain loses, CAS keeps', () => {
+  it('the tally beats carry simulateAtomicIncrement 1:1, plain loses, CAS keeps', () => {
     const inc = simulateAtomicIncrement();
     for (const c of COMBOS) {
       const trace = simulateAtomicSteps(c.mechanism, c.atomic);
@@ -116,7 +116,7 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
 
 describe('Lesson 13 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('analogy tokens are native: equal footprints, sized like bodies', () => {
-    // CounterEngine renders analogy tokens at a fixed 54px — equal by construction.
+    // CounterEngine renders analogy tokens at a fixed 54px, equal by construction.
     // The assertion that matters here: our lesson uses that path (analogy names
     // set, so view<0.5 shows people, not threads).
     const input = atomicLessonInput(DEFAULT_ATOMIC);
@@ -144,7 +144,7 @@ describe('Lesson 13 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     }
   });
 
-  it('the same two threads run in every mode — only fused-vs-split changes', () => {
+  it('the same two threads run in every mode, only fused-vs-split changes', () => {
     for (const c of COMBOS) {
       const input = atomicLessonInput(c);
       expect(input.actors.map((a) => a.id)).toEqual(['T1', 'T2']);
@@ -211,7 +211,7 @@ describe('Lesson 13 · lesson wiring', () => {
     expect(lesson13.slug).toBe('lesson-13');
   });
 
-  it('opens split — the corruption first, then the fix one toggle away', () => {
+  it('opens split, the corruption first, then the fix one toggle away', () => {
     expect(lesson13Input.params).toStrictEqual(DEFAULT_ATOMIC);
     expect(DEFAULT_ATOMIC.atomic).toBe(false);
     expect(atomicTrace(lesson13Input.params).bothEnteredCS).toBe(true);
@@ -238,7 +238,7 @@ describe('Lesson 13 · geometry on actual coordinates (§3C.2c)', () => {
   };
 
   // The mounted engine runs DEFAULT_ATOMIC (tas-split). Find the first step
-  // with a holder AND a waiter in the ENGINE's own steps — the picture's
+  // with a holder AND a waiter in the ENGINE's own steps, the picture's
   // occupancy, not a parallel computation's.
   const mountSteps = (): ReturnType<typeof atomicSteps> => {
     const host = document.createElement('div');
@@ -272,7 +272,7 @@ describe('Lesson 13 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w[holder] / w[waiter]).toBeCloseTo(96 / 60, 5);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const step = occupiedStep();
     for (const id of ['T1', 'T2']) {
       const a = widthsAt(0, step)[id];

@@ -103,11 +103,11 @@ const STRATEGY_LABELS: Record<PreventionStrategy, string> = {
 };
 
 const STRATEGY_CAPTIONS: Record<PreventionStrategy, string> = {
-  none: 'All four conditions hold together — deadlock remains possible.',
-  share: 'Shareable resources remove mutual exclusion — this ring cannot deadlock.',
-  'all-at-once': 'Request everything together or wait holding nothing — hold and wait is gone.',
+  none: 'All four conditions hold together, deadlock remains possible.',
+  share: 'Shareable resources remove mutual exclusion, this ring cannot deadlock.',
+  'all-at-once': 'Request everything together or wait holding nothing, hold and wait is gone.',
   release: 'If the next resource is unavailable, release what you hold and retry.',
-  order: 'Every process requests lower-numbered resources first — the ring cannot close.'
+  order: 'Every process requests lower-numbered resources first, the ring cannot close.'
 };
 
 export function preventionInput(strategy: PreventionStrategy): DiagramInput {
@@ -258,7 +258,12 @@ export const lesson18: Lesson<DiagramInput, DiagramState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'At family dinner, Ammu can prevent the serving utensils from freezing in a ring four ways: share a dish, require everyone to take all utensils together, put one down when the next is busy, or always take the lower-numbered utensil first.'
+    text: 
+      'Ammu has watched the two spoons go wrong once and does not intend to watch it again. So she thinks about what would have to be true for it to happen at all.\n\n' +
+      'She finds four things, and all four have to hold together. The spoons have to be the kind of thing only one person can use at a time. People have to be able to hold one while waiting for another. Nobody can have a spoon taken off them once they have it. And the waiting has to come round in a circle.\n\n' +
+      'Which means she does not have to solve all four. She only has to break one.\n\n' +
+      'She could put out serving spoons that everyone shares. She could make a rule that you pick up both or neither. She could allow a spoon to be taken back if you are sitting there holding it and waiting. Or she could number them and require that everyone takes the lower number first.\n\n' +
+      'Any one of these makes the deadlock impossible, not unlikely. That is the difference between prevention and everything else in this lecture.'
   },
   concept: 'Operating systems can handle deadlocks four ways: prevention, avoidance, detection and recovery, or ignoring the problem. Prevention makes deadlock impossible by denying at least one necessary condition. Make resources shareable where possible; require a process to request everything before it starts; preempt held resources when another request fails; or impose a total ordering and require requests in increasing order. Each rule prevents the ring, but each has a cost in applicability, utilisation, repeated work, or programmer discipline.'  +
     '  Deadlock needs four conditions to hold at the same time, and they have names you will be asked for. MUTUAL EXCLUSION: at least one resource is non-shareable, so only one process can hold it. HOLD AND WAIT: a process is holding at least one resource while waiting for another. NO PREEMPTION: a resource cannot be taken away, it has to be released voluntarily by the process holding it. CIRCULAR WAIT: there is a set of processes where each is waiting on the next and the last waits on the first. All four must hold together, which is what makes prevention possible: break any single one and deadlock cannot occur at all.',

@@ -10,13 +10,13 @@ export interface PlaygroundCapable {
   debugHooks?(): Record<string, unknown>;
 }
 
-// src/core/types.ts — §3.1 authoritative contract
+// src/core/types.ts, §3.1 authoritative contract
 
 export type Domain = 'travel' | 'food' | 'friends';
 /**
  * Which shared engine a lesson claims. `standalone` means the lesson's
  * engineClass extends AnimationEngine directly because no shared engine's
- * state shape fits — a legitimate choice that must be declared, not the
+ * state shape fits, a legitimate choice that must be declared, not the
  * default. A test (tests/engine-taxonomy.test.ts) enforces that this
  * field matches what engineClass actually extends.
  */

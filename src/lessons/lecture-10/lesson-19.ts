@@ -18,9 +18,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L19 · Safe, unsafe, and stuck (ATLAS units 76–79, slides 17–21)
 //
-// LESSONS.md: L19 — units 76–79. A group treasurer checking whether there is
+// LESSONS.md: L19, units 76–79. A group treasurer checking whether there is
 // still *some* order in which everyone can finish the trip and pay back.
-// Playground: grant a request and watch the safe region shrink — unsafe is not
+// Playground: grant a request and watch the safe region shrink, unsafe is not
 // stuck yet, but the guarantee is gone.
 //
 // ATLAS rows (deck wording, kept for provenance):
@@ -28,34 +28,34 @@ import {
 // |      treasurer uses those ceilings to decide what's safe to lend.
 // | 77 | There exists some order in which you can fund every friend to the end
 // |      of the trip and get repaid. Find one sequence and you're safe.
-// | 78 | Unsafe doesn't mean stranded — it means you've lost the guarantee.
+// | 78 | Unsafe doesn't mean stranded, it means you've lost the guarantee.
 // |      Three nested regions, animated as the state moves between them.
 // | 79 | Dotted lines for "I might need this car later." Granting a request is
 // |      only allowed if the solid line it creates doesn't close a ring.
 //
 // ENGINE VERDICT (a): extend GraphEngine and use its render() unmodified.
-// Why: the ledger scene IS a resource-allocation graph — ceilings as dotted
-// claim edges, notes drawn as assignment edges — and the claims scene is the
+// Why: the ledger scene IS a resource-allocation graph, ceilings as dotted
+// claim edges, notes drawn as assignment edges, and the claims scene is the
 // single-instance claim-edge rule the engine was built for (its header names
 // L19). Overriding render() would reimplement identical interpolation.
 //
 // The carrying property of the morph is WIDTH. At the treasurer's table every
-// purse is the same size — a promise is just a dotted line. On the graph,
+// purse is the same size, a promise is just a dotted line. On the graph,
 // width means holdings: the fund is as wide as its twelve notes, a person as
 // wide as what they currently hold. The safe/unsafe/deadlock region readout
-// is computed per step by safetyAlgorithm / detectionAlgorithm — never typed.
+// is computed per step by safetyAlgorithm / detectionAlgorithm, never typed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// DENSITY: the ledger script is 8 beats — three ceilings declared, three
+// DENSITY: the ledger script is 8 beats, three ceilings declared, three
 // withdrawals (one per person: a purse is filled in one motion), the computed
-// safe verdict — and the grant script adds the extra note and the computed
+// safe verdict, and the grant script adds the extra note and the computed
 // unsafe verdict. Friendly and hostile each append their own beats to the
 // grant script; the claims script is its own complete event set. Every
 // verdict caption is built from the algorithm's own output, and no beat
 // repeats a state with new words.
 
 export const TOTAL_NOTES = 12;
-/** Declared ceilings before departure (unit 76) — the deck's 10 / 4 / 9. */
+/** Declared ceilings before departure (unit 76), the deck's 10 / 4 / 9. */
 export const MAX_CLAIMS = [10, 4, 9];
 
 // STORY.md: Ammu holds the envelope, so she is the one deciding and is never
@@ -133,10 +133,10 @@ export function needMatrixOf(state: GraphState): number[][] {
 export type Region = 'safe' | 'unsafe' | 'deadlock' | 'complete';
 
 /**
- * The region the system currently sits in — computed, never typed. Complete
+ * The region the system currently sits in, computed, never typed. Complete
  * means every note came home; safe means the safety sweep drains everyone;
  * deadlock means the detection sweep on outstanding asks confirms stuck
- * processes; anything else is unsafe — the guarantee is gone, nothing more.
+ * processes; anything else is unsafe, the guarantee is gone, nothing more.
  */
 export function regionOf(state: Lesson19State): Region {
   const alloc = allocationOf(state);
@@ -150,14 +150,14 @@ export function regionOf(state: Lesson19State): Region {
   return detection.deadlocked.length > 0 ? 'deadlock' : 'unsafe';
 }
 
-/** Computed safe sequence in family terms — "Ammu → Abbu → Arijit". */
+/** Computed safe sequence in family terms, "Ammu → Abbu → Arijit". */
 export function safeSequenceOf(state: GraphState): string {
   const safety = safetyAlgorithm(
     [availableOf(state)],
     MAX_CLAIMS.map((m) => [m]),
     allocationOf(state).map((a) => [a])
   );
-  if (!safety.safe) return '—';
+  if (!safety.safe) return ', ';
   return safety.sequence.map((i) => PEOPLE_NAMES[i]).join(' → ');
 }
 
@@ -187,7 +187,7 @@ const take = (caption: string, edges: RagEdge[]): Lesson19Event => ({
 
 /**
  * Units 76–77: ceilings declared as dotted claim edges, then the (5, 2, 2)
- * draw, then the computed verdict — some order finishes, so the state is safe.
+ * draw, then the computed verdict, some order finishes, so the state is safe.
  */
 export function ledgerEvents(): Lesson19Event[] {
   const out: Lesson19Event[] = [
@@ -228,7 +228,7 @@ export function ledgerEvents(): Lesson19Event[] {
 
 /**
  * Unit 78, the grant: Sister draws one more note and the treasurer allows it.
- * safetyAlgorithm now drains only Ammu — the state is unsafe: the guarantee
+ * safetyAlgorithm now drains only Ammu, the state is unsafe: the guarantee
  * is gone, though nothing is stuck yet.
  */
 export function grantEvents(): Lesson19Event[] {
@@ -262,11 +262,11 @@ export function friendlyEvents(): Lesson19Event[] {
       removeEdges: allocEdges(pid, notes).map((e) => ({ from: e.from, to: e.to }))
     });
   };
-  finish(0, 5, 'Abbu finishes without asking again — five notes come back.');
-  finish(2, 3, 'Sister finishes with the three she has — the fund grows to ten.');
-  finish(1, 2, 'Ammu finishes too — every note is home.');
+  finish(0, 5, 'Abbu finishes without asking again, five notes come back.');
+  finish(2, 3, 'Sister finishes with the three she has, the fund grows to ten.');
+  finish(1, 2, 'Ammu finishes too, every note is home.');
   out.push({
-    caption: 'Unsafe, yet everyone completed. Unsafe means no guarantee — not stranded.'.slice(0, CAPTION_MAX),
+    caption: 'Unsafe, yet everyone completed. Unsafe means no guarantee, not stranded.'.slice(0, CAPTION_MAX),
     activeNodes: ['R']
   });
   return out;
@@ -279,7 +279,7 @@ export function friendlyEvents(): Lesson19Event[] {
 export function hostileEvents(): Lesson19Event[] {
   const out = grantEvents();
   out.push({
-    caption: 'Then each asks for the rest of their promise — all at once.'.slice(0, CAPTION_MAX),
+    caption: 'Then each asks for the rest of their promise, all at once.'.slice(0, CAPTION_MAX),
     allAskNeed: true,
     activeNodes: ['P0', 'P1', 'P2']
   });
@@ -287,7 +287,7 @@ export function hostileEvents(): Lesson19Event[] {
   const stuck = stuckOf(state);
   const names = stuck.join(', ');
   out.push({
-    caption: `Everyone waits on the fund — ${names} can never finish. Stuck.`.slice(0, CAPTION_MAX),
+    caption: `Everyone waits on the fund, ${names} can never finish. Stuck.`.slice(0, CAPTION_MAX),
     activeNodes: stuck
   });
   return out;
@@ -295,7 +295,7 @@ export function hostileEvents(): Lesson19Event[] {
 
 /**
  * Unit 79: dotted claims at the driveway. Ammu's request for Car 1 is
- * refused — if Abbu then needed Car 2, the ring would close. Once Abbu
+ * refused, if Abbu then needed Car 2, the ring would close. Once Abbu
  * withdraws his claim, the same grant closes nothing and is allowed. The
  * refusal is computed: claims count as edges when the check runs.
  */
@@ -374,7 +374,7 @@ function applyEventEdges(edges: RagEdge[], ev: Lesson19Event): RagEdge[] {
   return out;
 }
 
-/** Fold events into the state they leave behind — the verdicts' input. */
+/** Fold events into the state they leave behind, the verdicts' input. */
 export function stateAfterEvents(events: Lesson19Event[], allAskNeed = false): Lesson19State {
   let edges: RagEdge[] = [];
   for (const ev of events) edges = applyEventEdges(edges, ev);
@@ -383,7 +383,7 @@ export function stateAfterEvents(events: Lesson19Event[], allAskNeed = false): L
 
 /**
  * The claim-edge rule (unit 79): granting the pending request is allowed only
- * if the solid edge it creates never closes a ring — with every dotted claim
+ * if the solid edge it creates never closes a ring, with every dotted claim
  * counted as an edge that could turn solid later. Computed by detectCycle on
  * the hypothetical graph where claims are treated as request edges.
  */
@@ -436,7 +436,7 @@ export function scenarioInput(id: Lesson19Scenario): GraphInput {
 
 /**
  * Lesson 19's engine, scoped to this lesson. Uses GraphEngine.render()
- * unchanged — the lesson adds the treasurer story: scenario scripts whose
+ * unchanged, the lesson adds the treasurer story: scenario scripts whose
  * region verdicts fall out of safetyAlgorithm/detectionAlgorithm, and the
  * claim-edge grant check computed by detectCycle.
  */
@@ -472,7 +472,7 @@ export class Lesson19GraphEngine extends GraphEngine implements PlaygroundCapabl
       }
     });
 
-    steps.push(snapshot('Ceilings come first — the treasurer lends against promises.', []));
+    steps.push(snapshot('Ceilings come first, the treasurer lends against promises.', []));
 
     for (const ev of events ?? []) {
       if (ev.addEdge) edges.push({ ...ev.addEdge });
@@ -513,14 +513,14 @@ export class Lesson19GraphEngine extends GraphEngine implements PlaygroundCapabl
     this.scoreboardHost = scoreboardHost ?? null;
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Grant the request — watch the region move</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Grant the request, watch the region move</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(SCENARIO_LABELS) as Lesson19Scenario[]).map((id) => `
             <button type="button" class="l19-scenario" data-scenario="${id}" data-primary-control="true" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${this.scenario === id ? 'var(--accent)' : 'var(--hairline)'}; color: ${this.scenario === id ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">${SCENARIO_LABELS[id]}</button>
           `).join('')}
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">Every region badge and sequence is computed — the safe sweep, the detection sweep, the claim check.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">Every region badge and sequence is computed, the safe sweep, the detection sweep, the claim check.</div>
     `;
     host.querySelectorAll('.l19-scenario').forEach((el) => {
       el.addEventListener('click', () => {
@@ -550,10 +550,10 @@ export class Lesson19GraphEngine extends GraphEngine implements PlaygroundCapabl
     const region = regionOf(state);
     const isLedger = this.scenario !== 'claims';
     const regionMeta: Record<Region, { color: string; label: string }> = {
-      safe: { color: 'var(--running)', label: 'SAFE — some order finishes' },
-      unsafe: { color: 'var(--waiting)', label: 'UNSAFE — the guarantee is gone' },
-      deadlock: { color: 'var(--waiting)', label: 'DEADLOCK — stuck for good' },
-      complete: { color: 'var(--running)', label: 'COMPLETE — every note came home' }
+      safe: { color: 'var(--running)', label: 'SAFE, some order finishes' },
+      unsafe: { color: 'var(--waiting)', label: 'UNSAFE, the guarantee is gone' },
+      deadlock: { color: 'var(--waiting)', label: 'DEADLOCK, stuck for good' },
+      complete: { color: 'var(--running)', label: 'COMPLETE, every note came home' }
     };
     const meta = regionMeta[region];
     const alloc = allocationOf(state);

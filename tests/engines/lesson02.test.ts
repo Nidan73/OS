@@ -150,7 +150,7 @@ describe('Lesson 2: FCFS and Convoy Effect (§3C)', () => {
     expect(wP1 / wP2).toBeCloseTo(24 / 3, 1);
   });
 
-  test('geometry interpolates — the morph is real (§3C.2c)', () => {
+  test('geometry interpolates, the morph is real (§3C.2c)', () => {
     const ids = ['P1', 'P2', 'P3'];
     const widthAt = (view: number, id: string) => {
       engine.setView(view);

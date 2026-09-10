@@ -50,7 +50,7 @@ describe('Lesson 10 · the last slide numbers (§2.1)', () => {
     expect(r.isCorrupted).toBe(true);
   });
 
-  it('serial execution is not corrupted — only some orders break', () => {
+  it('serial execution is not corrupted, only some orders break', () => {
     expect(simulateRaceCondition(5, toThreadIds(SERIAL_ORDER)).finalCounter).toBe(5);
     expect(simulateRaceCondition(5, toThreadIds(SERIAL_ORDER)).isCorrupted).toBe(false);
   });
@@ -118,7 +118,7 @@ describe('Lesson 10 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(g['act-T2-1'].x).toBeCloseTo(g['act-T2-0'].x, 5);
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     for (const id of ids) {
       const a = actGeometry(0, SLIDE_ORDER)[id];
       const mid = actGeometry(0.5, SLIDE_ORDER)[id];
@@ -136,7 +136,7 @@ describe('Lesson 10 · the morph is geometric, not cosmetic (§3C.2a)', () => {
 });
 
 describe('Lesson 10 · words agree with the mechanism', () => {
-  it('displayed instruction strings ARE the algorithm\'s instructions — no drift possible', () => {
+  it('displayed instruction strings ARE the algorithm\'s instructions, no drift possible', () => {
     expect(lesson10Input.threads[0].instructions).toEqual(RACE_INSTRUCTIONS.T1);
     expect(lesson10Input.threads[1].instructions).toEqual(RACE_INSTRUCTIONS.T2);
   });
@@ -172,7 +172,7 @@ describe('Lesson 10 · words agree with the mechanism', () => {
   it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
     // Every digit the playground can put on screen lives in the scenarios:
     // initial 3/800/14/5 and the outcomes initial-1/initial/initial+1. Copy
-    // must state the mechanism conditionally, never one run's result — so
+    // must state the mechanism conditionally, never one run's result, so
     // after removing identifier tokens (register1, R2, …), no digits remain.
     const stripIdentifiers = (s: string) => s.replace(/register\d|R\d/gi, '');
     const digits = (s: string) => [...stripIdentifiers(s).matchAll(/\d+/g)].map(m => m[0]);

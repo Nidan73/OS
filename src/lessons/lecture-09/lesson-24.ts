@@ -13,18 +13,18 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L24 · The barrier (ATLAS units 47–49, Lecture 9 slides 3–5)
 //
-// LESSONS.md: L24 — units 47–49. Strongly vs weakly ordered memory, then the
+// LESSONS.md: L24, units 47–49. Strongly vs weakly ordered memory, then the
 // barrier. Playground: toggle ordering, watch two stores land shuffled, insert
-// a barrier, watch it stop. PAIRS WITH L12 — L12 already owns the broken case,
+// a barrier, watch it stop. PAIRS WITH L12. L12 already owns the broken case,
 // reference it, do not duplicate its trace. Unit 49 is already mapped to the
 // trace engine.
 //
 // ATLAS rows (kept for provenance):
 // | 47 | diagram | Disabling Interrupts                       | slide 3
-// | 48 | diagram | Memory Models — Strongly vs Weakly Ordered  | slide 4
+// | 48 | diagram | Memory Models. Strongly vs Weakly Ordered  | slide 4
 // | 49 | trace   | Memory Barriers                            | slide 5
 //
-// DECK DATA — slides 3–5 are text-only, quoted here as written:
+// DECK DATA, slides 3–5 are text-only, quoted here as written:
 //   slide 3  "Uniprocessors – could disable interrupts … Generally too
 //             inefficient on multiprocessor systems … not broadly scalable"
 //   slide 4  "Strongly ordered – where a memory modification of one processor
@@ -40,7 +40,7 @@ import {
 // HOW THIS DIFFERS FROM L12 (units 44–46, slides 13–18).
 // L12 owns the broken case and narrates it: two hardcoded branches, intact and
 // reordered, and the printed number flips. This lesson does not replay that.
-// It replaces the narrative with a MODEL — simulateMemoryBarrier gives T2 a
+// It replaces the narrative with a MODEL, simulateMemoryBarrier gives T2 a
 // store buffer, so "visible" is a first-class thing a write either is or is
 // not. The consequence is that the deck's fix becomes reachable inside the
 // same model instead of being a third scripted branch, and the broken case
@@ -51,7 +51,7 @@ import {
 // ENGINE VERDICT (a): extend TraceEngine, call its render() and add one lane.
 // Unit 49 is a two-thread instruction trace, which is exactly what TraceEngine
 // draws. What it has no concept of is a write that has happened but is not yet
-// visible — so the subclass adds the in-flight lane and nothing else. The
+// visible, so the subclass adds the in-flight lane and nothing else. The
 // instruction parser is bypassed deliberately: it understands loads, stores
 // and arithmetic, and would throw on memory_barrier(), while (!flag) and
 // print x rather than silently mis-executing them. buildSteps drives the
@@ -60,8 +60,7 @@ import {
 // The carrying property of the morph is WHERE A PENDING WRITE SITS.
 //
 // FIRST ATTEMPT, AND WHY IT WAS WRONG. This was originally "the gap between
-// the two columns". Measured, that gap is 20px at view 0 and 16px at view 1 —
-// four pixels, which cannot carry a meaning. The tokens placed in it also
+// the two columns". Measured, that gap is 20px at view 0 and 16px at view 1, // four pixels, which cannot carry a meaning. The tokens placed in it also
 // overflowed their boxes, because SVG text does not clip. The morph test I had
 // written asserted only that the gap moved by >= 1px, so it passed on drift
 // and proved nothing. Recorded rather than quietly replaced.
@@ -69,10 +68,10 @@ import {
 // WHAT IT IS NOW. A write that has been issued and is not yet visible is drawn
 // in the band below the columns, and its POSITION is the carrying property.
 // In the hallway the pending writes are strung out along the corridor, spaced
-// apart: a corridor has length, and a thing in it is somewhere — the dish is
+// apart: a corridor has length, and a thing in it is somewhere, the dish is
 // further along than the call, or it is not. In the machine they collapse into
 // a stack at one fixed x: a store buffer has no geography at all, only order.
-// Position stops meaning distance and starts meaning nothing — which is
+// Position stops meaning distance and starts meaning nothing, which is
 // exactly the property that makes weak ordering dangerous. You cannot look at
 // a buffer and see how far along something is, so "x = 100 has run" and
 // "x = 100 can be read" come apart with nothing on screen to warn you, and
@@ -80,12 +79,12 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // DENSITY: one beat per discrete mechanism event, and the event set here is
-// genuinely uneven — that unevenness IS the content. Strongly ordered runs are
+// genuinely uneven, that unevenness IS the content. Strongly ordered runs are
 // short because nothing can go wrong: 6 beats, and the buffer is never used.
 // The weak runs are longer because each buffered store reaching the other
 // processor is its own event, and T1 re-reads the flag between every one of
 // them. Counts, plus the engine's opening frame: 7 / 10 / 11 / 13.
-// This follows lesson-03's precedent — a complete short event set is correct;
+// This follows lesson-03's precedent, a complete short event set is correct;
 // padding a strongly ordered run to look busy would teach the opposite of
 // what slide 4 says about it.
 
@@ -109,9 +108,9 @@ interface ScenarioSpec {
 export const SCENARIOS: Record<Lesson24Scenario, ScenarioSpec> = {
   // slide 4, strongly ordered: visible to everyone the moment it happens
   strong: { model: 'strong', barriers: false, drainOrder: ['x', 'flag'], gist: 'Everything lands the moment it happens.' },
-  // weakly ordered and lucky — the dish gets through before the call does
+  // weakly ordered and lucky, the dish gets through before the call does
   lucky: { model: 'weak', barriers: false, drainOrder: ['x', 'flag'], gist: 'The dish got there first. This time.' },
-  // weakly ordered and unlucky — the call overtakes the dish. L12's outcome,
+  // weakly ordered and unlucky, the call overtakes the dish. L12's outcome,
   // reached here from the buffer rather than from a scripted branch.
   broken: { model: 'weak', barriers: false, drainOrder: ['flag', 'x'], gist: 'The call overtook the dish. She served an empty plate.' },
   // slide 5's fix
@@ -178,7 +177,7 @@ export const TOKEN_ANALOGY: Record<'x' | 'flag', string> = {
   flag: 'call on its way'
 };
 
-/** Unit 47, slide 3 — the cores a masked interrupt does not protect. */
+/** Unit 47, slide 3, the cores a masked interrupt does not protect. */
 export const INTERRUPT_CORES = [1, 2, 4, 8];
 
 interface BarrierTraceState extends TraceState {
@@ -202,7 +201,7 @@ export class Lesson24TraceEngine extends TraceEngine {
   /**
    * Driven by simulateMemoryBarrier, not by TraceEngine's instruction parser.
    * The parser handles loads, stores and arithmetic and throws on anything
-   * else — which is correct of it, and the reason this override exists rather
+   * else, which is correct of it, and the reason this override exists rather
    * than a set of instruction strings bent into shapes it recognises.
    */
   protected override buildSteps(input: TraceInput): Step<TraceState>[] {
@@ -223,7 +222,7 @@ export class Lesson24TraceEngine extends TraceEngine {
         stepIndex: t,
         activeThreadIndex,
         threadPointers: [...pointers],
-        // no registers in this lesson — the panel would only show two dashes
+        // no registers in this lesson, the panel would only show two dashes
         registers: {},
         memory: { x: ev.visible.x, flag: ev.visible.flag },
         lastModifiedVar: null,
@@ -262,11 +261,11 @@ export class Lesson24TraceEngine extends TraceEngine {
         verdictT,
         run.correct
           ? `She served ${run.printed}. Everything that had happened was visible in time.`
-          : `She served ${run.printed}. The work was done — it just could not be seen yet.`,
+          : `She served ${run.printed}. The work was done, it just could not be seen yet.`,
         null,
         {
           // after every store has drained the visible state is the same in
-          // every scenario — which is the point: what differed was only WHEN
+          // every scenario, which is the point: what differed was only WHEN
           visible: { x: 100, flag: 1 },
           pending: [],
           printed: run.printed,
@@ -284,24 +283,24 @@ export class Lesson24TraceEngine extends TraceEngine {
     switch (ev.kind) {
       case 'issue':
         return ev.action === 'x = 100'
-          ? 'The kitchen puts the biryani in the serving dish — and it is on the counter at once.'
-          : 'The kitchen calls "ready!" — and it is heard at once.';
+          ? 'The kitchen puts the biryani in the serving dish, and it is on the counter at once.'
+          : 'The kitchen calls "ready!", and it is heard at once.';
       case 'buffer':
         return ev.action === 'x = 100'
-          ? 'The kitchen puts the biryani in the dish — but it has not reached the counter yet.'
-          : 'The kitchen calls "ready!" — but the call has not carried yet.';
+          ? 'The kitchen puts the biryani in the dish, but it has not reached the counter yet.'
+          : 'The kitchen calls "ready!", but the call has not carried yet.';
       case 'barrier':
-        return 'memory_barrier() — nothing more happens until what is already done is really out there.';
+        return 'memory_barrier(), nothing more happens until what is already done is really out there.';
       case 'drain':
         return ev.action.startsWith('x')
           ? 'The dish reaches the counter. Now it can be seen.'
           : 'The call carries through. Now it can be heard.';
       case 'spin':
-        return 'Ammu listens again — still no call, so she waits.';
+        return 'Ammu listens again, still no call, so she waits.';
       case 'pass':
         return 'Ammu hears "ready!" and gets up.';
       case 'print':
-        return `She carries out whatever is in the dish — that is ${ev.printed}.`;
+        return `She carries out whatever is in the dish, that is ${ev.printed}.`;
       default:
         return ev.caption;
     }
@@ -322,8 +321,8 @@ export class Lesson24TraceEngine extends TraceEngine {
    * that has happened and cannot yet be read.
    *
    * The lane sits in the band below the two columns, because the horizontal
-   * gap between the columns is 20px at view 0 and 16px at view 1 — measured,
-   * not assumed — and four pixels cannot carry a meaning. The first version of
+   * gap between the columns is 20px at view 0 and 16px at view 1, measured,
+   * not assumed, and four pixels cannot carry a meaning. The first version of
    * this lesson put the tokens in that gap and claimed it as the morph; the
    * text overflowed its box and the geometry barely moved. See the header.
    */
@@ -359,7 +358,7 @@ export class Lesson24TraceEngine extends TraceEngine {
       empty.setAttribute('font-size', '10');
       empty.setAttribute('fill', 'var(--muted)');
       empty.textContent =
-        v < 0.5 ? 'Nothing on its way — the room is up to date.' : 'Buffer empty — everything issued is visible.';
+        v < 0.5 ? 'Nothing on its way, the room is up to date.' : 'Buffer empty, everything issued is visible.';
       g.appendChild(empty);
       return;
     }
@@ -406,7 +405,7 @@ export class Lesson24TraceEngine extends TraceEngine {
     this.scoreboardHost = scoreboardHost ?? null;
     host.innerHTML = `
       <div>
-        <h3 style="font-size: 0.78rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 3px; color: var(--ink);">Change the ordering — then put the barrier in</h3>
+        <h3 style="font-size: 0.78rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 3px; color: var(--ink);">Change the ordering, then put the barrier in</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(SCENARIO_LABELS) as Lesson24Scenario[])
             .map(
@@ -508,9 +507,9 @@ export function guaranteeOf(id: Lesson24Scenario): string {
   ];
   const results = orders.map((o) => simulateMemoryBarrier(spec.model, spec.barriers, o).printed);
   const allCorrect = results.every((r) => r === 100);
-  if (allCorrect) return 'yes — every ordering prints 100';
+  if (allCorrect) return 'yes, every ordering prints 100';
   const bad = results.filter((r) => r !== 100).length;
-  return `no — ${bad} of ${orders.length} orderings print ${results.find((r) => r !== 100)}`;
+  return `no, ${bad} of ${orders.length} orderings print ${results.find((r) => r !== 100)}`;
 }
 
 export function threadsFor(id: Lesson24Scenario) {
@@ -543,7 +542,7 @@ export function scenarioInput(id: Lesson24Scenario): TraceInput {
     analogy: {
       domain: 'food',
       title: 'The kitchen and the table',
-      // not "what both sides share" — the panel shows what is VISIBLE, which
+      // not "what both sides share", the panel shows what is VISIBLE, which
       // is precisely what the table can read and the kitchen may have moved on from
       memoryTitle: 'WHAT THE TABLE CAN SEE',
       labels: { x: VAR_ANALOGY.x, flag: VAR_ANALOGY.flag }
@@ -570,21 +569,26 @@ export const lesson24: Lesson<TraceInput, TraceState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'The kitchen puts the biryani in the serving dish, then calls "ready!" through to the dining room. Ammu is listening for that call, and when she hears it she carries out whatever is in the dish. On a good night the dish gets there first. On a bad night the call travels faster than the food does, and she carries out an empty plate — the cooking was done, it just had not arrived yet.'
+    text: 
+      'Ammu is at the table waiting for the food, and the kitchen is through the doorway.\n\n' +
+      'The rule in this house is simple. The kitchen puts the biryani in the serving dish, then calls out that it is ready. Ammu hears the call and carries out whatever is in the dish.\n\n' +
+      'On a good night that works exactly as intended.\n\n' +
+      'On a bad night the call arrives before the dish does. Not because anyone got the order wrong. The kitchen did put the biryani in first, exactly as it was supposed to. It is just that a shout travels across a flat faster than a dish carried by hand, so what Ammu can hear and what Ammu can see stop agreeing with each other for a moment.\n\n' +
+      'She hears ready, she goes to the counter, and she carries out an empty plate. The cooking was done. It simply had not arrived yet.'
   },
   concept:
-    'A memory model is the set of guarantees an architecture makes about when one processor\'s writes become visible to the others. Under a strongly ordered model a modification by one processor is immediately visible to all the rest, so nothing can slip. Under a weakly ordered model it may not be — a write can have definitely executed and still be unreadable by another processor, and two writes can become visible in the opposite order to the one they were issued in. That is why Lesson 12\'s printout could come out 0 when the program plainly says 100: not because the store did not run, but because the announcement arrived before it did. A memory barrier is an instruction that forces every change already made to be propagated to all other processors before execution continues, which is what pins the two writes into an order that can be relied on. Putting a barrier between x = 100 and flag = true, and another between the spin loop and the read, is what makes Thread 1 output 100 on every run rather than on the lucky ones. The older answer to all of this — simply disabling interrupts — works on a uniprocessor, because the code then runs without preemption, but it protects only the processor that does it, so it is generally too inefficient and not broadly scalable on multiprocessor systems.',
+    'A memory model is the set of guarantees an architecture makes about when one processor\'s writes become visible to the others. Under a strongly ordered model a modification by one processor is immediately visible to all the rest, so nothing can slip. Under a weakly ordered model it may not be, a write can have definitely executed and still be unreadable by another processor, and two writes can become visible in the opposite order to the one they were issued in. That is why Lesson 12\'s printout could come out 0 when the program plainly says 100: not because the store did not run, but because the announcement arrived before it did. A memory barrier is an instruction that forces every change already made to be propagated to all other processors before execution continues, which is what pins the two writes into an order that can be relied on. Putting a barrier between x = 100 and flag = true, and another between the spin loop and the read, is what makes Thread 1 output 100 on every run rather than on the lucky ones. The older answer to all of this, simply disabling interrupts, works on a uniprocessor, because the code then runs without preemption, but it protects only the processor that does it, so it is generally too inefficient and not broadly scalable on multiprocessor systems.',
   morphReveals:
-    'In the hallway, where a thing sits is how far along it has got: the dish and the call are strung out down the corridor, spaced apart, and you can point at which one is further on. On the machine side those same two collapse into a stack at one fixed spot, because a store buffer has no length — position stops meaning distance and starts meaning nothing at all, only order survives. That is precisely what makes weakly ordered memory dangerous: you cannot look and see how far along a write is, so "the store has run" and "the store can be read" come apart with nothing on screen to warn you.',
+    'In the hallway, where a thing sits is how far along it has got: the dish and the call are strung out down the corridor, spaced apart, and you can point at which one is further on. On the machine side those same two collapse into a stack at one fixed spot, because a store buffer has no length, position stops meaning distance and starts meaning nothing at all, only order survives. That is precisely what makes weakly ordered memory dangerous: you cannot look and see how far along a write is, so "the store has run" and "the store can be read" come apart with nothing on screen to warn you.',
   morphMode: 'morph',
   analogyMapping: [
     'The kitchen ➔ Thread 2, issuing the writes',
     'Ammu listening at the table ➔ Thread 1, spinning on while (!flag)',
     'What is in the serving dish ➔ the shared variable x',
     'The call of "ready!" ➔ the shared variable flag',
-    'Where a thing sits in the hallway ➔ nothing — a store buffer has order, not distance',
+    'Where a thing sits in the hallway ➔ nothing, a store buffer has order, not distance',
     'Everyone hearing things in the same order ➔ a strongly ordered memory model, slide 4',
-    'The call outrunning the dish ➔ weakly ordered memory — L12\'s printed 0, explained',
+    'The call outrunning the dish ➔ weakly ordered memory. L12\'s printed 0, explained',
     'Saying nothing until it is really out there ➔ memory_barrier(), slide 5',
     'Telling the whole house not to disturb one cook ➔ disabling interrupts, slide 3'
   ],

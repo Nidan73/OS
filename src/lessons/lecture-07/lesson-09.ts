@@ -13,7 +13,7 @@ import {
 } from '../../algorithms/synchronization.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DENSITY (Task A audit): 12 reveals — the leaving frame, the doorbell call
+// DENSITY (Task A audit): 12 reveals, the leaving frame, the doorbell call
 // and the state save (one discrete phase each), the corridor blocked and the
 // corridor clearing (slide 21's phase split into its two states), the staged
 // Abbu and the handover (arrival distinct from handover), the dispatch
@@ -22,20 +22,19 @@ import {
 // "Arrival" and "ringing" differ the way L8's balancer tick and move differ:
 // naming the start of a mechanism event is not the event. The knock-on slide-20 rescue
 // run (soft deadline, still a failure on retry) is a different verdict over
-// the same budget — told by the playground burst, not a thirteenth reveal.
+// the same budget, told by the playground burst, not a thirteenth reveal.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CANVAS_W = 720;
 // ENGINE VERDICT (a): extend DiagramEngine and use its render() unmodified.
-// Why: the lesson IS a stacked bar whose segment widths encode latencies —
-// exactly what DiagramEngine interpolates (analogy x/y/width/height fields
+// Why: the lesson IS a stacked bar whose segment widths encode latencies, // exactly what DiagramEngine interpolates (analogy x/y/width/height fields
 // → mechanism x/y/width/height, linear in `view`, rendered as [id^="bar-*"]
 // entities). No shared engine fits better; a standalone would reimplement
 // this interpolation for no gain.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position). In
-// the family scene a box is sized like the thing it pictures — the car door is
-// tall, the corridor crowd is wide — and where it stands says nothing about time. On
+// the family scene a box is sized like the thing it pictures, the car door is
+// tall, the corridor crowd is wide, and where it stands says nothing about time. On
 // the budget bar width stops meaning size and starts meaning milliseconds,
 // and left-to-right stops meaning standing room and starts meaning running
 // order. Every slider below changes a length the learner drags until the
@@ -44,7 +43,7 @@ export const CANVAS_W = 720;
 
 export const CANVAS_H = 260;
 
-/** Latency budget under test — every number below is an input or computed. */
+/** Latency budget under test, every number below is an input or computed. */
 export interface LatencyParams {
   interruptLatency: number;
   conflictPhase: number;
@@ -91,7 +90,7 @@ export const MAX_TOTAL =
   PARAM_RANGES.dispatchPhase.max +
   PARAM_RANGES.executionTime.max;
 
-/** Pixels per millisecond — computed by division, the only scale in the lesson. */
+/** Pixels per millisecond, computed by division, the only scale in the lesson. */
 export const PX_PER_MS = TRACK_W / MAX_TOTAL;
 
 export type NodeId = 'alarm' | 'aisle' | 'switch' | 'run' | 'slack' | 'gate';
@@ -105,7 +104,7 @@ export interface Box {
 
 /**
  * Analogy layout, authored independently FIRST (§3C.2a rule 1): the family
- * scene as it looks — doorbell high left, Abbu high right, corridor
+ * scene as it looks, doorbell high left, Abbu high right, corridor
  * crowd mid-floor, school run low, car door tall at the right, spare-minutes
  * bench off to the side. Position here is PLACE; size is how big the thing
  * looks. Neither encodes any latency.
@@ -128,7 +127,7 @@ const ANALOGY_LABELS: Record<NodeId, { label: string; sub: string }> = {
   gate: { label: 'Car door', sub: 'leaves on time' }
 };
 
-/** Live breakdown — computed on every call, never cached, never typed. */
+/** Live breakdown, computed on every call, never cached, never typed. */
 export function realtimeBreakdown(p: LatencyParams): LatencyBreakdown {
   return evaluateRealtimeDeadline(
     p.interruptLatency,
@@ -175,7 +174,7 @@ export function mechanismBox(id: NodeId, p: LatencyParams): Box {
 const lerp = (a: number, b: number, v: number): number => a + (b - a) * v;
 
 /**
- * Geometry of every morphable entity at any view — pure, exported for tests.
+ * Geometry of every morphable entity at any view, pure, exported for tests.
  * DiagramEngine.render() performs exactly this interpolation; the function
  * exists so the §3C.2c trio can assert on it without a DOM.
  */
@@ -241,18 +240,18 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
     verdict
   };
   const finalCaption = b.met
-    ? `Total ${b.totalResponseTime}ms lands inside ${b.deadline}ms with ${b.slackTime}ms to spare — the car is still waiting.`
-    : `Total ${b.totalResponseTime}ms overshoots ${b.deadline}ms by ${Math.abs(b.slackTime)}ms — the car has already left.`;
+    ? `Total ${b.totalResponseTime}ms lands inside ${b.deadline}ms with ${b.slackTime}ms to spare, the car is still waiting.`
+    : `Total ${b.totalResponseTime}ms overshoots ${b.deadline}ms by ${Math.abs(b.slackTime)}ms, the car has already left.`;
   return [
     {
-      caption: `The car leaves at ${b.deadline}ms. Everything the system does must fit left of it — length is time.`,
+      caption: `The car leaves at ${b.deadline}ms. Everything the system does must fit left of it, length is time.`,
       highlightNodeIds: ['gate', 'slack'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: `Leaves at ${b.deadline}ms`,
       metrics
     },
     {
-      caption: `The doorbell rings — the interrupt arrives and the clock starts.`,
+      caption: `The doorbell rings, the interrupt arrives and the clock starts.`,
       highlightNodeIds: ['alarm'],
       activeNodeIds: ['alarm'],
       badgeText: `Call ${b.interruptLatency}ms`,
@@ -266,28 +265,28 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       metrics
     },
     {
-      caption: `The corridor is still crowded — the outgoing task holds the exit.`,
+      caption: `The corridor is still crowded, the outgoing task holds the exit.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Blocked ${b.conflictPhase}ms`,
       metrics
     },
     {
-      caption: `The corridor clears over ${b.conflictPhase}ms — preemption done, resources released.`,
+      caption: `The corridor clears over ${b.conflictPhase}ms, preemption done, resources released.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Corridor ${b.conflictPhase}ms`,
       metrics
     },
     {
-      caption: `Abbu is ready but waiting — the corridor has not cleared yet.`,
+      caption: `Abbu is ready but waiting, the corridor has not cleared yet.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Abbu waits`,
       metrics
     },
     {
-      caption: `Abbu takes over in ${b.dispatchPhase}ms — the context switch itself.`,
+      caption: `Abbu takes over in ${b.dispatchPhase}ms, the context switch itself.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Handover ${b.dispatchPhase}ms`,
@@ -301,7 +300,7 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       metrics
     },
     {
-      caption: `The school run is staged but held — the handover has not happened yet.`,
+      caption: `The school run is staged but held, the handover has not happened yet.`,
       highlightNodeIds: ['run'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Held ${b.executionTime}ms`,
@@ -354,7 +353,7 @@ const SLIDERS: Array<{ key: ParamKey; label: string }> = [
 
 /**
  * Lesson 9's engine, scoped to this lesson. Uses DiagramEngine.render()
- * unchanged — the lesson adds the live latency budget: sliders recompute
+ * unchanged, the lesson adds the live latency budget: sliders recompute
  * the nodes (widths = latency × scale) and the reveals, then rebuild via
  * this.setSteps(this.buildSteps(this.input)).
  */
@@ -367,7 +366,7 @@ export class RealtimeDiagramEngine extends DiagramEngine implements PlaygroundCa
     return super.buildSteps({ ...input, reveals: realtimeReveals(params) });
   }
 
-  /** The live result, computed on every call — never cached, never typed. */
+  /** The live result, computed on every call, never cached, never typed. */
   public getBreakdown(): LatencyBreakdown {
     return realtimeBreakdown((this.input as RealtimeInput).params);
   }
@@ -391,7 +390,7 @@ export class RealtimeDiagramEngine extends DiagramEngine implements PlaygroundCa
     const p = this.getParams();
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Latency budget — drag a length</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Latency budget, drag a length</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           <button id="l9-inject" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--waiting); color: var(--waiting); cursor: pointer;">🚨 Inject interrupt burst</button>
           <button id="l9-reset" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--hairline); color: var(--ink); cursor: pointer;">Reset budget</button>
@@ -469,7 +468,7 @@ export class RealtimeDiagramEngine extends DiagramEngine implements PlaygroundCa
     const ok = b.met;
     const verdictColor = ok ? 'var(--running)' : 'var(--waiting)';
     const verdictBg = ok ? 'rgba(8, 127, 91, 0.12)' : 'rgba(217, 119, 6, 0.12)';
-    const verdictText = ok ? '🟢 Inside the deadline — car waits' : '🔴 Past the deadline — car left';
+    const verdictText = ok ? '🟢 Inside the deadline, car waits' : '🔴 Past the deadline, car left';
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Budget check</h3>
@@ -517,12 +516,16 @@ export const lesson09: Lesson<RealtimeInput, DiagramState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'The doorbell rings, the corridor fills, Abbu pushes through — and the car still leaves on time.'
+    text: 
+      'Abbu has to leave at eight for the airport. He is standing by the door with the keys.\n\n' +
+      'The doorbell goes. It takes a moment for anyone to register it over the noise of dinner. Then someone has to actually get up, and the corridor has Afra and a chair and Pechu in it, so getting to the door means clearing a path first. Only then does the door open.\n\n' +
+      'Every one of those delays is small and every one of them is real. Add them together and they are the difference between leaving at eight and leaving at ten past. For a dinner guest ten past eight is nothing. For a flight it is the whole trip.\n\n' +
+      'That is the distinction the lecture is built on: some deadlines degrade when you miss them, and some simply fail.'
   },
   concept:
-    'A real-time system must answer before its deadline, not just eventually. The answer waits on interrupt latency (noticing the request and saving state), dispatch latency (clearing preemption and switching context), and the task’s own run time. A soft miss only degrades the trip, while a hard miss fails it outright — so the budget is a length, and the deadline is a line it must not cross.',
+    'A real-time system must answer before its deadline, not just eventually. The answer waits on interrupt latency (noticing the request and saving state), dispatch latency (clearing preemption and switching context), and the task’s own run time. A soft miss only degrades the trip, while a hard miss fails it outright, so the budget is a length, and the deadline is a line it must not cross.',
   morphReveals:
-    'At home each box is sized like the thing it pictures — the car door stands tall, the corridor crowd spreads wide — and where it stands says nothing about time. On the budget bar width stops meaning size and starts meaning milliseconds, and left-to-right stops meaning standing room and starts meaning running order: stretch any length and watch the bar chase the car.',
+    'At home each box is sized like the thing it pictures, the car door stands tall, the corridor crowd spreads wide, and where it stands says nothing about time. On the budget bar width stops meaning size and starts meaning milliseconds, and left-to-right stops meaning standing room and starts meaning running order: stretch any length and watch the bar chase the car.',
   morphMode: 'morph',
   analogyMapping: [
     'Doorbell ➔ interrupt latency (notice the request, save state)',

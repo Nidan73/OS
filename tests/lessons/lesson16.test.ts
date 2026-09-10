@@ -30,7 +30,7 @@ function ragOfMode(mode: Lesson16Mode, edges: { from: string; to: string; kind: 
 }
 
 describe('Lesson 16 · every verdict is computed', () => {
-  it('the story ring is a deadlock — isDeadlock on the final edges says so', () => {
+  it('the story ring is a deadlock, isDeadlock on the final edges says so', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const engine = new Lesson16GraphEngine(host, modeInput('story'));
@@ -46,7 +46,7 @@ describe('Lesson 16 · every verdict is computed', () => {
     host.remove();
   });
 
-  it('the ring caption branches on isDeadlock — never typed', () => {
+  it('the ring caption branches on isDeadlock, never typed', () => {
     const story = storyEvents();
     expect(story[7].caption).toMatch(/deadlock|Neither will ever eat/);
     expect(shareEvents().at(-1)?.caption).toMatch(/impossible/);
@@ -67,23 +67,23 @@ describe('Lesson 16 · every verdict is computed', () => {
     host.remove();
   });
 
-  it('request, use, release is an edge lifecycle — ask, take up, give back', () => {
+  it('request, use, release is an edge lifecycle, ask, take up, give back', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const engine = new Lesson16GraphEngine(host, modeInput('story'));
     engine.init(0);
     const steps = engine.getSteps();
-    // Step 1: the ask — a pending request edge.
+    // Step 1: the ask, a pending request edge.
     expect(steps[1].state.edges).toEqual([{ from: 'T1', to: 'M1', kind: 'request' }]);
-    // Step 2: taken up — the request is gone, the hold is there.
+    // Step 2: taken up, the request is gone, the hold is there.
     expect(steps[2].state.edges).toEqual([{ from: 'M1', to: 'T1', kind: 'assignment' }]);
-    // Step 3: released — nothing held, nothing asked.
+    // Step 3: released, nothing held, nothing asked.
     expect(steps[3].state.edges).toEqual([]);
     engine.destroy();
     host.remove();
   });
 
-  it('every removal ends fed — computed, not staged', () => {
+  it('every removal ends fed, computed, not staged', () => {
     for (const mode of MODES) {
       const host = document.createElement('div');
       document.body.appendChild(host);
@@ -102,10 +102,10 @@ describe('Lesson 16 · every verdict is computed', () => {
     }
   });
 
-  it('no removal ever holds one while asking for another — except preempt mid-beat', () => {
+  it('no removal ever holds one while asking for another, except preempt mid-beat', () => {
     // Hold-and-wait is the property that turns waiting into deadlock: in
     // every removal ending, no process both holds and waits. (Preempt passes
-    // through it mid-timeline — that is the condition being removed.)
+    // through it mid-timeline, that is the condition being removed.)
     for (const mode of ['share', 'atomic', 'ordered'] as Lesson16Mode[]) {
       const host = document.createElement('div');
       document.body.appendChild(host);
@@ -146,7 +146,7 @@ describe('Lesson 16 · the conditions are highlights, not bullets', () => {
     host.remove();
   });
 
-  it('mode scripts are complete event sets — story 12, share 9, atomic 11, preempt 13, ordered 11', () => {
+  it('mode scripts are complete event sets, story 12, share 9, atomic 11, preempt 13, ordered 11', () => {
     expect(storyEvents().length).toBe(12);
     expect(shareEvents().length).toBe(9);
     expect(atomicEvents().length).toBe(11);
@@ -178,7 +178,7 @@ describe('Lesson 16 · the playground removes each condition', () => {
 });
 
 describe('Lesson 16 · copy agrees with the mechanism', () => {
-  it('each removal is staged as computed — the concept says so', () => {
+  it('each removal is staged as computed, the concept says so', () => {
     expect(lesson16.concept).toMatch(/computed, not staged/);
   });
 
@@ -210,7 +210,7 @@ describe('Lesson 16 · lesson wiring', () => {
     expect(lesson16.slug).toBe('lesson-16');
   });
 
-  it('opens on the founding scene — both reach across', () => {
+  it('opens on the founding scene, both reach across', () => {
     expect(lesson16Input.nodes.map((n) => n.id)).toEqual(['T1', 'T2', 'M1', 'M2']);
     expect(lesson16.input.events.length).toBeGreaterThan(0);
   });
@@ -245,11 +245,11 @@ describe('Lesson 16 · geometry on actual coordinates (§3C.2c)', () => {
   it('mechanism layout encodes the quantity: holders wider than the empty', () => {
     const w = widthsAt(1, 'story');
     expect(Math.max(...Object.values(w)) - Math.min(...Object.values(w))).toBeGreaterThan(1);
-    // Split chopsticks are wider than single ones — instances are geometry.
+    // Split chopsticks are wider than single ones, instances are geometry.
     expect(widthsAt(1, 'share')['bar-M1']).toBeGreaterThan(w['bar-M1']);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     for (const id of Object.keys(widthsAt(0, 'story'))) {
       const a = widthsAt(0, 'story')[id];
       const mid = widthsAt(0.5, 'story')[id];

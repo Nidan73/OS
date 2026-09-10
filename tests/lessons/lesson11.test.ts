@@ -67,12 +67,12 @@ describe('Lesson 11 · the morph is geometric, not cosmetic (§3C.2a)', () => {
       expect(g[p].x + g[p].w).toBeLessThanOrEqual(laneX + CS_LANE_W);
       expect(g[p].y).toBeCloseTo(CS_ROW_Y0 + s.step * CS_ROW_H, 5);
     }
-    // lanes are equal width — the protocol gives sections equal standing
+    // lanes are equal width, the protocol gives sections equal standing
     const laneWidths = new Set(CS_PROCS.map(p => (CS_LANE_W as number)));
     expect(laneWidths.size).toBe(1);
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     for (const broken of ['none', 'mutex', 'progress', 'bounded'] as const) {
       const s = stateAt(broken, 5);
       for (const id of ids) {

@@ -1,7 +1,7 @@
 import type { Lesson } from '../../core/types.js';
 import type { GanttInput } from '../../engines/gantt.js';
 
-// DENSITY (Task A audit): correct at 8 — same FCFS trio as L01 (three
+// DENSITY (Task A audit): correct at 8, same FCFS trio as L01 (three
 // dispatches, three completions, arrival frame, computed summary), because the
 // convoy story IS L01's schedule re-read: the playground reversal to 3 ms is
 // a recomputed schedule, not a new timeline beat. Splitting dispatch from
@@ -10,16 +10,20 @@ export const lesson02: Lesson<GanttInput> = {
   id: 2,
   lecture: 6,
   slug: 'lesson-02',
-  title: 'First-Come, First-Served — and the Convoy',
+  title: 'First-Come, First-Served, and the Convoy',
   absorbsUnits: [7, 8],
   slides: 'slides 8–9',
   engine: 'gantt',
   analogy: {
     domain: 'food',
-    text: 'A restaurant with one kitchen, where a party of forty ordered ahead of a couple who only wanted two coffees. Everyone behind the big order waits while the kitchen works through it, one dish at a time.'
+    text: 
+      'It is Friday night at Yum Cha and a party of forty booked ahead. Their order goes into the kitchen first: forty plates of chicken nanban, and the kitchen has one stove.\n\n' +
+      'Two minutes later a couple sit down and ask for two coffees.\n\n' +
+      'They will get their coffees in about an hour. Not because anyone is being unfair to them, and not because the kitchen is slow. Simply because they arrived second, and the rule at Yum Cha is that the kitchen works through orders in the order they came in.\n\n' +
+      'Now notice something. The forty plates take the same total time whichever order they are cooked in. What changes, and changes enormously, is how long everybody spends waiting. Reverse those two tickets and the couple wait four minutes instead of sixty, while the party of forty barely notices four extra minutes on top of their hour.'
   },
-  concept: 'First-Come, First-Served (FCFS) allocates the CPU strictly in arrival order. When a CPU-bound process with a large burst runs ahead of short I/O-bound processes, all subsequent jobs queue up behind it — known as the Convoy Effect. Reordering the queue to run shorter jobs first drastically reduces average waiting time.',
-  morphReveals: 'In a queue every person occupies equal space. On a timeline width becomes duration — so waiting depends on the time ahead of you, not the number of people ahead of you.',
+  concept: 'First-Come, First-Served (FCFS) allocates the CPU strictly in arrival order. When a CPU-bound process with a large burst runs ahead of short I/O-bound processes, all subsequent jobs queue up behind it, known as the Convoy Effect. Reordering the queue to run shorter jobs first drastically reduces average waiting time.',
+  morphReveals: 'In a queue every person occupies equal space. On a timeline width becomes duration, so waiting depends on the time ahead of you, not the number of people ahead of you.',
   morphMode: 'morph',
   analogyMapping: [
     'Restaurant Kitchen ➔ CPU Core',

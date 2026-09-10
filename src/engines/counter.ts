@@ -297,10 +297,10 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
 
     // 4. Render Isomorphic Actors with [id^="bar-${actor.id}"]
     //
-    // Width encodes OCCUPANCY, computed from state — never a constant. In the
+    // Width encodes OCCUPANCY, computed from state, never a constant. In the
     // analogy every token is the same 54px: people at a hook stand in a row
     // with equal footprints, because that is what the analogy looks like
-    // (§3C.2a rule 1 — authored independently of the mechanism). In the
+    // (§3C.2a rule 1, authored independently of the mechanism). In the
     // mechanism the holder's token fills the holder slot it occupies while
     // queued tokens compress: width stops meaning a body and starts meaning
     // the claim on the resource. Idle tokens sit between the two.
@@ -309,8 +309,8 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
     const M_IDLE_W = 84;
     const M_WAITING_W = 60;
     // Crowded rows shrink to fit their slots. One factor per render, applied
-    // to holder AND waiter widths alike, so the holder:waiter ratio — the
-    // occupancy meaning — survives crowding instead of overflowing the slots.
+    // to holder AND waiter widths alike, so the holder:waiter ratio, the
+    // occupancy meaning, survives crowding instead of overflowing the slots.
     // Computed from this render's own occupancy (no typed layout).
     const rowFit = (n: number, base: number, slotW: number): number => {
       if (n <= 1) return 1;
@@ -346,7 +346,7 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
       }
 
       // Mechanism Geometry: execution bar / token. Width is occupancy, read
-      // off this render's own holders/waiting — the same state every lesson
+      // off this render's own holders/waiting, the same state every lesson
       // maps 1:1 from its simulation, so no lesson file is special-cased.
       const mTokenW = isHolder ? holderWNow : isWaiting ? waiterWNow : idleWNow;
       const mTokenH = 44;
@@ -372,8 +372,8 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
       actorGroup.setAttribute('id', `bar-${actor.id}`);
 
       // Gate reads geometry off the <g> via getBBox (union of token + label).
-      // The label is centered text — its width follows the token, never the
-      // string — so the box the gate measures IS the token width (±1px).
+      // The label is centered text, its width follows the token, never the
+      // string, so the box the gate measures IS the token width (±1px).
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       rect.setAttribute('x', String(curX));
       rect.setAttribute('y', String(curY));
@@ -387,7 +387,7 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
       const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       // Centered on the token so the <g> bbox the gate reads equals the token
       // box: text-anchor middle at the token center keeps short names inside.
-      // Long analogy names are clipped to the token width — an 86px token
+      // Long analogy names are clipped to the token width, an 86px token
       // cannot letter a 12-char name, and an overflowing label would widen the
       // bbox the gate measures past the token (L15 bar-T4: 86.2 vs 54).
       const rawName = v < 0.5 && actor.analogyName ? actor.analogyName : actor.name;

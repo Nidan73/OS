@@ -78,7 +78,7 @@ describe('Lesson 12 · the morph is geometric, not cosmetic (§3C.2a)', () => {
       const flipped = petersonGeometry(0, true)[id];
       expect(calm).toStrictEqual(flipped);
     }
-    // the two acts sit at fixed, arbitrary heights — msg high, pack low
+    // the two acts sit at fixed, arbitrary heights, msg high, pack low
     const g = petersonGeometry(0, false);
     expect(g.msg.y).toBeLessThan(g.pack.y);
   });
@@ -93,7 +93,7 @@ describe('Lesson 12 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(actRows(true)).toEqual({ msg: 0, pack: 1, print: 1 });
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     for (const reordered of [false, true]) {
       for (const id of ids) {
         const a = petersonGeometry(0, reordered)[id];

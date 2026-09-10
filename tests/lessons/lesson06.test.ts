@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { QueueEngine } from '../../src/engines/queue.js';
 import { lesson06 } from '../../src/lessons/lecture-07/lesson-06.js';
 
-describe('Lesson 06 — Queues within queues (MLFQ)', () => {
+describe('Lesson 06. Queues within queues (MLFQ)', () => {
   let container: HTMLElement;
 
   beforeEach(() => {
@@ -52,8 +52,8 @@ describe('Lesson 06 — Queues within queues (MLFQ)', () => {
     engine.destroy();
   });
 
-  // ── SPEC §3C.2c Required Test 3: Geometry interpolates — the morph is real
-  it('geometry interpolates — the morph is real', () => {
+  // ── SPEC §3C.2c Required Test 3: Geometry interpolates, the morph is real
+  it('geometry interpolates, the morph is real', () => {
     const engine = new QueueEngine(container, lesson06.input);
     engine.init(0);
 
@@ -88,7 +88,7 @@ describe('Lesson 06 — Queues within queues (MLFQ)', () => {
     expect(lesson06.analogy.domain).toBe('food');
     expect(lesson06.morphMode).toBe('morph');
     expect(lesson06.morphReveals).toBe(
-      'At the restaurant, which tier you sit at is printed on your booking — a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.'
+      'At the restaurant, which tier you sit at is printed on your booking, a fact about who you are before you arrive. In the feedback queues that same vertical position is earned: every job that outlives its time slice drops a row. Height stops describing what a job is and starts recording how it has behaved.'
     );
   });
 

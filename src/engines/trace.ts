@@ -9,7 +9,7 @@ export interface TraceThread {
   analogyName?: string;
   /**
    * The same steps said in the scene's own words, shown in the analogy view.
-   * Must be the same length as `instructions` — index i is the same act.
+   * Must be the same length as `instructions`, index i is the same act.
    * Omit to show the code in both views.
    */
   analogyInstructions?: string[];
@@ -30,7 +30,7 @@ export interface TraceInput {
     title?: string;
     /**
      * Heading over the shared-state panel in the analogy view. Every trace
-     * lesson has its own scene, so this cannot be a constant — it used to be
+     * lesson has its own scene, so this cannot be a constant, it used to be
      * hardcoded to 'SHARED CAKE LEDGER', which is L10's scene. L10 overrides
      * render() and never draws this panel, so that string only ever appeared
      * in L24's kitchen, where it was simply wrong.
@@ -140,10 +140,10 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
         }
       } else {
         // An instruction matching no known pattern would otherwise become a
-        // step that advances the pointer and changes nothing — a silently
+        // step that advances the pointer and changes nothing, a silently
         // wrong trace. Fail loudly instead.
         throw new Error(
-          `TraceEngine: unparsed instruction "${inst}" in thread "${thread.name}" — ` +
+          `TraceEngine: unparsed instruction "${inst}" in thread "${thread.name}", ` +
           `no load, store or arithmetic pattern matched.`
         );
       }
@@ -335,7 +335,7 @@ export class TraceEngine extends AnimationEngine<TraceInput, TraceState> {
       t.setAttribute('font-family', 'var(--font-mono)');
       t.setAttribute('font-size', '11');
       t.setAttribute('fill', isMod ? 'var(--accent)' : 'var(--muted)');
-      t.textContent = `${rKey} = ${rVal !== null ? rVal : '—'}`;
+      t.textContent = `${rKey} = ${rVal !== null ? rVal : ', '}`;
       this.memoryGroup.appendChild(t);
       varY += 22;
     });

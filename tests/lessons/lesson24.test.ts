@@ -25,7 +25,7 @@ import {
 // slide 4 ("immediately visible to all other processors" / "may not be") and
 // slide 5 ("add a memory barrier … to ensure Thread 1 outputs 100").
 
-describe('L24 · deck fidelity — slides 3–5', () => {
+describe('L24 · deck fidelity, slides 3–5', () => {
   it('carries slide 5s two programs verbatim', () => {
     expect(T2_PROGRAM).toEqual(['x = 100', 'memory_barrier()', 'flag = true']);
     expect(T1_PROGRAM).toEqual(['while (!flag)', 'memory_barrier()', 'print x']);
@@ -41,7 +41,7 @@ describe('L24 · deck fidelity — slides 3–5', () => {
     const r = simulateMemoryBarrier('strong', false);
     expect(r.printed).toBe(100);
     expect(r.correct).toBe(true);
-    // slide 4's definition — nothing is ever in flight
+    // slide 4's definition, nothing is ever in flight
     expect(r.events.every((e) => e.pending.length === 0)).toBe(true);
   });
 
@@ -55,7 +55,7 @@ describe('L24 · deck fidelity — slides 3–5', () => {
     expect(evaluateInterruptMasking(1)).toEqual({ cores: 1, unprotectedCores: 0, safe: true });
     expect(evaluateInterruptMasking(2).safe).toBe(false);
     expect(evaluateInterruptMasking(8).unprotectedCores).toBe(7);
-    // "not broadly scalable" — the exposure grows with every core added
+    // "not broadly scalable", the exposure grows with every core added
     const exposure = INTERRUPT_CORES.map((c) => evaluateInterruptMasking(c).unprotectedCores);
     for (let i = 1; i < exposure.length; i++) expect(exposure[i]).toBeGreaterThan(exposure[i - 1]);
   });
@@ -81,7 +81,7 @@ describe('L24 · the weak model, tested against every drain order', () => {
     ]);
   });
 
-  it('is fixed on EVERY drain order once the barriers are in — not just the one we ship', () => {
+  it('is fixed on EVERY drain order once the barriers are in, not just the one we ship', () => {
     for (const o of ORDERS) {
       const r = simulateMemoryBarrier('weak', true, o);
       expect(r.printed, `barrier + drain ${o.join('>')}`).toBe(100);
@@ -106,7 +106,7 @@ describe('L24 · the weak model, tested against every drain order', () => {
     }
   });
 
-  it('always drains everything eventually — the work was never lost, only late', () => {
+  it('always drains everything eventually, the work was never lost, only late', () => {
     for (const o of ORDERS) {
       const r = simulateMemoryBarrier('weak', false, o);
       expect(r.events[r.events.length - 1].pending).toHaveLength(0);
@@ -134,7 +134,7 @@ describe('L24 · the weak model, tested against every drain order', () => {
     expect(a).toEqual(b);
   });
 
-  it('runs both threads concurrently — T1 is already spinning before T2 acts', () => {
+  it('runs both threads concurrently. T1 is already spinning before T2 acts', () => {
     const r = simulateMemoryBarrier('weak', false, ['flag', 'x']);
     expect(r.events[0].actor).toBe('T1');
     expect(r.events[0].kind).toBe('spin');
@@ -151,7 +151,7 @@ describe('L24 · pairs with L12 without repeating it', () => {
     expect(l24.events.some((e) => e.pending.length > 0)).toBe(true);
   });
 
-  it('offers the fix L12 cannot reach — same model, barriers on', () => {
+  it('offers the fix L12 cannot reach, same model, barriers on', () => {
     expect(simulateMemoryBarrier('weak', true).printed).toBe(100);
     // and L12's intact run agrees on the good case
     expect(simulateReorderingOutput(false).output).toBe(100);
@@ -171,7 +171,7 @@ describe('L24 · scenarios', () => {
     expect(guaranteeOf('broken')).toMatch(/^no/);
     expect(guaranteeOf('strong')).toMatch(/^yes/);
     expect(guaranteeOf('barrier')).toMatch(/^yes/);
-    // lucky and broken are the SAME configuration — only the drain order differs
+    // lucky and broken are the SAME configuration, only the drain order differs
     expect(SCENARIOS.lucky.model).toBe(SCENARIOS.broken.model);
     expect(SCENARIOS.lucky.barriers).toBe(SCENARIOS.broken.barriers);
     expect(guaranteeOf('lucky')).toBe(guaranteeOf('broken'));
@@ -271,7 +271,7 @@ describe('L24 · engine', () => {
     expect(b).toEqual(a);
   });
 
-  it('moves a pending write a long way between views — the carrying property', () => {
+  it('moves a pending write a long way between views, the carrying property', () => {
     // The previous version of this test measured the gap between the two
     // columns and asserted it moved by >= 1px. Measured, that gap moves 20 ->
     // 16, so the test passed on four pixels of drift and proved nothing. It
@@ -309,7 +309,7 @@ describe('L24 · engine', () => {
 
   it('keeps every in-flight label inside its own box at both views', () => {
     // The gate cannot catch this: its SVG overflow check compares text against
-    // el.closest('g'), and a <g> has no intrinsic size — it is the union of
+    // el.closest('g'), and a <g> has no intrinsic size, it is the union of
     // its children, so text can never overflow its own group. Measured here
     // against the rect the text is drawn inside.
     engine.applyScenario('broken');

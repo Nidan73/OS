@@ -32,7 +32,7 @@ describe('Lesson 22 · starvation is demonstrated, not asserted', () => {
     expect(run.starvedId).toBe(run.picks[0]);
   });
 
-  it('counting tows rotates the victim — nobody absorbs every one', () => {
+  it('counting tows rotates the victim, nobody absorbs every one', () => {
     const run = recoveryRounds(CANDIDATES, ROUNDS, true);
     expect(new Set(run.picks).size).toBeGreaterThan(1);
     expect(run.starved).toBe(false);
@@ -42,13 +42,13 @@ describe('Lesson 22 · starvation is demonstrated, not asserted', () => {
   it('the only difference between the two runs is the rollback term', () => {
     const off = recoveryRounds(CANDIDATES, ROUNDS, false);
     const on = recoveryRounds(CANDIDATES, ROUNDS, true);
-    // Same candidates, same rounds, same first pick — they diverge only after
+    // Same candidates, same rounds, same first pick, they diverge only after
     // the first tow is priced in.
     expect(on.picks[0]).toBe(off.picks[0]);
     expect(on.picks.slice(1)).not.toEqual(off.picks.slice(1));
   });
 
-  it('one round could never show starvation — repetition is the mechanism', () => {
+  it('one round could never show starvation, repetition is the mechanism', () => {
     expect(recoveryRounds(CANDIDATES, 1, false).starved).toBe(false);
     expect(ROUNDS).toBeGreaterThan(1);
   });
@@ -126,7 +126,7 @@ describe('Lesson 22 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     expect(ws[0]).toBe(ANALOGY_CARD_W);
   });
 
-  it('the rendered DOM actually moves — width or x differs between views', () => {
+  it('the rendered DOM actually moves, width or x differs between views', () => {
     const a = widthsAt(0, 'one-at-a-time');
     const b = widthsAt(1, 'one-at-a-time');
     const moved = Object.keys(a).some((id) => Math.abs(a[id] - b[id]) > 1);
@@ -143,7 +143,7 @@ describe('Lesson 22 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     expect(new Set(ws.map((w) => Math.round(w))).size).toBeGreaterThan(1);
   });
 
-  it('each tow makes that card wider — the reason starvation ends', () => {
+  it('each tow makes that card wider, the reason starvation ends', () => {
     const clean = nodesFor(true, { 'Flat 1': 0, 'Flat 2': 0, 'Flat 3': 0 });
     const towed = nodesFor(true, { 'Flat 1': 0, 'Flat 2': 2, 'Flat 3': 0 });
     const before = clean.find((n) => n.label === 'Flat 2')!.width;
@@ -151,7 +151,7 @@ describe('Lesson 22 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     expect(after).toBeGreaterThan(before);
   });
 
-  it('geometry interpolates — every card moves monotonically between views', () => {
+  it('geometry interpolates, every card moves monotonically between views', () => {
     const a = widthsAt(0, 'one-at-a-time');
     const mid = widthsAt(0.5, 'one-at-a-time');
     const b = widthsAt(1, 'one-at-a-time');
@@ -229,13 +229,13 @@ describe('L22 · the abort-all figures are computed, not typed', () => {
     // the values that were hardcoded, asserted here so the deck stays honest
     expect(abortAllTotals().cost).toBe(183);
     expect(abortAllTotals().unitsFreed).toBe(6);
-    // and moves when the data moves — which the literal could not
+    // and moves when the data moves, which the literal could not
     const heavier = CANDIDATES.map((c) => ({ ...c, heldUnits: c.heldUnits + 1 }));
     expect(abortAllTotals(heavier).unitsFreed).toBe(9);
     expect(abortAllTotals(heavier).cost).toBeGreaterThan(183);
   });
 
-  it('costs at least as much as any single victim — aborting all is the blunt option', () => {
+  it('costs at least as much as any single victim, aborting all is the blunt option', () => {
     const worst = Math.max(...CANDIDATES.map((c) => victimCost(c, false).total));
     expect(abortAllTotals().cost).toBeGreaterThan(worst);
   });
@@ -253,7 +253,7 @@ describe('L22 · rollback geometry is a pure function of the step', () => {
     expect(counted(999)).toBe(run.picks.length);
   });
 
-  it('is pure — same index in, same tally out, and no shared mutation', () => {
+  it('is pure, same index in, same tally out, and no shared mutation', () => {
     const a = tallyAt(4);
     const b = tallyAt(4);
     expect(a).toEqual(b);

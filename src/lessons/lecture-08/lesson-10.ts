@@ -4,10 +4,10 @@ import { TraceEngine, type TraceInput, type TraceState } from '../../engines/tra
 import { simulateRaceCondition, RACE_INSTRUCTIONS, type RaceSimulationResult } from '../../algorithms/synchronization.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layout (pure) — the carrying property of the morph is VERTICAL POSITION.
+// Layout (pure), the carrying property of the morph is VERTICAL POSITION.
 //
 // View 0 (analogy): two friends act around a plate at the same moment. Each
-// card's position is place, not order — deliberately, the three acts of each
+// card's position is place, not order, deliberately, the three acts of each
 // friend are laid out top-to-bottom in REVERSE story order, so vertical
 // position provably carries no time information in the analogy.
 //
@@ -16,10 +16,10 @@ import { simulateRaceCondition, RACE_INSTRUCTIONS, type RaceSimulationResult } f
 // becomes whose register holds the value. The plate becomes shared memory.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// DENSITY (Task A audit): correct at 7 — the initial frame plus one beat per
+// DENSITY (Task A audit): correct at 7, the initial frame plus one beat per
 // register-level instruction (read, modify, write × two threads = six). The
 // slide's S0–S5 trace is the complete mechanism; a serial order or a different
-// scenario changes the outcome, not the event count — told by the playground,
+// scenario changes the outcome, not the event count, told by the playground,
 // not by extra beats. Declaring is the brief's own legitimate answer here:
 // inventing a seventh instruction would falsify the trace.
 export const CANVAS_W = 720;
@@ -52,7 +52,7 @@ const ANALOGY_LAYOUT: Record<string, Box> = {
 
 /**
  * actOrder maps each act (threadIndex, instructionIndex) to its slot in the
- * execution sequence — computed from the interleaving, never stored.
+ * execution sequence, computed from the interleaving, never stored.
  */
 export function actOrder(interleaving: number[]): number[][] {
   const order = [[-1, -1, -1], [-1, -1, -1]];
@@ -79,7 +79,7 @@ function mechanismBox(key: string, order: number[][]): Box {
 const lerp = (a: number, b: number, v: number) => a + (b - a) * v;
 
 /**
- * Geometry of every morphable entity at any view — pure, exported for tests.
+ * Geometry of every morphable entity at any view, pure, exported for tests.
  * Every coordinate interpolates linearly and monotonically between extremes.
  */
 export function actGeometry(view: number, interleaving: number[]): Record<string, Box> {
@@ -101,8 +101,7 @@ export function actGeometry(view: number, interleaving: number[]): Record<string
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The computation (§2.1): every number the learner sees comes from
-// simulateRaceCondition(). buildSteps() is a pure mapping over its output —
-// the base regex interpreter never runs for this lesson.
+// simulateRaceCondition(). buildSteps() is a pure mapping over its output, // the base regex interpreter never runs for this lesson.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function toThreadIds(interleaving: number[]): Array<'T1' | 'T2'> {
@@ -142,7 +141,7 @@ export function raceSteps(input: TraceInput): Step<TraceState>[] {
         diff > 0 ? 'one update was lost'
         : diff < 0 ? 'one update was applied twice'
         : 'every update landed';
-      caption = `${rs.description}. The shared count ends at ${result.finalCounter}, expected ${result.expectedCounter} — ${verdict}.`;
+      caption = `${rs.description}. The shared count ends at ${result.finalCounter}, expected ${result.expectedCounter}, ${verdict}.`;
     }
     steps.push({
       t: i + 1,
@@ -200,7 +199,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
     return raceSteps(input);
   }
 
-  /** The live result, computed on every call (§2.1) — never cached, never typed. */
+  /** The live result, computed on every call (§2.1), never cached, never typed. */
   public getRaceResult(): RaceSimulationResult {
     return simulateRaceCondition(this.input.initial.counter, toThreadIds(this.input.interleaving));
   }
@@ -244,10 +243,10 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
     const geometry = actGeometry(v, this.input.interleaving);
     const order = actOrder(this.input.interleaving);
 
-    // Plate / shared memory — same entity, both views.
+    // Plate / shared memory, same entity, both views.
     this.renderPlate(state, v, geometry['plate']);
 
-    // Friends — column headers in the mechanism, arbitrary standing spots in the analogy.
+    // Friends, column headers in the mechanism, arbitrary standing spots in the analogy.
     (['T1', 'T2'] as const).forEach((tid, tIdx) => {
       const g = this.box(geometry[`friend-${tid}`], 'var(--surface)', 'var(--hairline)', 999);
       g.setAttribute('id', `bar-friend-${tid}`);
@@ -260,7 +259,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
       this.actsGroup.appendChild(g);
     });
 
-    // The six acts — the morph's carrying property moves these.
+    // The six acts, the morph's carrying property moves these.
     (['T1', 'T2'] as const).forEach((tid, tIdx) => {
       for (let i = 0; i < 3; i++) {
         const key = `act-${tid}-${i}`;
@@ -337,8 +336,8 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
 
     const rows: [string, string][] = [
       ['counter', String(state.memory.counter)],
-      ['R1', state.registers.R1 === null ? '—' : String(state.registers.R1)],
-      ['R2', state.registers.R2 === null ? '—' : String(state.registers.R2)]
+      ['R1', state.registers.R1 === null ? ', ' : String(state.registers.R1)],
+      ['R2', state.registers.R2 === null ? ', ' : String(state.registers.R2)]
     ];
     rows.forEach(([k, val], i) => {
       const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -492,7 +491,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
     const verdictColor = r.isCorrupted ? 'var(--waiting)' : 'var(--running)';
     const verdictBg = r.isCorrupted ? 'rgba(217, 119, 6, 0.12)' : 'rgba(8, 127, 91, 0.12)';
     const verdictText = r.isCorrupted
-      ? (drift > 0 ? '⚠️ Corrupted — one update vanished' : '⚠️ Corrupted — one update applied twice')
+      ? (drift > 0 ? '⚠️ Corrupted, one update vanished' : '⚠️ Corrupted, one update applied twice')
       : '🟢 The count survived';
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
@@ -524,7 +523,7 @@ export class RaceTraceEngine extends TraceEngine implements PlaygroundCapable {
 
 export const lesson10Input: TraceInput = {
   threads: [
-    // Instruction strings are the algorithm's own RACE_INSTRUCTIONS — the
+    // Instruction strings are the algorithm's own RACE_INSTRUCTIONS, the
     // picture at view 1 is bound to what simulateRaceCondition executes.
     { id: 'T1', name: 'Ammu (T1)', analogyName: 'Ammu', color: '#8a4b08', instructions: [...RACE_INSTRUCTIONS.T1] },
     { id: 'T2', name: 'Abbu (T2)', analogyName: 'Abbu', color: '#0b5c8a', instructions: [...RACE_INSTRUCTIONS.T2] }
@@ -551,11 +550,16 @@ export const lesson10: Lesson<TraceInput, TraceState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'Ammu puts a plate into the fridge while Abbu takes one out. Each writes down the count they saw when they looked — so if both look before either has written, the second write erases the first, and one change never lands. Neither parent is wrong; the order is. The same lost update corrupts the household ledger, and gives the last seat in the car to two people at once.'
+    text: 
+      'There are five plates of leftover biryani in the fridge and a note on the door where the family keeps the count.\n\n' +
+      'Ammu puts one more plate in. She reads the note, sees five, and works out that it should now say six.\n\n' +
+      'At the same moment Abbu takes a plate out. He reads the note too, and sees five, because Ammu has not written anything yet. He works out that it should now say four.\n\n' +
+      'Ammu writes six. Abbu writes four.\n\n' +
+      'The fridge has five plates in it. The note says four. Neither of them did anything wrong, neither of them was careless, and if you asked them both to explain their reasoning they would each be exactly right. The mistake is not in either action. It is in the fact that both of them read before either of them wrote.'
   },
-  concept: 'When two threads read, modify and write the same shared variable, the final value depends on the order their steps interleave. Each thread loads the count into its own register, edits the register, and writes it back — and if both threads read before either has written, the second write silently erases the first update. The slide\'s counter is the bounded buffer\'s count of full buffers: a producer increments it, a consumer decrements it, and an interleaved execution loses an update. A lost update is not a bug in either parent\'s edit; it is a property of the order. The same lost update corrupts the household ledger the whole family edits, and hands the last seat in the car to two people. The fix — making read-modify-write indivisible — is the critical-section problem, next lesson.'  +
+  concept: 'When two threads read, modify and write the same shared variable, the final value depends on the order their steps interleave. Each thread loads the count into its own register, edits the register, and writes it back, and if both threads read before either has written, the second write silently erases the first update. The slide\'s counter is the bounded buffer\'s count of full buffers: a producer increments it, a consumer decrements it, and an interleaved execution loses an update. A lost update is not a bug in either parent\'s edit; it is a property of the order. The same lost update corrupts the household ledger the whole family edits, and hands the last seat in the car to two people. The fix, making read-modify-write indivisible, is the critical-section problem, next lesson.'  +
     '  The name for this is a RACE CONDITION: several threads read and write the same shared data, and the result depends on the order their steps happen to interleave. Nothing in the code says which order that will be, and neither instruction is wrong on its own. The specific damage here is a LOST UPDATE, where one thread\'s write is overwritten by another that read before it. What makes it possible is that counter++ is not one step. It is a read, a modify and a write, and any of the three can be interrupted.',
-  morphReveals: 'Around the cake, where Ammu and Abbu stand means nothing — they act at the same moment, and the six actions have no order you can point to. In the register trace, vertical position becomes time: the same six actions sorted into the one order they really ran in. Height stops meaning place and starts meaning when — and read top to bottom, you can see exactly which count each action saw; a lost update shows up as two actions seeing the same count before either has written.',
+  morphReveals: 'Around the cake, where Ammu and Abbu stand means nothing, they act at the same moment, and the six actions have no order you can point to. In the register trace, vertical position becomes time: the same six actions sorted into the one order they really ran in. Height stops meaning place and starts meaning when, and read top to bottom, you can see exactly which count each action saw; a lost update shows up as two actions seeing the same count before either has written.',
   morphMode: 'morph',
   analogyMapping: [
     'Ammu ➔ T1 (register1)',

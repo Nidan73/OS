@@ -14,14 +14,14 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L20 · The banker's algorithm (ATLAS units 80–83, slides 26–32)
 //
-// LESSONS.md: L20 — units 80–83. Ammu's monthly household ledger — cash
+// LESSONS.md: L20, units 80–83. Ammu's monthly household ledger, cash
 // on hand, each person's declared ceiling, what they have drawn, what they
 // could still ask for. Morphs into
 // Available / Max / Allocation / Need. Playground: make P1's request (1,0,2),
 // watch the safety sweep run cell by cell, then push it until it is refused."
 //
 // ATLAS rows (deck wording, kept for provenance):
-// | 80 | `matrix` | Banker's Algorithm — Available, Max, Allocation, Need |
+// | 80 | `matrix` | Banker's Algorithm, Available, Max, Allocation, Need |
 // |    |          | slides 26–27 | travel | The group treasurer's ledger: cash
 // |    |          |              |        | on hand, each person's declared
 // |    |          |              |        | ceiling, what they've drawn, and what
@@ -45,39 +45,38 @@ import {
 // |    |          |                            |          |        | hand the money
 // |    |          |                            |          |        | back and say
 // |    |          |                            |          |        | wait. |
-// | 83 | `matrix` | Banker's Worked Example — P1 requests (1,0,2) | slides 30–32
+// | 83 | `matrix` | Banker's Worked Example. P1 requests (1,0,2) | slides 30–32
 // |    |          | | travel | The full five-process, three-resource ledger from
 // |    |          | |        | the deck, stepped through cell by cell, ending on
 // |    |          | |        | the safe sequence ⟨P1, P3, P4, P0, P2⟩. |
 //
 // ENGINE VERDICT (a): extend MatrixEngine and use its render() unmodified.
-// Why: the lesson IS four ledger tables swept cell by cell — exactly what
+// Why: the lesson IS four ledger tables swept cell by cell, exactly what
 // MatrixEngine renders (per-cell probe highlight, finished-row dimming, live
 // Work row, pretend-grant overlay, [id^="bar-*"] widths computed from amounts).
 // Overriding render() would reimplement identical interpolation for no gain.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position). On
-// Ammu's slips every ceiling is written on the same-size slip —
-// position is just whose slip it is. On the ledger width stops meaning a slip
+// Ammu's slips every ceiling is written on the same-size slip, // position is just whose slip it is. On the ledger width stops meaning a slip
 // and starts meaning units: a Need cell is as wide as what the process still
 // claims, so funded rows visibly narrow to nothing as the sweep reclaims.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DENSITY (Task A rule, applied from the start): the sweep arc shows one
-// beat per Task B probe — 15 probes, 15 wait/fund beats — because a different
+// beat per Task B probe, 15 probes, 15 wait/fund beats, because a different
 // Work vector is a different event. P0 fails at [3,3,2], fails again at
 // [5,3,2], then passes at [7,4,3]: the Work row is the thing that moves, and
 // collapsing those examinations would hide the growth that makes the pass
 // possible. Every examination gets its beat: 15 probes plus the satisfied
 // losers a full pass scans past (P3 yields to P1, P4 to P3, P0 and P2 to P4,
-// P2 to P0 — the losers narrate the first-satisfiable-wins discipline behind
+// P2 to P0, the losers narrate the first-satisfiable-wins discipline behind
 // the deck's order, on screen). With the 5 Need derivations, the single wrap
 // beat (the scan continues after the last winner instead of restarting at
-// the top — the deck order depends on it, so it earns one beat), and the
+// the top, the deck order depends on it, so it earns one beat), and the
 // computed verdict, the sweep arc is 22 steps. Order fidelity is asserted in lesson20.test.ts
 // (funded order P1,P3,P4,P0,P2, the wrap position, the 15-probe log length);
 // the stages verify visually: at step 7 P4's bar is still wide while P1's
-// has narrowed to nothing — funded and live rows coexist in one frame.
+// has narrowed to nothing, funded and live rows coexist in one frame.
 // The P1-request arc adds its three checks (ceiling, cash, sweep) and the
 // P4-refusal arc is declared correct at 5 steps (4 events + idle): its four
 // real events are the ceiling check, the cash check, the stall probe, and
@@ -112,7 +111,7 @@ export type Lesson20Mode = 'sweep' | 'request' | 'refuse';
 function needBeats(): MatrixEvent[] {
   const need = needMatrix(L20_MAX, L20_ALLOCATION);
   return L20_PROCESSES.map((pid, i) => ({
-    caption: `${pid} could still ask [${need[i].join(', ')}] — ceiling minus drawn.`.slice(0, 120),
+    caption: `${pid} could still ask [${need[i].join(', ')}], ceiling minus drawn.`.slice(0, 120),
     probeCells: need[i].map((_, j) => [i, j] as [number, number]),
     work: [...L20_AVAILABLE],
     activeRow: i
@@ -121,9 +120,9 @@ function needBeats(): MatrixEvent[] {
 
 /**
  * One MatrixEvent per safety probe, driven by safetyAlgorithm's own probe
- * log — the animation replays the sweep, never a re-derivation. Reclaim
+ * log, the animation replays the sweep, never a re-derivation. Reclaim
  * beats reuse the probe's own work-after figure: Work grows by exactly the
- * funded row's Allocation. Resume beats fire only on a genuine wrap — when
+ * funded row's Allocation. Resume beats fire only on a genuine wrap, when
  * the circular scan passes P0 (the restart point of the plausible wrong
  * implementation), so the learner sees the one cursor motion that decides
  * the deck's order.
@@ -131,7 +130,7 @@ function needBeats(): MatrixEvent[] {
  * A pass can satisfy several processes but funds only its first, so a
  * satisfied probe is not always a funding: the pass assignment below replays
  * the scan positions (never the comparisons) to mark each probe as winner,
- * loser, or wait. A pid mismatch throws — the narration must fail loudly
+ * loser, or wait. A pid mismatch throws, the narration must fail loudly
  * rather than silently diverge from the algorithm's scan order.
  */
 function sweepBeats(
@@ -162,7 +161,7 @@ function sweepBeats(
         const probe = sweep.steps[k];
         if (!probe || probe.pid !== i) {
           throw new Error(
-            `L20: probe log diverged from circular scan — expected P${i} at probe ${k}`
+            `L20: probe log diverged from circular scan, expected P${i} at probe ${k}`
           );
         }
         pass.push(k);
@@ -172,14 +171,14 @@ function sweepBeats(
       if (passWinner < 0) {
         if (k !== sweep.steps.length) {
           throw new Error(
-            `L20: ${sweep.steps.length - k} probe(s) beyond the final pass — scan replay diverged`
+            `L20: ${sweep.steps.length - k} probe(s) beyond the final pass, scan replay diverged`
           );
         }
         break;
       }
       const winnerProbe = pass.find((idx) => sweep.steps[idx].satisfied);
       if (winnerProbe === undefined) {
-        throw new Error('L20: pass winner has no satisfied probe — scan replay diverged');
+        throw new Error('L20: pass winner has no satisfied probe, scan replay diverged');
       }
       isWinner[winnerProbe] = true;
       for (const idx of pass) passWinnerOf[idx] = passWinner;
@@ -193,9 +192,9 @@ function sweepBeats(
     const cells = probe.need.map((_, j) => [probe.pid, j] as [number, number]);
     // Genuine wrap only, once per pass: the circular scan passed P0 coming
     // from a higher row. A restart-from-P0 scan would examine P0 here instead
-    // — and take the wrong process third. One beat names the cursor motion
-    // behind the deck order. (A double P0 examination in one pass — wait then
-    // fund — names the wrap once: only the first, wait-side examination.)
+    //, and take the wrong process third. One beat names the cursor motion
+    // behind the deck order. (A double P0 examination in one pass, wait then
+    // fund, names the wrap once: only the first, wait-side examination.)
     const alreadyWrappedThisPass =
       events.length > 0 && events[events.length - 1].caption.startsWith('Scan wraps');
     if (
@@ -207,7 +206,7 @@ function sweepBeats(
       !alreadyWrappedThisPass
     ) {
       events.push({
-        caption: `Scan wraps past P0 — resumes after P${prevPid}, not from the top.`.slice(0, 120),
+        caption: `Scan wraps past P0, resumes after P${prevPid}, not from the top.`.slice(0, 120),
         work: [...prevWork],
         finishedRows: [...done]
       });
@@ -216,7 +215,7 @@ function sweepBeats(
     if (isWinner[si]) {
       done.push(probe.pid);
       prevWork = prevWork.map((v, j) => v + allocation[probe.pid][j]);
-      const funded = `P${probe.pid} fits [${probe.need.join(', ')}] — fund, collect back.`;
+      const funded = `P${probe.pid} fits [${probe.need.join(', ')}], fund, collect back.`;
       events.push({
         caption: funded.slice(0, 120),
         probeCells: cells,
@@ -227,16 +226,16 @@ function sweepBeats(
     } else if (probe.satisfied) {
       // Fits, but the scan already took this pass's winner: the first
       // satisfiable process in circular order wins, so P4 beats P0 in pass
-      // 3 — the selection discipline behind the deck's order, on screen.
+      // 3, the selection discipline behind the deck's order, on screen.
       events.push({
-        caption: `P${probe.pid} fits [${probe.need.join(', ')}] too — P${passWinnerOf[si]} came first in this pass.`.slice(0, 120),
+        caption: `P${probe.pid} fits [${probe.need.join(', ')}] too. P${passWinnerOf[si]} came first in this pass.`.slice(0, 120),
         probeCells: cells,
         finishedRows: [...done],
         work: [...prevWork],
         activeRow: probe.pid
       });
     } else {
-      // Every probe earns its beat — a different Work vector is a different
+      // Every probe earns its beat, a different Work vector is a different
       // event. P0 fails at [3,3,2], fails again at [5,3,2], then passes at
       // [7,4,3]: that progression is the mechanism, not a repeat of it.
       const lacking = probe.cellOk
@@ -244,7 +243,7 @@ function sweepBeats(
         .filter(Boolean)
         .join('; ');
       events.push({
-        caption: `P${probe.pid} waits — ${lacking}.`.slice(0, 120),
+        caption: `P${probe.pid} waits, ${lacking}.`.slice(0, 120),
         probeCells: cells,
         finishedRows: [...done],
         work: [...prevWork],
@@ -263,7 +262,7 @@ export function sweepEvents(): MatrixEvent[] {
     ...needBeats(),
     ...events,
     {
-      caption: `Safe — the sweep drains ⟨${order}⟩. Lending stays open.`.slice(0, 120),
+      caption: `Safe, the sweep drains ⟨${order}⟩. Lending stays open.`.slice(0, 120),
       finishedRows: [0, 1, 2, 3, 4],
       work: [10, 5, 7]
     }
@@ -280,18 +279,18 @@ export function requestEvents(): MatrixEvent[] {
   const need1 = needMatrix(L20_MAX, L20_ALLOCATION)[1];
   if (!req.granted || !req.safety) {
     throw new Error(
-      `L20: deck slide 32 says P1 (1,0,2) is granted — requestAlgorithm refused: ${req.reason}`
+      `L20: deck slide 32 says P1 (1,0,2) is granted, requestAlgorithm refused: ${req.reason}`
     );
   }
   const events: MatrixEvent[] = [
     {
-      caption: `P1 asks (1, 0, 2) — inside its ceiling [${need1.join(', ')}].`.slice(0, 120),
+      caption: `P1 asks (1, 0, 2), inside its ceiling [${need1.join(', ')}].`.slice(0, 120),
       probeCells: [[1, 0], [1, 1], [1, 2]],
       work: [...L20_AVAILABLE],
       activeRow: 1
     },
     {
-      caption: `Cash [${L20_AVAILABLE.join(', ')}] covers it — pretend the loan.`.slice(0, 120),
+      caption: `Cash [${L20_AVAILABLE.join(', ')}] covers it, pretend the loan.`.slice(0, 120),
       work: [2, 3, 0],
       finishedRows: []
     }
@@ -304,16 +303,16 @@ export function requestEvents(): MatrixEvent[] {
   events.push(...sweep);
   const order = sequence.map((i) => `P${i}`).join(', ');
   // req.granted is true (guarded above): the caption states the computed
-  // outcome unconditionally — no fallback text that could disagree with it.
+  // outcome unconditionally, no fallback text that could disagree with it.
   events.push({
-    caption: `Granted — the pretended sweep drains ⟨${order}⟩.`.slice(0, 120),
+    caption: `Granted, the pretended sweep drains ⟨${order}⟩.`.slice(0, 120),
     finishedRows: [0, 1, 2, 3, 4],
     work: [10, 5, 7]
   });
   return events;
 }
 
-/** P4 asks (3,3,0): passes ceiling and cash, dies in the sweep — a refusal. */
+/** P4 asks (3,3,0): passes ceiling and cash, dies in the sweep, a refusal. */
 export function refuseEvents(): MatrixEvent[] {
   const req = requestAlgorithm(
     { available: L20_AVAILABLE, max: L20_MAX, allocation: L20_ALLOCATION },
@@ -323,31 +322,31 @@ export function refuseEvents(): MatrixEvent[] {
   const need4 = needMatrix(L20_MAX, L20_ALLOCATION)[4];
   if (req.granted || !req.safety) {
     throw new Error(
-      `L20: the Task B sweep proves P4 (3,3,0) unsafe — requestAlgorithm granted it`
+      `L20: the Task B sweep proves P4 (3,3,0) unsafe, requestAlgorithm granted it`
     );
   }
   const events: MatrixEvent[] = [
     {
-      caption: `P4 asks (3, 3, 0) — inside its ceiling [${need4.join(', ')}].`.slice(0, 120),
+      caption: `P4 asks (3, 3, 0), inside its ceiling [${need4.join(', ')}].`.slice(0, 120),
       probeCells: [[4, 0], [4, 1], [4, 2]],
       work: [...L20_AVAILABLE],
       activeRow: 4
     },
     {
-      caption: `Cash [${L20_AVAILABLE.join(', ')}] covers it — pretend the loan.`.slice(0, 120),
+      caption: `Cash [${L20_AVAILABLE.join(', ')}] covers it, pretend the loan.`.slice(0, 120),
       work: [0, 0, 2],
       finishedRows: []
     },
     {
-      caption: `Pretended cash [0, 0, 2] fits no Need row — the sweep stalls empty.`.slice(0, 120),
+      caption: `Pretended cash [0, 0, 2] fits no Need row, the sweep stalls empty.`.slice(0, 120),
       probeCells: [[0, 0], [0, 1], [0, 2]],
       work: [0, 0, 2],
       activeRow: 0
     },
     {
       // req is refused (guarded above): the caption states the computed
-      // outcome unconditionally — the refusal staged as the algorithm working.
-      caption: `Refused — and that is the algorithm working, not failing.`.slice(0, 120),
+      // outcome unconditionally, the refusal staged as the algorithm working.
+      caption: `Refused, and that is the algorithm working, not failing.`.slice(0, 120),
       work: [0, 0, 2],
       finishedRows: []
     }
@@ -397,13 +396,13 @@ export function modeInput(mode: Lesson20Mode): MatrixInput {
 
 const MODE_LABELS: Record<Lesson20Mode, string> = {
   sweep: '🧹 The safety sweep (T0)',
-  request: '💰 P1 asks (1, 0, 2) — granted',
-  refuse: '🛑 P4 asks (3, 3, 0) — refused'
+  request: '💰 P1 asks (1, 0, 2), granted',
+  refuse: '🛑 P4 asks (3, 3, 0), refused'
 };
 
 /**
  * Lesson 20's engine, scoped to this lesson. Uses MatrixEngine.render()
- * unchanged — the lesson adds the Banker's story: sweep scripts driven by
+ * unchanged, the lesson adds the Banker's story: sweep scripts driven by
  * safetyAlgorithm's probe log, the P1 grant, and the P4 refusal staged as
  * the algorithm working correctly.
  */
@@ -431,7 +430,7 @@ export class Lesson20MatrixEngine extends MatrixEngine implements PlaygroundCapa
           `).join('')}
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">The sweep replays cell by cell — each probe is one examination the algorithm performs. The refusal is Ammu doing her job.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">The sweep replays cell by cell, each probe is one examination the algorithm performs. The refusal is Ammu doing her job.</div>
     `;
     host.querySelectorAll('.l20-mode').forEach((el) => {
       el.addEventListener('click', () => {
@@ -469,10 +468,10 @@ export class Lesson20MatrixEngine extends MatrixEngine implements PlaygroundCapa
     const funded = state.finishedRows.length;
     const verdict =
       this.mode === 'sweep'
-        ? { text: `🟢 Safe — ⟨${order}⟩ drains`, color: 'var(--running)', bg: 'rgba(8, 127, 91, 0.12)' }
+        ? { text: `🟢 Safe, ⟨${order}⟩ drains`, color: 'var(--running)', bg: 'rgba(8, 127, 91, 0.12)' }
         : this.mode === 'request'
-          ? { text: '🟢 Granted — the sweep still drains', color: 'var(--running)', bg: 'rgba(8, 127, 91, 0.12)' }
-          : { text: '🛑 Refused — the algorithm working, not failing', color: 'var(--waiting)', bg: 'rgba(217, 119, 6, 0.12)' };
+          ? { text: '🟢 Granted, the sweep still drains', color: 'var(--running)', bg: 'rgba(8, 127, 91, 0.12)' }
+          : { text: '🛑 Refused, the algorithm working, not failing', color: 'var(--waiting)', bg: 'rgba(217, 119, 6, 0.12)' };
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Ledger check · ${MODE_LABELS[this.mode]}</h3>
@@ -492,7 +491,7 @@ export class Lesson20MatrixEngine extends MatrixEngine implements PlaygroundCapa
         <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">The safe order</div>
           <div style="font-family: var(--font-mono); font-size: 0.74rem; margin-top: 3px; color: var(--running);">⟨${order}⟩</div>
-          <div style="font-size: 0.68rem; color: var(--muted); margin-top: 2px;">computed — the scan resumes, never restarts</div>
+          <div style="font-size: 0.68rem; color: var(--muted); margin-top: 2px;">computed, the scan resumes, never restarts</div>
         </div>
       </div>
     `;
@@ -520,13 +519,17 @@ export const lesson20: Lesson<MatrixInput, MatrixState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'Ammu\u2019s monthly household ledger: cash on hand, what each person declared as their ceiling, what each has drawn, and what each could still ask for — all on identical slips before the counting starts.'
+    text: 
+      'Ammu is at the table with the envelope open in front of her and a piece of paper, and she is going to do this properly.\n\n' +
+      'She writes four things down. What is in the envelope right now. The most each person said they might need. What each of them is holding already. And, from those, what each could still come back for.\n\n' +
+      'Arijit asks for more. She does not say yes and she does not say no. She does something more careful: she pretends she has already given it to him, crosses out the old numbers, writes the new ones, and then asks whether the family she has just invented could still get through. Could someone finish with what is left? If they finished, could the next person finish with what came back? And the next?\n\n' +
+      'If she can get all the way through the list, she rubs out the pretending and actually hands over the money. If she cannot, she says no, and the notes stay in the envelope even though they were sitting right there.'
   },
   concept:
-    'The Banker decides each loan by pretending to grant it and running the safety sweep on the imaginary ledger. The sweep looks for someone whose remaining need fits the cash on hand, funds them, collects everything back, and repeats — resuming the scan after each winner rather than restarting at the top. If every process finishes, the state is safe and the loan commits; if the sweep stalls, the money stays and the asker waits. A refusal is the algorithm working, not failing.'  +
+    'The Banker decides each loan by pretending to grant it and running the safety sweep on the imaginary ledger. The sweep looks for someone whose remaining need fits the cash on hand, funds them, collects everything back, and repeats, resuming the scan after each winner rather than restarting at the top. If every process finishes, the state is safe and the loan commits; if the sweep stalls, the money stays and the asker waits. A refusal is the algorithm working, not failing.'  +
     '  This is the BANKER\'S ALGORITHM, and the name is the idea: a bank never lends so much that it could not cover every customer who might still come asking. It works on four structures you will be asked to fill in. AVAILABLE is a vector of what is free right now. MAX is a matrix of the most each process could ever demand. ALLOCATION is a matrix of what each process holds at this moment. NEED is Max minus Allocation, what each could still come back for. A request is granted only if it is within that process\'s Need, only if it fits in Available, and only if the state that results is still safe, which the safety algorithm decides by trying to find an order in which every process can finish.',
   morphReveals:
-    'On Ammu\u2019s slips every ceiling is written the same size — position is just whose slip it is. On the ledger width stops meaning a slip and starts meaning units: a Need cell is as wide as what the process still claims, so each funded row visibly narrows to nothing and the cash row grows as holdings return.',
+    'On Ammu\u2019s slips every ceiling is written the same size, position is just whose slip it is. On the ledger width stops meaning a slip and starts meaning units: a Need cell is as wide as what the process still claims, so each funded row visibly narrows to nothing and the cash row grows as holdings return.',
   morphMode: 'morph',
   analogyMapping: [
     'Cash on hand ➔ Available / Work',

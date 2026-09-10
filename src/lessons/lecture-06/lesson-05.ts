@@ -269,10 +269,14 @@ export const lesson05: Lesson<GanttInput, GanttState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'Who gets served first at dinner. The Afra keeps getting skipped while bigger plates go ahead — starving — until Ammu steps in and moves them up the serving order.'
+    text: 
+      'At dinner the serving is not first come first served. It goes by who needs feeding most urgently: the guest first, then the elders, then whoever has to leave early.\n\n' +
+      'Afra wants one thing, and it is small. But every time the dish comes round, somebody with a better claim is ahead of her. Another guest arrives. Someone has to leave for work. Each of these is a perfectly good reason, and each of them pushes her back one more place.\n\n' +
+      'She is not being refused. That is the thing to notice. Nobody has ever said no to Afra. She is simply never quite at the front, and the queue keeps being refreshed by people who outrank her.\n\n' +
+      'Then Ammu steps in, and she does the only thing that actually fixes it: she starts counting how long Afra has been waiting, and lets that count outweigh everyone else\'s rank.'
   },
   concept: 'Priority scheduling assigns each process an integer priority rank where the CPU is allocated to the highest-priority job (lowest integer). However, low-priority processes can suffer from starvation (indefinite blocking) if higher-priority tasks continuously arrive. Aging solves starvation by gradually incrementing the priority of processes waiting in the ready queue, ensuring every job eventually executes.',
-  morphReveals: 'At dinner your serving order decides where you sit in the line, and waiting costs you nothing. On the timeline that same position becomes when you start — so every newly served guest slides the Afra further right, and starvation is simply a bar that never gets reached. Ammu moves them up the line as they wait.',
+  morphReveals: 'At dinner your serving order decides where you sit in the line, and waiting costs you nothing. On the timeline that same position becomes when you start, so every newly served guest slides the Afra further right, and starvation is simply a bar that never gets reached. Ammu moves them up the line as they wait.',
   morphMode: 'morph',
   analogyMapping: [
     'Dinner Table ➔ CPU Core',

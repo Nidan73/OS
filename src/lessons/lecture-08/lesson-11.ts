@@ -10,7 +10,7 @@ import {
 } from '../../algorithms/synchronization.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layout (pure) — the carrying property of the morph is POSITION ITSELF:
+// Layout (pure), the carrying property of the morph is POSITION ITSELF:
 // at home, horizontal position is rooms (a bathroom barely wider than
 // a person, a long corridor, a wide table area) and vertical position is posture
 // (standing in the corridor, sitting at the table). In the protocol picture the
@@ -47,8 +47,7 @@ interface Box { x: number; y: number; w: number; h: number }
 /**
  * Analogy layout, authored as a bathroom first (§3C.2a rule 1): a small room,
  * a long corridor where the queue stands shoulder to shoulder, and a wide table
- * area where remainder guests sit lower down. Zone widths are UNEQUAL —
- * that is what the house is like.
+ * area where remainder guests sit lower down. Zone widths are UNEQUAL, * that is what the house is like.
  */
 const ANALOGY: Record<string, Box> = {
   cs: { x: 40, y: 70, w: 90, h: 56 },
@@ -70,7 +69,7 @@ const CS_TOKEN_H = 12;
 const lerp = (a: number, b: number, v: number) => a + (b - a) * v;
 
 /**
- * Geometry of every morphable entity at any view — pure, exported for tests.
+ * Geometry of every morphable entity at any view, pure, exported for tests.
  * state drives the analogy positions (queue order, seat index) and the
  * mechanism rows (which lane, which step).
  */
@@ -330,7 +329,7 @@ export class CriticalSectionEngine extends AnimationEngine<CSInput, CSStep> impl
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">The other promises</div>
           <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 3px;">
             ${badge(!r.progressViolated, 'Progress: the free room admits', 'Progress: empty room, queue stuck')}
-            ${badge(r.starved.length === 0, 'Bounded waiting: FIFO kept', `Starved: ${r.starved.join(', ') || '—'} (${r.queueJumps} cuts)`)}
+            ${badge(r.starved.length === 0, 'Bounded waiting: FIFO kept', `Starved: ${r.starved.join(', ') || ', '} (${r.queueJumps} cuts)`)}
           </div>
         </div>
       </div>
@@ -359,10 +358,13 @@ export const lesson11: Lesson<CSInput, CSStep> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'The one bathroom in the house. Queue at the door, go in, turn the latch back on the way out, return to the table. Everything about the problem follows from that room: it holds one person, the little latch is the only thing keeping it that way, and every promise is a promise about the queue at the door.'
+    text: 
+      'There is one bathroom in the flat and there are five people. Somehow this works, every day, without anyone drawing up a schedule.\n\n' +
+      'It works because of three things that nobody says out loud. Only one person is in there at a time, and the little latch is the only thing enforcing it. If the bathroom is empty and someone is waiting, they go in, rather than everyone standing in the corridor being polite at each other. And if you have been waiting, you eventually get in, rather than watching person after person slip ahead of you forever.\n\n' +
+      'Those three are not obvious once you try to write them down, and they are exactly what any correct solution to this problem has to promise. Take away any one of them and you can picture the failure immediately: two people in the bathroom, or five people waiting outside an empty one, or Afra still in the corridor an hour later.'
   },
-  concept: 'The critical-section problem asks for a protocol keeping three promises. Mutual exclusion: never two inside at once. Progress: if the section is free and processes are waiting, somebody gets in — a latch left locked over an empty bathroom breaks it. Bounded waiting: a limit on how many times others may go ahead of you — without it the system is technically making progress and someone still never gets in. Every failure here is computed from one simulation of the same bathroom protocol with one promise disabled. A non-preemptive kernel sidesteps the problem by never stopping anyone mid-corridor — race-free by construction, at the cost of responsiveness.',
-  morphReveals: 'At home, position is rooms and posture: a bathroom barely wider than a person, a long corridor you stand in, the table you sit at lower down. In the protocol picture the four sections become equal lanes and height becomes time — size and posture stop mattering, and what is left is which section each process is in, and when.',
+  concept: 'The critical-section problem asks for a protocol keeping three promises. Mutual exclusion: never two inside at once. Progress: if the section is free and processes are waiting, somebody gets in, a latch left locked over an empty bathroom breaks it. Bounded waiting: a limit on how many times others may go ahead of you, without it the system is technically making progress and someone still never gets in. Every failure here is computed from one simulation of the same bathroom protocol with one promise disabled. A non-preemptive kernel sidesteps the problem by never stopping anyone mid-corridor, race-free by construction, at the cost of responsiveness.',
+  morphReveals: 'At home, position is rooms and posture: a bathroom barely wider than a person, a long corridor you stand in, the table you sit at lower down. In the protocol picture the four sections become equal lanes and height becomes time, size and posture stop mattering, and what is left is which section each process is in, and when.',
   morphMode: 'morph',
   analogyMapping: [
     'Bathroom ➔ critical section',

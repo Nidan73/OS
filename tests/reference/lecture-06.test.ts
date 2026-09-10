@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderLecture06Reference } from '../../src/reference/lecture-06.js';
 import { fcfs, type Process } from '../../src/algorithms/scheduling.js';
 
-describe('Lecture 6 Reference Page — Scheduling Criteria', () => {
+describe('Lecture 6 Reference Page. Scheduling Criteria', () => {
   const canonicalProcesses: Process[] = [
     { id: 'P1', arrival: 0, burst: 24 },
     { id: 'P2', arrival: 0, burst: 3 },

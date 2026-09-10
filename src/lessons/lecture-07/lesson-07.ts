@@ -1,7 +1,7 @@
 import type { Lesson, PlaygroundCapable } from "../../core/types.js";
 import { QueueEngine, type QueueInput, type QueueState } from "../../engines/queue.js";
 
-// DENSITY (Task A audit): correct at 11 — four dispatches, four completions,
+// DENSITY (Task A audit): correct at 11, four dispatches, four completions,
 // the stall, the instant hardware switch onto Thread 1, and the resume, plus
 // the initial frame. T3 and T4 run straight through with no contention: each
 // contributes exactly its dispatch and its completion, and a contention-free
@@ -165,7 +165,7 @@ function setupLesson07Playground(
     if (coresCount === 1 && !smtEnabled) {
       events.push(
         { caption: "T1 dispatched to Core 0. Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall (cache miss). The pan simmers — nobody can touch it!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { caption: "T1 hits a memory stall (cache miss). The pan simmers, nobody can touch it!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
         { caption: "No alternate hardware thread: the core stays empty through the whole stall.", action: "demote" as const, itemId: "T2", toQueue: "ready" },
         { caption: "Memory returns. T1 resumes on Core 0.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
         { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
@@ -180,7 +180,7 @@ function setupLesson07Playground(
         { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" },
         { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
         { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
-        { caption: "T3 dispatched to Core 0 — the core never sat idle.", action: "dispatch" as const, itemId: "T3", coreId: "core0_t0" },
+        { caption: "T3 dispatched to Core 0, the core never sat idle.", action: "dispatch" as const, itemId: "T3", coreId: "core0_t0" },
         { caption: "T3 finishes its slice.", action: "complete" as const, itemId: "T3" }
       );
     } else if (!smtEnabled) {
@@ -191,7 +191,7 @@ function setupLesson07Playground(
         { caption: "T1 resumes on Core 0 when memory returns.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
         { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
         { caption: "T3 finishes its slice on Core 1.", action: "complete" as const, itemId: "T3" },
-        { caption: "T2 dispatched to Core 0 — multicore still stalls per thread.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
+        { caption: "T2 dispatched to Core 0, multicore still stalls per thread.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
         { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" }
       );
     } else {
@@ -204,7 +204,7 @@ function setupLesson07Playground(
         { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
         { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
         { caption: "T3 finishes its slice on Core 1.", action: "complete" as const, itemId: "T3" },
-        { caption: "T4 dispatched to Core 1 (Thread 1) — the stall window stays filled.", action: "dispatch" as const, itemId: "T4", coreId: "core1_t1" },
+        { caption: "T4 dispatched to Core 1 (Thread 1), the stall window stays filled.", action: "dispatch" as const, itemId: "T4", coreId: "core1_t1" },
         { caption: "T4 finishes. Latency was masked, not removed.", action: "complete" as const, itemId: "T4" }
       );
     }
@@ -233,10 +233,14 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
   },
   analogy: {
     domain: "food",
-    text: "One cook versus several, and one cook working several pans. When a pan must simmer untouched, the cook turns to the next pan instead of standing idle — and the second pan covers the waiting time."
+    text: 
+      'One cook can only stand at one stove. On a Friday at Yum Cha, that is the whole problem, and there are two different ways to fix it that people constantly confuse.\n\n' +
+      'The first is obvious: hire a second cook. Two cooks, two stoves, two plates of chicken nanban coming out at once. You have doubled what the kitchen can actually do.\n\n' +
+      'The second is subtler. Keep one cook, but give her two pans. While the first pan is sitting there with the chicken simmering and needing nothing from her, she turns to the second pan and starts the next order. She has not become faster. She has stopped standing still during the parts of the work that do not need her.\n\n' +
+      'Both of these make the kitchen busier. Only one of them is more cooks. Knowing which is which is the difference between a core and a hardware thread.'
   },
   concept: "Multiprocessor architectures scale throughput by adding cores and hardware threads (chip multithreading / SMT). When a running task hits a memory stall waiting for a cache miss, the core hardware instantly switches to an alternate hardware thread, masking latency and keeping execution units saturated across two distinct levels of scheduling.",
-  morphReveals: "In the kitchen a gap at the cook's counter is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
+  morphReveals: "In the kitchen a gap at the cook's counter is plain dead time, nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
   morphMode: "morph",
   analogyMapping: [
     "Cooks at Counters ➔ Processor Cores",
@@ -271,7 +275,7 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
       { caption: "T1 finishes its slice.", action: "complete", itemId: "T1" },
       { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", action: "dispatch", itemId: "T3", coreId: "core1_t0" },
       { caption: "T3 finishes its slice on Core 1.", action: "complete", itemId: "T3" },
-      { caption: "T4 dispatched to Core 1 (Thread 1) — the stall window stays filled.", action: "dispatch", itemId: "T4", coreId: "core1_t1" },
+      { caption: "T4 dispatched to Core 1 (Thread 1), the stall window stays filled.", action: "dispatch", itemId: "T4", coreId: "core1_t1" },
       { caption: "T4 finishes. Latency was masked, not removed.", action: "complete", itemId: "T4" }
     ],
     analogy: {

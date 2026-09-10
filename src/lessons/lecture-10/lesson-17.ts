@@ -16,8 +16,8 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L17 · Seeing it as a graph (ATLAS units 69–71, slides 8–12)
 //
-// LESSONS.md: L17 — units 69–71. Cars blocking each other in the building
-// driveway. Playground: draw edges and watch cycle detection fire — including
+// LESSONS.md: L17, units 69–71. Cars blocking each other in the building
+// driveway. Playground: draw edges and watch cycle detection fire, including
 // the cycle that is *not* a deadlock because a spare slot exists.
 //
 // ATLAS rows (deck wording, kept for provenance):
@@ -48,8 +48,7 @@ import {
 // |    |         |                          |              |        | there are
 // |    |         |                          |              |        | two spare
 // |    |         |                          |              |        | cars in
-// |    |         |                          |              |        | the lot —
-// |    |         |                          |              |        | someone
+// |    |         |                          |              |        | the lot, // |    |         |                          |              |        | someone
 // |    |         |                          |              |        | finishes,
 // |    |         |                          |              |        | releases,
 // |    |         |                          |              |        | and the
@@ -61,26 +60,26 @@ import {
 // |    |         |                          |              |        | sufficient. |
 //
 // ENGINE VERDICT (a): extend GraphEngine and use its render() unmodified.
-// Why: the lesson IS a resource-allocation graph built edge by edge — exactly
+// Why: the lesson IS a resource-allocation graph built edge by edge, exactly
 // what GraphEngine renders (bipartite nodes, request vs assignment edges,
 // cycle highlight, [id^="bar-*"] widths computed from instances and holdings).
 // Overriding render() would reimplement identical interpolation for no gain.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position). In
-// the driveway every car takes the same space — position is just where
+// the driveway every car takes the same space, position is just where
 // it parked. On the graph width stops meaning a body and starts meaning
 // holdings: a parking slot is as wide as its cars, a driver as wide as what they hold.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// DENSITY (Task A rule, applied from the start): 16 steps — the idle frame,
+// DENSITY (Task A rule, applied from the start): 16 steps, the idle frame,
 // four takes (one per key claimed), two asks (one per waiter), the ring
 // verdict, the T2 release and the break it causes, the granted take plus the
-// withdrawn ask (a satisfied request is fulfilled, not left pending — leaving
+// withdrawn ask (a satisfied request is fulfilled, not left pending, leaving
 // it would re-ring and contradict the computed verdict), the T4 release with
 // its withdrawn ask and granted take, and the closing verdict. No beat repeats
 // a state with new words: each moves edges (claim, wait, release, satisfy) or
 // names the computed verdict. The deadlock and chain alternates are shorter
-// (8 each) because their graphs are smaller — complete event sets, not cuts.
+// (8 each) because their graphs are smaller, complete event sets, not cuts.
 
 export type Lesson17Scenario = 'spare' | 'deadlock' | 'chain';
 
@@ -128,13 +127,13 @@ function ragOf(nodes: GraphNodeInput[], edges: RagEdge[]): RagGraph {
   };
 }
 
-/** Verdict caption, branched on the computed isDeadlock — never typed. */
+/** Verdict caption, branched on the computed isDeadlock, never typed. */
 function ringCaption(nodes: GraphNodeInput[], edges: RagEdge[]): string {
   const v = isDeadlock(ragOf(nodes, edges));
   if (v.deadlocked) {
-    return `Ring closes and nobody can move — deadlock. Each waits on the next.`.slice(0, 120);
+    return `Ring closes and nobody can move, deadlock. Each waits on the next.`.slice(0, 120);
   }
-  return `Ring on the map — but T2 and T4 wait on nothing, so nobody is stuck.`.slice(0, 120);
+  return `Ring on the map, but T2 and T4 wait on nothing, so nobody is stuck.`.slice(0, 120);
 }
 
 function ringCycle(nodes: GraphNodeInput[], edges: RagEdge[]): string[] {
@@ -144,7 +143,7 @@ function ringCycle(nodes: GraphNodeInput[], edges: RagEdge[]): string[] {
 
 /**
  * The spare story (unit 71, the lesson): a ring closes around two lots with
- * two keys each — then the off-ring holders finish, release, and the ring
+ * two keys each, then the off-ring holders finish, release, and the ring
  * dissolves. Cycle highlights and verdict captions fall out of detectCycle /
  * isDeadlock run on the edge prefix, not out of stored answers.
  */
@@ -156,12 +155,12 @@ export function spareEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    take('Ammu parks in driveway R1 — one of two slots.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('Elder sister takes the second R1 slot — the lane is full.', { from: 'R1', to: 'T3', kind: 'assignment' }),
-    take('Abbu parks in driveway R2 — one of two slots.', { from: 'R2', to: 'T1', kind: 'assignment' }),
-    take('Younger brother takes the second R2 slot — both lanes full.', { from: 'R2', to: 'T4', kind: 'assignment' }),
-    take('Abbu needs R1 out — both slots are blocked.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('Elder sister needs R2 out — both blocked. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
+    take('Ammu parks in driveway R1, one of two slots.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Elder sister takes the second R1 slot, the lane is full.', { from: 'R1', to: 'T3', kind: 'assignment' }),
+    take('Abbu parks in driveway R2, one of two slots.', { from: 'R2', to: 'T1', kind: 'assignment' }),
+    take('Younger brother takes the second R2 slot, both lanes full.', { from: 'R2', to: 'T4', kind: 'assignment' }),
+    take('Abbu needs R1 out, both slots are blocked.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Elder sister needs R2 out, both blocked. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   const rel1 = { from: 'R1', to: 'T2' };
@@ -170,7 +169,7 @@ export function spareEvents(): GraphEvent[] {
     caption: 'Ammu drives out and frees her R1 slot.'.slice(0, 120),
     removeEdge: { ...rel1 }
   });
-  out.push({ caption: 'The ring breaks — R1 has a free slot, Abbu can move.'.slice(0, 120), clearCycle: true });
+  out.push({ caption: 'The ring breaks. R1 has a free slot, Abbu can move.'.slice(0, 120), clearCycle: true });
   const grant1 = { from: 'R1', to: 'T1', kind: 'assignment' as const };
   edges.push({ ...grant1 });
   out.push({ caption: 'Abbu pulls into the freed R1 slot.'.slice(0, 120), addEdge: { ...grant1 } });
@@ -183,7 +182,7 @@ export function spareEvents(): GraphEvent[] {
   const req2 = { from: 'T3', to: 'R2', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req2.from && e.to === req2.to), 1);
   out.push({
-    caption: 'With a slot free, the R2 wait is over — sister stops asking.'.slice(0, 120),
+    caption: 'With a slot free, the R2 wait is over, sister stops asking.'.slice(0, 120),
     removeEdge: { from: req2.from, to: req2.to }
   });
   const grant2 = { from: 'R2', to: 'T3', kind: 'assignment' as const };
@@ -192,11 +191,11 @@ export function spareEvents(): GraphEvent[] {
   const req1 = { from: 'T1', to: 'R1', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req1.from && e.to === req1.to), 1);
   out.push({
-    caption: 'Abbu stops asking too — the freed slot answered it.'.slice(0, 120),
+    caption: 'Abbu stops asking too, the freed slot answered it.'.slice(0, 120),
     removeEdge: { from: req1.from, to: req1.to }
   });
   out.push({
-    caption: 'Everyone finishes — the ring dissolved. A cycle is not a deadlock.'.slice(0, 120),
+    caption: 'Everyone finishes, the ring dissolved. A cycle is not a deadlock.'.slice(0, 120),
     clearCycle: true
   });
   return out;
@@ -214,9 +213,9 @@ export function deadlockEvents(): GraphEvent[] {
     take('Ammu blocks the only R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
     take('Elder sister blocks the only R2 exit.', { from: 'R2', to: 'T3', kind: 'assignment' }),
     take('Abbu blocks the only R3 exit.', { from: 'R3', to: 'T1', kind: 'assignment' }),
-    take('Abbu needs R1 — Ammu blocks it.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('Ammu needs R2 — sister blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
-    take('Sister needs R3 — Abbu blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
+    take('Abbu needs R1, Ammu blocks it.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Ammu needs R2, sister blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
+    take('Sister needs R3, Abbu blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   return out;
@@ -235,7 +234,7 @@ export function chainEvents(): GraphEvent[] {
     take('Ammu takes the second R2 slot.', { from: 'R2', to: 'T2', kind: 'assignment' }),
     take('Ammu needs R3 out.', { from: 'T2', to: 'R3', kind: 'request' }),
     take('Sister holds the R3 exit.', { from: 'R3', to: 'T3', kind: 'assignment' }),
-    { caption: 'No ring on the map — a chain waits, but nobody waits in a circle.'.slice(0, 120) }
+    { caption: 'No ring on the map, a chain waits, but nobody waits in a circle.'.slice(0, 120) }
   ];
 }
 
@@ -259,7 +258,7 @@ export function scenarioInput(id: Lesson17Scenario): GraphInput {
   };
 }
 
-/** The RAG behind any step state — what the scoreboard verdict computes from. */
+/** The RAG behind any step state, what the scoreboard verdict computes from. */
 export function ragOfState(scenario: Lesson17Scenario, state: GraphState): RagGraph {
   return ragOf(SCENARIO_NODES[scenario], state.edges);
 }
@@ -272,7 +271,7 @@ const SCENARIO_LABELS: Record<Lesson17Scenario, string> = {
 
 /**
  * Lesson 17's engine, scoped to this lesson. Uses GraphEngine.render()
- * unchanged — the lesson adds the deadlock story: scenario scripts whose
+ * unchanged, the lesson adds the deadlock story: scenario scripts whose
  * verdicts and cycle highlights fall out of isDeadlock/detectCycle, and a
  * playground that reaches a deadlock, a free cycle, and an open chain.
  */
@@ -293,7 +292,7 @@ export class Lesson17GraphEngine extends GraphEngine implements PlaygroundCapabl
     this.scoreboardHost = scoreboardHost ?? null;
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Draw the map three ways — only one gets stuck</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Draw the map three ways, only one gets stuck</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(SCENARIO_LABELS) as Lesson17Scenario[]).map((id) => `
             <button type="button" class="l17-scenario" data-scenario="${id}" data-primary-control="true" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${this.scenario === id ? 'var(--accent)' : 'var(--hairline)'}; color: ${this.scenario === id ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">${SCENARIO_LABELS[id]}</button>
@@ -332,15 +331,15 @@ export class Lesson17GraphEngine extends GraphEngine implements PlaygroundCapabl
     const end = isDeadlock(ragOfState(this.scenario, finalState));
     const badge = (v: { deadlocked: boolean; cycles: string[][] }): string => {
       if (v.deadlocked) {
-        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);">🔴 Stuck — nobody can move</div>`;
+        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);">🔴 Stuck, nobody can move</div>`;
       }
       if (v.cycles.length > 0) {
-        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(0, 102, 204, 0.08); color: var(--accent); border: 1px solid var(--accent);">🔵 Ring — but someone can still finish</div>`;
+        return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(0, 102, 204, 0.08); color: var(--accent); border: 1px solid var(--accent);">🔵 Ring, but someone can still finish</div>`;
       }
-      return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);">🟢 No ring — nobody waits in a circle</div>`;
+      return `<div style="padding: 2px 8px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.72rem; background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);">🟢 No ring, nobody waits in a circle</div>`;
     };
     const fmtCycle = (v: { cycles: string[][] }): string =>
-      v.cycles.length > 0 ? v.cycles[0].join(' → ') : '—';
+      v.cycles.length > 0 ? v.cycles[0].join(' → ') : ', ';
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Ring check · ${SCENARIO_LABELS[this.scenario]}</h3>
@@ -387,12 +386,16 @@ export const lesson17: Lesson<GraphInput, GraphState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'Family cars parked bumper to bumper in the building driveway. Each driver holds one spot and waits on the car blocking them — the map draws who blocks whom, with request arrows pointing one way and holding arrows the other.'
+    text: 
+      'Kabir chacha\'s driveway is narrow, so cars park in behind one another, and by nine at night there is a problem.\n\n' +
+      'The car at the back cannot leave until the one in front moves. That is fine, normally. Someone comes down, moves their car, everyone gets out. But tonight the arrangement has come round in a circle: each driver is blocked by the car in front of them, and the car at the front is blocked by the one at the back.\n\n' +
+      'Kabir chacha does what anyone would do, which is to stop looking at the cars. He takes his register and writes down only one thing per family: who they are waiting on.\n\n' +
+      'Then he looks at what he has written and sees it immediately, because it is now the only thing on the page. The arrows come back round to where they started.'
   },
   concept:
-    'A resource-allocation graph draws processes and resource types as nodes: a request edge points from a waiter to a resource, an assignment edge from a resource to its holder. A deadlock needs a cycle — each process waiting on the next in a ring. But a cycle alone is not enough: if some holder on the ring waits on nothing, it finishes and the ring dissolves. Only a ring nobody can leave is a deadlock.',
+    'A resource-allocation graph draws processes and resource types as nodes: a request edge points from a waiter to a resource, an assignment edge from a resource to its holder. A deadlock needs a cycle, each process waiting on the next in a ring. But a cycle alone is not enough: if some holder on the ring waits on nothing, it finishes and the ring dissolves. Only a ring nobody can leave is a deadlock.',
   morphReveals:
-    'In the driveway every car takes the same space — position is just where it parked. On the graph width stops meaning a body and starts meaning holdings: a slot is as wide as its cars, a driver as wide as what they hold — so the stuck ring reads wide all round while a moved car frees the lane.',
+    'In the driveway every car takes the same space, position is just where it parked. On the graph width stops meaning a body and starts meaning holdings: a slot is as wide as its cars, a driver as wide as what they hold, so the stuck ring reads wide all round while a moved car frees the lane.',
   morphMode: 'morph',
   analogyMapping: [
     'Driver ➔ process node',

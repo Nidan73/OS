@@ -25,7 +25,7 @@ describe("Lesson 7: More cores, more problems (§3C)", () => {
     expect(lesson07.concept).toContain("Multiprocessor");
     expect(lesson07.morphMode).toBe("morph");
     expect(lesson07.morphReveals).toBe(
-      "In the kitchen a gap at the cook's counter is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else."
+      "In the kitchen a gap at the cook's counter is plain dead time, nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else."
     );
   });
 
@@ -78,7 +78,7 @@ describe("Lesson 7: More cores, more problems (§3C)", () => {
     expect(wT1).toBeGreaterThan(50);
   });
 
-  test("geometry interpolates — the morph is real (§3C.2c)", () => {
+  test("geometry interpolates, the morph is real (§3C.2c)", () => {
     const ids = ["T1", "T2", "T3", "T4"];
     const widthAt = (view: number, id: string) => {
       engine.setView(view);

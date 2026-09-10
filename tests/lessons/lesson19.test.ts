@@ -45,7 +45,7 @@ describe('Lesson 19 · every verdict is computed', () => {
     expect(regionOf(end)).toBe('safe');
   });
 
-  it('the grant loses the guarantee — unsafe, yet nobody is stuck', () => {
+  it('the grant loses the guarantee, unsafe, yet nobody is stuck', () => {
     const end = LAST('grant');
     const safety = safetyAlgorithm(
       [availableOf(end)],
@@ -59,7 +59,7 @@ describe('Lesson 19 · every verdict is computed', () => {
     expect(stuckOf(end)).toEqual([]);
   });
 
-  it('friendly completion finishes everyone — unsafe was not stuck', () => {
+  it('friendly completion finishes everyone, unsafe was not stuck', () => {
     const end = LAST('friendly');
     expect(allocationOf(end)).toEqual([0, 0, 0]);
     expect(availableOf(end)).toBe(TOTAL_NOTES);
@@ -169,7 +169,7 @@ describe('Lesson 19 · the morph is geometric, not cosmetic (§3C.2a, §3C.2c)',
     expect(wClaim['bar-C1']).toBeLessThan(w['bar-R']);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const a = widthsAt(0, 'ledger');
     const mid = widthsAt(0.5, 'ledger');
     const b = widthsAt(1, 'ledger');

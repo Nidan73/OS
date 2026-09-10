@@ -2,8 +2,7 @@ import type { Lesson, PlaygroundCapable } from '../../core/types.js';
 import { QueueEngine, type QueueInput, type QueueEvent, type QueueState } from '../../engines/queue.js';
 
 // DENSITY (Task A audit): push/pull run 14 steps, affinity 13. Three arrivals
-// stage through the incoming lane first (an arrival is a discrete event —
-// without the lane they would collapse into the initial frame), then one step
+// stage through the incoming lane first (an arrival is a discrete event, // without the lane they would collapse into the initial frame), then one step
 // per dispatch, completion, balancer tick, migration or its refusal,
 // cold-cache stall, and closing verdict. The tick and the move are separate
 // because detection and migration are separate kernel acts; the stall is
@@ -11,58 +10,58 @@ import { QueueEngine, type QueueInput, type QueueEvent, type QueueState } from '
 
 export type MigrationScenario = 'push' | 'pull' | 'affinity';
 
-/** New work lands here before joining a core's runqueue — arrivals are events. */
+/** New work lands here before joining a core's runqueue, arrivals are events. */
 
 const ARRIVAL_EVENTS: QueueEvent[] = [
-  { caption: "P1 arrives — joins Core 0's runqueue.", action: 'enqueue', itemId: 'P1', toQueue: 'q_core0' },
-  { caption: 'P2 arrives — queues behind P1 on Core 0.', action: 'enqueue', itemId: 'P2', toQueue: 'q_core0' },
-  { caption: "P3 arrives — Core 0's line grows to three while Core 1 idles.", action: 'enqueue', itemId: 'P3', toQueue: 'q_core0' }
+  { caption: "P1 arrives, joins Core 0's runqueue.", action: 'enqueue', itemId: 'P1', toQueue: 'q_core0' },
+  { caption: 'P2 arrives, queues behind P1 on Core 0.', action: 'enqueue', itemId: 'P2', toQueue: 'q_core0' },
+  { caption: "P3 arrives. Core 0's line grows to three while Core 1 idles.", action: 'enqueue', itemId: 'P3', toQueue: 'q_core0' }
 ];
 
 export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
   push: [
     ...ARRIVAL_EVENTS,
-    { caption: 'Core 0 dispatches P1 — cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'Core 0 dispatches P1, cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
     { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
-    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty — P3 is chosen.', action: 'stall', itemId: 'P3' },
+    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty. P3 is chosen.', action: 'stall', itemId: 'P3' },
     { caption: "Balancer pushes P3 to Core 1's runqueue.", action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
-    { caption: 'Core 1 dispatches P3 — busy at last, but its cache is cold.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-    { caption: 'P3 stalls on Core 1 — cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
+    { caption: 'Core 1 dispatches P3, busy at last, but its cache is cold.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
+    { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
     { caption: 'P3 finishes on Core 1 after paying the reload cost.', action: 'complete', itemId: 'P3' },
     { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
     { caption: 'P2 finishes on Core 0 with warm-cache hits.', action: 'complete', itemId: 'P2' },
-    { caption: 'Balanced — both cores ran; one cold reload was the price.', action: 'stall', itemId: 'P2' }
+    { caption: 'Balanced, both cores ran; one cold reload was the price.', action: 'stall', itemId: 'P2' }
   ],
   pull: [
     ...ARRIVAL_EVENTS,
-    { caption: 'Core 0 dispatches P1 — cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'Core 0 dispatches P1, cache warm from the start.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
     { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
-    { caption: 'Core 1 drains dry and idles — the work-stealer scans Core 0 and chooses P3.', action: 'stall', itemId: 'P3' },
+    { caption: 'Core 1 drains dry and idles, the work-stealer scans Core 0 and chooses P3.', action: 'stall', itemId: 'P3' },
     { caption: 'Idle Core 1 steals: it pulls P3 from Core 0 runqueue.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
     { caption: 'Core 1 dispatches the stolen P3, paying cold-cache reload.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-    { caption: 'P3 stalls on Core 1 — cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
+    { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', action: 'stall', itemId: 'P3' },
     { caption: 'P3 finishes on Core 1.', action: 'complete', itemId: 'P3' },
-    { caption: 'Core 0 dispatches P2 — affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
     { caption: 'P2 finishes on Core 0.', action: 'complete', itemId: 'P2' },
-    { caption: 'Stealing beat idling — both cores ran; one reload was the price.', action: 'stall', itemId: 'P2' }
+    { caption: 'Stealing beat idling, both cores ran; one reload was the price.', action: 'stall', itemId: 'P2' }
   ],
   affinity: [
     ...ARRIVAL_EVENTS,
     { caption: 'P1, P2, P3 pinned to Core 0 by hard affinity; Core 1 idles.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'P1 finishes on Core 0 — cache warm throughout.', action: 'complete', itemId: 'P1' },
-    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty — imbalance found.', action: 'stall', itemId: 'P3' },
-    { caption: 'The move is forbidden — P3 stays pinned to Core 0 despite the imbalance.', action: 'stall', itemId: 'P3' },
-    { caption: 'Core 0 dispatches P2 — still pinned, still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'P1 finishes on Core 0, cache warm throughout.', action: 'complete', itemId: 'P1' },
+    { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty, imbalance found.', action: 'stall', itemId: 'P3' },
+    { caption: 'The move is forbidden. P3 stays pinned to Core 0 despite the imbalance.', action: 'stall', itemId: 'P3' },
+    { caption: 'Core 0 dispatches P2, still pinned, still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
     { caption: 'P2 finishes on Core 0 with full warm-cache hits.', action: 'complete', itemId: 'P2' },
-    { caption: 'Core 0 dispatches P3 — still pinned, still warm.', action: 'dispatch', itemId: 'P3', coreId: 'core0' },
+    { caption: 'Core 0 dispatches P3, still pinned, still warm.', action: 'dispatch', itemId: 'P3', coreId: 'core0' },
     { caption: 'P3 finishes on Core 0 with full warm-cache hits.', action: 'complete', itemId: 'P3' },
-    { caption: 'Pinned — Core 1 never ran, zero reloads paid; locality kept, balance lost.', action: 'stall', itemId: 'P3' }
+    { caption: 'Pinned. Core 1 never ran, zero reloads paid; locality kept, balance lost.', action: 'stall', itemId: 'P3' }
   ]
 };
 
 /**
  * Lesson 08's engine. Scoped to this lesson: the queue engine is shared with
- * lessons 6 and 7, so patching its prototype — or LessonPlayer's — made the
+ * lessons 6 and 7, so patching its prototype, or LessonPlayer's, made the
  * page depend on which lesson the learner opened first.
  */
 export class MigrationQueueEngine extends QueueEngine implements PlaygroundCapable {
@@ -184,11 +183,14 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'Waiters and sections: the host moves a waiter to the busy side when one section overflows. But the waiter who already knows your order remembers everything — move sections and the warm memory is thrown away.'
+    text: 
+      'Yum Cha has two sections and two waiters, one each. Then a large group sits down in the left section, and suddenly one waiter has eleven tables and the other has three.\n\n' +
+      'There are two ways this gets fixed. Either the manager notices and sends the quiet waiter over, or the quiet waiter notices himself and goes. Both happen in real restaurants and both have a name in the exam.\n\n' +
+      'But there is a cost that nobody sees, and it is the interesting part. The waiter who has been looking after your table all evening knows that you asked for no chilli, that the child needs a fork, and that you are waiting on one dish that was slow. Send him to the other section and a new waiter arrives who knows none of it. Everything he needs to know is still true. It is just no longer in anyone\'s head, so it has to be gathered again from scratch.'
   },
   concept: 'Multiprocessor scheduling balances workloads across cores using push and pull migration. However, migrating threads across processor cores destroys CPU cache state (processor affinity), introducing cold-cache memory stalls. NUMA systems further penalize migration when threads are moved away from their local memory nodes.'  +
     '  Two names for the exam. Keeping every core busy is called LOAD BALANCING, and it takes two forms: push migration, where the system periodically checks each core and moves threads off the overloaded ones, and pull migration, where an idle core reaches over and takes a waiting thread from a busy one. Most systems run both. The thing that argues against moving anyone is PROCESSOR AFFINITY, the fact that a thread has built up warm cache state on the core it has been running on, and moving it throws that away. Soft affinity means the system tries to keep a thread on the same core but makes no promise. Hard affinity means the thread can insist.',
-  morphReveals: 'In the restaurant, walking to a busier section is free — sideways distance costs nothing but a few steps, so the host always evens the sections. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.',
+  morphReveals: 'In the restaurant, walking to a busier section is free, sideways distance costs nothing but a few steps, so the host always evens the sections. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.',
   morphMode: 'morph',
   analogyMapping: [
     'Restaurant Section / Table ➔ CPU Core',

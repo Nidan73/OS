@@ -254,10 +254,10 @@ export class RoundRobinGanttEngine extends GanttEngine {
     const maxWaitGuarantee = (n - 1) * q;
 
     const badgeText = q <= 2
-      ? '⚠️ Context-Switch Penalty Active — handovers eat the drive'
+      ? '⚠️ Context-Switch Penalty Active, handovers eat the drive'
       : stats.bottomedOut
-      ? '⚡ Turnaround Bottomed Out — optimal balance of responsiveness & overhead'
-      : '⚠️ Large Quantum — degenerating into First-Come First-Served convoy';
+      ? '⚡ Turnaround Bottomed Out, optimal balance of responsiveness & overhead'
+      : '⚠️ Large Quantum, degenerating into First-Come First-Served convoy';
 
     const badgeColor = q <= 2
       ? 'var(--waiting)'
@@ -312,10 +312,14 @@ export const lesson04: Lesson<GanttInput, GanttState> = {
   engineClass: RoundRobinGanttEngine,
   analogy: {
     domain: 'friends',
-    text: 'Turns with the family car, each person driving a fixed slot before handing the keys to the next in line. Nobody keeps the car all evening, so everyone drives within (n−1)q time. But cut each turn to seconds and the whole evening becomes parking, keys and seatbelts — handover overhead eats the drive.'
+    text: 
+      'There is one family car and three people who want it this evening. Rather than argue, they agree on a rule: everyone gets a fixed slot, and when your slot is up you bring the car back and hand the key to the next person, finished or not.\n\n' +
+      'It is properly fair. Nobody can take the car for the entire evening. Whatever you need it for, you know roughly when your turn will come, because at worst you wait for everyone ahead of you to use one slot each.\n\n' +
+      'Then somebody suggests making it fairer still by cutting the slots to five minutes. Now every turn is: find the car, adjust the seat, pull out, drive four minutes, come back, park, hand over the key. The evening fills up with handovers and almost nobody gets anywhere.\n\n' +
+      'Fairness has a price, the price is the handover, and the length of the slot decides how much of the evening you spend paying it.'
   },
   concept: 'Round Robin (RR) allocates the CPU using fixed time slices called time quanta (q). Each process executes for at most q units before being preempted to the back of the ready queue, ensuring no process waits more than (n−1)q time units. However, when q is too small, context-switch overhead dominates execution time, causing turnaround time to spike. When q is too large, Round Robin degenerates into First-Come First-Served (FCFS). Tuning q balances responsiveness against switching costs.',
-  morphReveals: 'Taking turns with the car, every slot is the same length, so fairness is just holding your place in the key line. On the timeline that same equal width becomes the quantum — and a long drive now needs many separate turns, so shrinking the slot to feel fairer multiplies the handovers until the evening is spent passing the keys.',
+  morphReveals: 'Taking turns with the car, every slot is the same length, so fairness is just holding your place in the key line. On the timeline that same equal width becomes the quantum, and a long drive now needs many separate turns, so shrinking the slot to feel fairer multiplies the handovers until the evening is spent passing the keys.',
   morphMode: 'morph',
   analogyMapping: [
     'Family Car & Keys ➔ CPU Core & Dispatcher',

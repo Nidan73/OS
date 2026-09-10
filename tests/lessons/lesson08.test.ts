@@ -22,7 +22,7 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     expect(lesson08.analogy.domain).toBe('food');
     expect(lesson08.concept).toContain('Multiprocessor scheduling');
     expect(lesson08.morphReveals).toBe(
-      'In the restaurant, walking to a busier section is free — sideways distance costs nothing but a few steps, so the host always evens the sections. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.'
+      'In the restaurant, walking to a busier section is free, sideways distance costs nothing but a few steps, so the host always evens the sections. Across cores that same sideways move throws away a warm cache, so horizontal distance turns into a price paid in reload time. Balance and locality pull opposite ways.'
     );
     expect(lesson08.morphMode).toBe('morph');
   });
@@ -55,8 +55,8 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     expect(wP3 / wP1).toBeCloseTo(20 / 12, 5);
   });
 
-  // §3C.2c Required Test 3: Geometry interpolates — the morph is real
-  test('geometry interpolates — the morph is real (§3C.2c)', () => {
+  // §3C.2c Required Test 3: Geometry interpolates, the morph is real
+  test('geometry interpolates, the morph is real (§3C.2c)', () => {
     const ids = ['P1', 'P2', 'P3'];
     const widthAt = (view: number, id: string) => {
       engine.setView(view);
@@ -104,7 +104,7 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     expect(steps[4].state.cores.core0).toBe('P1');
     expect(steps[5].state.completed).toContain('P1');
 
-    // The balancer tick fires before the move — detection and migration differ
+    // The balancer tick fires before the move, detection and migration differ
     expect(steps[6].caption).toMatch(/Balancer tick/);
     const stepPush = steps[7];
     expect(stepPush.state.queues.q_core1).toContain('P3');
@@ -127,8 +127,8 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
     expect(engine.getSteps().length).toBe(14);
     expect(engine.getSteps()[7].caption).toContain('steals');
 
-    // Affinity scenario: the refusal is two honest beats — the tick fires,
-    // then the move is forbidden — instead of one lesson doing two jobs
+    // Affinity scenario: the refusal is two honest beats, the tick fires,
+    // then the move is forbidden, instead of one lesson doing two jobs
     engine.reconfigure(SCENARIO_EVENTS.affinity);
     expect(engine.getSteps().length).toBe(13);
     expect(engine.getSteps()[6].caption).toContain('tick');

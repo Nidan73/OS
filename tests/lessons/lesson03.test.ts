@@ -24,7 +24,7 @@ describe('Lesson 3: Shortest Job First (§3C)', () => {
     expect(lesson03.analogy.domain).toBe('food');
     expect(lesson03.morphMode).toBe('morph');
     expect(lesson03.morphReveals).toBe(
-      'At the table each guest holds one plate. On a schedule width is cooking time — sending the quick plates first minimizes the whole table wait.'
+      'At the table each guest holds one plate. On a schedule width is cooking time, sending the quick plates first minimizes the whole table wait.'
     );
     expect(lesson03.concept).toContain('Shortest-Job-First');
   });
@@ -168,7 +168,7 @@ describe('Lesson 3: Shortest Job First (§3C)', () => {
     expect(wP3 / wP4).toBeCloseTo(7 / 3, 1);
   });
 
-  test('geometry interpolates — the morph is real (§3C.2c)', () => {
+  test('geometry interpolates, the morph is real (§3C.2c)', () => {
     const widthAt = (view: number, id: string) => {
       engine.setView(view);
       return parseFloat(host.querySelector(`#bar-${id}`)!.getAttribute('width')!);

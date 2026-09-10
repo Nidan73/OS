@@ -15,11 +15,11 @@ import {
 //
 // ENGINE VERDICT (a): extend CounterEngine and use its render() unmodified.
 // Why: the lesson IS a pool of identical slots with a live count, holders in
-// the resource and a queue of waiting family — exactly the shape
+// the resource and a queue of waiting family, exactly the shape
 // CounterEngine renders (meter + holder + waiting, [id^="bar-<actor>"]
 // tokens, analogy labels at view<0.5, negative counts shown as sleepers).
 // The semaphore story is told by the COUNT, not by new geometry: it starts
-// at the lot size, drops per take, and goes negative — where the negative
+// at the lot size, drops per take, and goes negative, where the negative
 // is not a debt but the number of waiting family. Overriding render() would
 // reimplement identical interpolation for no gain.
 //
@@ -54,11 +54,11 @@ const ANALOGY_NAMES: Record<string, string> = {
   T5: 'Afra', T6: 'Uncle', T7: 'Aunt'
 };
 
-// DENSITY (Task A audit): correct at 10 — seven takes (each spot claimed once,
+// DENSITY (Task A audit): correct at 10, seven takes (each spot claimed once,
 // the overflow past zero IS the bench event), one release, the woken
 // handoff, and the computed lot verdict. The three slide-22 mistakes (swap,
 // double, omit) are the same ten-beat shape with different outcomes under the
-// playground buttons — not new events. An eighth contender would add a beat,
+// playground buttons, not new events. An eighth contender would add a beat,
 // but seven already overflows the five-spot lot by two, which is all the sign
 // story needs: positive, zero, negative.
 export function semaphoreOps(p: SemaphoreParams): Array<{ actorId: string; op: SemOp }> {
@@ -66,7 +66,7 @@ export function semaphoreOps(p: SemaphoreParams): Array<{ actorId: string; op: S
   switch (p.mistake) {
     case 'swap':
       // signal(mutex) … wait(mutex): the releaser frees a spot it never took,
-      // inflating the count — then the take overflows a lot that reads wrong.
+      // inflating the count, then the take overflows a lot that reads wrong.
       ops.push(
         { actorId: 'T1', op: 'signal' },
         { actorId: 'T1', op: 'wait' },
@@ -79,7 +79,7 @@ export function semaphoreOps(p: SemaphoreParams): Array<{ actorId: string; op: S
       break;
     case 'double':
       // wait(mutex) … wait(mutex): the second take has no matching release,
-      // so one person holds two spots — the lot disagrees with the board
+      // so one person holds two spots, the lot disagrees with the board
       // even though the final number lands where the intact run lands.
       ops.push(
         { actorId: 'T1', op: 'wait' },
@@ -94,7 +94,7 @@ export function semaphoreOps(p: SemaphoreParams): Array<{ actorId: string; op: S
       break;
     case 'omit':
       // the holder leaves without signalling: the count never rises, and the
-      // bench waiters are never woken — the lot deadlocks.
+      // bench waiters are never woken, the lot deadlocks.
       ops.push(
         { actorId: 'T1', op: 'wait' },
         { actorId: 'T2', op: 'wait' },
@@ -121,7 +121,7 @@ export function semaphoreOps(p: SemaphoreParams): Array<{ actorId: string; op: S
   return ops;
 }
 
-/** Live simulation — computed on every call, never cached, never typed. */
+/** Live simulation, computed on every call, never cached, never typed. */
 export function semaphoreRun(p: SemaphoreParams): SemaphoreSimulationResult {
   return simulateSemaphoreOps(p.initial, semaphoreOps(p));
 }
@@ -131,11 +131,11 @@ function shortCaption(s: string): string {
   if (m) {
     const who = m[1];
     const verb = m[2] === 'wait' ? 'takes a spot' : 'leaves a spot';
-    return `${who} ${verb} — count ${m[3]}.`.slice(0, 120);
+    return `${who} ${verb}, count ${m[3]}.`.slice(0, 120);
   }
   if (s.startsWith('BUG:')) {
     const who = s.match(/^BUG: (\S+)/)?.[1] ?? 'Someone';
-    return `${who} leaves without signalling — the bench waiters never wake.`.slice(0, 120);
+    return `${who} leaves without signalling, the bench waiters never wake.`.slice(0, 120);
   }
   const woke = s.match(/(\S+) is removed from waiting queue/);
   if (woke) return `${woke[1]} is woken and takes the freed spot.`.slice(0, 120);
@@ -144,7 +144,7 @@ function shortCaption(s: string): string {
 
 /**
  * Pure mapping: simulateSemaphoreOps output → CounterEngine steps. The count
- * IS the value (negatives included — the engine renders them as sleepers);
+ * IS the value (negatives included, the engine renders them as sleepers);
  * holders and the bench queue map straight across. Nothing is typed.
  */
 export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
@@ -182,16 +182,16 @@ export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
       }
     });
   });
-  // The lot is read once at the end: the computed verdict — balanced, bench
-  // waiters still queued, miscounted, or deadlocked — is its own discrete event.
+  // The lot is read once at the end: the computed verdict, balanced, bench
+  // waiters still queued, miscounted, or deadlocked, is its own discrete event.
   const last = run.steps[run.steps.length - 1];
   const verdict = run.deadlocked
-    ? 'Nobody wakes — the forgotten signal deadlocks the lot.'
+    ? 'Nobody wakes, the forgotten signal deadlocks the lot.'
     : last.waitingQueue.length > 0
-      ? `${last.waitingQueue.length} still waiting — below zero counts waiters, not spots.`
+      ? `${last.waitingQueue.length} still waiting, below zero counts waiters, not spots.`
       : p.mistake !== 'none'
-        ? 'The board disagrees with the lot — the calls were misused.'
-        : `Lot balanced — count ${run.finalValue}, everyone parked.`;
+        ? 'The board disagrees with the lot, the calls were misused.'
+        : `Lot balanced, count ${run.finalValue}, everyone parked.`;
   steps.push({
     t: run.steps.length + 1,
     caption: verdict.slice(0, 120),
@@ -253,7 +253,7 @@ const MISTAKE_BUTTONS: Array<{ mistake: SemaphoreParams['mistake']; label: strin
 
 /**
  * Lesson 15's engine, scoped to this lesson. Uses CounterEngine.render()
- * unchanged — the lesson adds the semaphore story: steps come from
+ * unchanged, the lesson adds the semaphore story: steps come from
  * semaphoreSteps() and the playground re-maps them on every control move.
  */
 export class SemaphoreCounterEngine extends CounterEngine implements PlaygroundCapable {
@@ -265,7 +265,7 @@ export class SemaphoreCounterEngine extends CounterEngine implements PlaygroundC
     return semaphoreSteps(params);
   }
 
-  /** The live result, computed on every call — never cached, never typed. */
+  /** The live result, computed on every call, never cached, never typed. */
   public getRun(): SemaphoreSimulationResult {
     return semaphoreRun(this.input.params);
   }
@@ -351,12 +351,12 @@ export class SemaphoreCounterEngine extends CounterEngine implements PlaygroundC
     const verdictColor = deadlocked ? 'var(--waiting)' : 'var(--running)';
     const verdictBg = deadlocked ? 'rgba(217, 119, 6, 0.12)' : 'rgba(8, 127, 91, 0.12)';
     const verdictText = deadlocked
-      ? '🔴 Deadlocked — the bench waiters never wake'
+      ? '🔴 Deadlocked, the bench waiters never wake'
       : mistake
-        ? '⚠️ Miscounted — the board disagrees with the lot'
+        ? '⚠️ Miscounted, the board disagrees with the lot'
         : waiting > 0
-          ? `🟡 ${waiting} waiting — negative means waiters`
-          : `🟢 Lot balanced — count ${run.finalValue}`;
+          ? `🟡 ${waiting} waiting, negative means waiters`
+          : `🟢 Lot balanced, count ${run.finalValue}`;
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Lot check · ${p.initial} spots</h3>
@@ -375,7 +375,7 @@ export class SemaphoreCounterEngine extends CounterEngine implements PlaygroundC
         </div>
         <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">The board itself</div>
-          <div style="font-size: 0.72rem; margin-top: 3px; line-height: 1.35;">Two people can corrupt the count board itself — which is why the tool that solves the problem has the problem.</div>
+          <div style="font-size: 0.72rem; margin-top: 3px; line-height: 1.35;">Two people can corrupt the count board itself, which is why the tool that solves the problem has the problem.</div>
         </div>
       </div>
     `;
@@ -403,18 +403,22 @@ export const lesson15: Lesson<SemaphoreLessonInput, CounterState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'The building parking lot and a live count of what is free: park a car and the count drops, drive out and it rises. When every spot is taken the count keeps falling past zero — and below zero it counts the family waiting on the bench, not the cars.'
+    text: 
+      'The building has five parking spots and Kabir chacha keeps the count on a board by the gate.\n\n' +
+      'A car comes in, the count drops. A car leaves, it goes up. When the board reads zero the driveway is full, which everyone understands.\n\n' +
+      'Then something strange happens. When every spot is taken and a sixth car still arrives, the count does not stop at zero. Kabir chacha writes minus one, and the board has gone past zero.\n\n' +
+      'Minus one cars is not a thing. But it is exactly the right number, because the board has stopped counting spots and started counting something else: how many people are sitting in their cars by the gate, waiting. Minus three means three families waiting. And when a car finally pulls out, he does not just add one to the board, he goes and tells the first family in the line that they can come in.'
   },
   concept:
-    'A semaphore is an integer with two indivisible operations: wait takes a slot and signal returns one. The initial count is the whole difference between five parking spots and one wall socket — same tool, different lot. The count board is itself shared, so the tool that solves the problem has the problem; and waiting on the bench with a token beats hovering once the wait grows. Used wrongly — swapped calls, a doubled take, a forgotten signal — the same integer deadlocks the lot, each mistake with its own computed outcome.',
+    'A semaphore is an integer with two indivisible operations: wait takes a slot and signal returns one. The initial count is the whole difference between five parking spots and one wall socket, same tool, different lot. The count board is itself shared, so the tool that solves the problem has the problem; and waiting on the bench with a token beats hovering once the wait grows. Used wrongly, swapped calls, a doubled take, a forgotten signal, the same integer deadlocks the lot, each mistake with its own computed outcome.',
   morphReveals:
-    'At the lot every token is the same width — a person with a car. In the semaphore width stops meaning a body and starts meaning the claim on a spot: parked tokens fill wide while the waiting compress on the bench, so a full lot reads wide and an overflowing one reads narrow. The count board tells the rest — below zero it counts the waiting, not the spots — and moving the slider from five spots to one turns the same integer into a binary lock.',
+    'At the lot every token is the same width, a person with a car. In the semaphore width stops meaning a body and starts meaning the claim on a spot: parked tokens fill wide while the waiting compress on the bench, so a full lot reads wide and an overflowing one reads narrow. The count board tells the rest, below zero it counts the waiting, not the spots, and moving the slider from five spots to one turns the same integer into a binary lock.',
   morphMode: 'morph',
   analogyMapping: [
     'Five parking spots ➔ the resource pool (capacity is the initial count)',
     'Parking a car ➔ wait(): the count drops',
     'Driving out ➔ signal(): the count rises',
-    'The live count board ➔ the semaphore value — shared, and corruptible itself',
+    'The live count board ➔ the semaphore value, shared, and corruptible itself',
     'Taking a token and waiting on the bench ➔ block(): a negative count is bench waiters',
     'One forgotten "I am out" ➔ the omitted signal that deadlocks the lot'
   ],
