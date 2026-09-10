@@ -502,7 +502,7 @@ export class Lesson19GraphEngine extends GraphEngine implements PlaygroundCapabl
       }
     });
 
-    steps.push(snapshot('Ceilings come first, the treasurer lends against promises.', []));
+    steps.push(snapshot('Ceilings come first, the treasurer lends against promises.', [], 'The envelope comes out first: everyone names a ceiling before a single note is lent.'));
 
     for (const ev of events ?? []) {
       if (ev.addEdge) edges.push({ ...ev.addEdge });

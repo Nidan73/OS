@@ -156,6 +156,9 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
       caption: waiting === 'spin'
         ? `Both waiters jiggle, the wait prices at ${price} burned cycles.`
         : `Both waiters sit, the wait prices at one ${price}-cycle wakeup.`,
+      analogyCaption: waiting === 'spin'
+        ? 'Two people hover by the bathroom door, and the hovering itself burns the visit.'
+        : 'Two people sit out the wait, and the price is one call to wake them.',
       highlight: ['T2', 'T3'],
       state: {
         stepIndex: 6, value: 0, capacity: 1, activeActorId: 'T2',
@@ -190,6 +193,9 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
       caption: m.preferSpinlock
         ? `Short stay: spinning wastes ${m.spinWastedCycles} cycles, less than a ${m.contextSwitchWastedCycles}-cycle wakeup.`
         : `Long stay: spinning would waste ${m.spinWastedCycles} cycles, sitting down costs ${m.contextSwitchWastedCycles}.`,
+      analogyCaption: m.preferSpinlock
+        ? 'For a short stay, standing at the door beats leaving and coming back.'
+        : 'For a long stay, going to sit down beats standing at the door.',
       highlight: ['T1'],
       state: {
         stepIndex: 9, value: 1, capacity: 1, activeActorId: 'T1',

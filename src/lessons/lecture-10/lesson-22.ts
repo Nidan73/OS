@@ -156,6 +156,7 @@ function abortAllReveals(): DiagramReveal[] {
     },
     {
       caption: `That throws away ${totalWork} minutes of everyone's evening and frees ${held} spots at once.`,
+      analogyCaption: 'Cancel every trip at once: the evening is gone, and the driveway is clear in one sweep.',
       highlightNodeIds: CANDIDATES.map((c) => c.id.replace(' ', '-')),
       metrics: { 'work lost (min)': totalWork, 'spots freed': held }
     },

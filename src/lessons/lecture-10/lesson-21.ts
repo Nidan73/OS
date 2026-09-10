@@ -128,17 +128,17 @@ export function ringOf(nodes: GraphNodeInput[], edges: RagEdge[]): string[] {
 export function collapseEvents(): GraphEvent[] {
   const edges: RagEdge[] = [];
   const out: GraphEvent[] = [];
-  const take = (caption: string, edge: RagEdge): void => {
+  const take = (caption: string, edge: RagEdge, analogy?: string): void => {
     edges.push({ ...edge });
-    out.push({ caption: caption.slice(0, 120), addEdge: { ...edge } });
+    out.push({ caption: caption.slice(0, 120), analogyCaption: analogy?.slice(0, 320), addEdge: { ...edge } });
   };
 
-  take('Flat 1 parks in Spot A and keeps the key.', COLLAPSE_ASSIGN[0]);
-  take('Flat 2 takes Spot B, the middle of the driveway.', COLLAPSE_ASSIGN[1]);
-  take('Flat 3 takes Spot C, and the driveway is full.', COLLAPSE_ASSIGN[2]);
-  take('Flat 1 now needs Spot B to get out. Flat 2 is in it.', COLLAPSE_REQUEST[0]);
-  take('Flat 2 needs Spot C. Flat 3 is parked there.', COLLAPSE_REQUEST[1]);
-  take('Flat 3 needs Spot A, which Flat 1 has not moved.', COLLAPSE_REQUEST[2]);
+  take('Flat 1 parks in Spot A and keeps the key.', COLLAPSE_ASSIGN[0], 'Flat 1 pulls into Spot A and hangs the key by the door.');
+  take('Flat 2 takes Spot B, the middle of the driveway.', COLLAPSE_ASSIGN[1], 'Flat 2 takes the middle spot; everyone now plans around it.');
+  take('Flat 3 takes Spot C, and the driveway is full.', COLLAPSE_ASSIGN[2], 'Flat 3 takes the last spot: the driveway is full.');
+  take('Flat 1 now needs Spot B to get out. Flat 2 is in it.', COLLAPSE_REQUEST[0], 'Flat 1 wants to leave, but Flat 2 blocks the way out.');
+  take('Flat 2 needs Spot C. Flat 3 is parked there.', COLLAPSE_REQUEST[1], 'Flat 2 wants to leave, but Flat 3 is in the way.');
+  take('Flat 3 needs Spot A, which Flat 1 has not moved.', COLLAPSE_REQUEST[2], 'Flat 3 wants to leave, but Flat 1 has not moved.');
 
   const ring = ringOf(COLLAPSE_NODES, edges);
   out.push({
@@ -146,7 +146,11 @@ export function collapseEvents(): GraphEvent[] {
       ring.length > 0
         ? `The map closes a ring: ${ring.join(' → ')}. Nobody can move first.`
         : 'No ring on the map, every car can still get out.',
-    setCycle: ring
+    setCycle: ring,
+    analogyCaption:
+      ring.length > 0
+        ? 'Draw the arrows of who waits on whom: the circle closes, and nobody moves first.'
+        : 'No circle in the asking: every car can still get out.'
   });
 
   // The collapse: cars drop out, only the waiting is left (unit 84).
@@ -164,6 +168,10 @@ export function collapseEvents(): GraphEvent[] {
       waitRing.length > 0
         ? `Same ring, half the arrows: ${waitRing.join(' → ')}.`
         : 'No ring once the spots drop out.',
+    analogyCaption:
+      waitRing.length > 0
+        ? 'With the spots rubbed out, the circle is shorter and plainer: Flat 1 waits on Flat 2, on Flat 3, back to Flat 1.'
+        : 'With the spots gone, no circle of waiting remains.',
     setCycle: waitRing
   });
   out.push({
@@ -257,6 +265,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
 
   out.push({
     caption: `Nothing spare in the driveway: ${SWEEP_AVAILABLE.join('/')} free across ${THING_NAMES.join(', ')}.`,
+    analogyCaption: 'The guard checks the board before walking: nothing is spare anywhere tonight.',
     addEdges: [...sweepAssignments(), ...sweepRequests(request)]
   } as GraphEvent);
 
@@ -306,6 +315,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
       lastGranted = probe.pid;
       out.push({
         caption: `${who} asks for nothing more than is free, it finishes and hands everything back.`,
+        analogyCaption: `${who} needs nothing more, so the car leaves and its spot opens.`,
         activeNodes: [`P${probe.pid}`]
       });
     } else if (probe.satisfied) {
@@ -317,6 +327,9 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
         caption: after
           ? `${who} fits too, but the sweep takes the first it finds, ${who} gets its turn after ${after}.`
           : `${who} fits too, but the sweep takes the first it finds, and it never gets a turn.`,
+        analogyCaption: after
+          ? `${who} could leave too, but the guard walks to the first flat he found, so this one waits its turn.`
+          : `${who} could leave, but the guard never reaches it: it waits inside the jam.`,
         activeNodes: [`P${probe.pid}`]
       });
     } else {
@@ -326,6 +339,7 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
         .join(' and ');
       out.push({
         caption: `${who} still wants ${short} that nobody has returned, it waits.`,
+        analogyCaption: `${who} is still short of what it asked for, so the car stays put.`,
         activeNodes: [`P${probe.pid}`]
       });
     }
@@ -337,6 +351,10 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
       stuck.length === 0
         ? 'Every flat finished, the driveway clears on its own, no deadlock.'
         : `${stuck.join(', ')} never finish: deadlock, and the guard has found it.`,
+    analogyCaption:
+      stuck.length === 0
+        ? 'The driveway empties on its own: no jam tonight.'
+        : `${stuck.join(' and ')} stay blocked: the guard has found the jam.`,
     activeNodes: result.deadlocked.length > 0 ? result.deadlocked : [`P${lastGranted}`]
   });
   return out;
@@ -361,18 +379,24 @@ export function cadenceEvents(deadlockedCount: number): GraphEvent[] {
   return [
     { caption: 'Detection has to be scheduled. Running it costs processor time, and not running it leaves processes blocked for longer.', analogyCaption: 'The guard has one shift. How often should he walk the driveway?' },
     {
-      caption: `Every ${tight.everyMinutes} min: ${tight.sweepsPerHour} walks an hour, ${tight.detectionOpsPerHour} checks, the shift is spent walking.`
+      caption: `Every ${tight.everyMinutes} min: ${tight.sweepsPerHour} walks an hour, ${tight.detectionOpsPerHour} checks, the shift is spent walking.`,
+      analogyCaption: 'Walk the driveway every minute and nothing sits unseen, but the walking becomes the whole shift.'
     },
     {
-      caption: `Every ${loose.everyMinutes} min: only ${loose.sweepsPerHour} walks, but a jam sits ${loose.meanUndetectedMinutes} min unseen.`
+      caption: `Every ${loose.everyMinutes} min: only ${loose.sweepsPerHour} walks, but a jam sits ${loose.meanUndetectedMinutes} min unseen.`,
+      analogyCaption: 'Walk twice a night and a jam can sit unseen for the whole gap between walks.'
     },
     {
-      caption: `At ${loose.everyMinutes} min that is ${loose.blockedProcessMinutes} flat-minutes lost to waiting.`
+      caption: `At ${loose.everyMinutes} min that is ${loose.blockedProcessMinutes} flat-minutes lost to waiting.`,
+      analogyCaption: 'Every minute between walks is time a jammed family sits stuck.'
     },
     {
       caption: tight.sweepDominates
         ? 'Walking constantly costs more than the jams it catches.'
-        : 'Walking constantly still costs less than the jams it catches.'
+        : 'Walking constantly still costs less than the jams it catches.',
+      analogyCaption: tight.sweepDominates
+        ? 'Walking flat out costs more than the jams it catches.'
+        : 'Even flat-out walking costs less than the jams it catches.'
     },
     {
       caption: 'Sweeping constantly burns the processor; sweeping rarely raises the mean time a deadlock goes undetected. The interval is a real cost decision, not a default.', analogyCaption: 'Neither end is free, the cadence is the trade, and you set it.'
@@ -394,6 +418,7 @@ export const SCENARIO_LABELS: Record<Lesson21Scenario, string> = {
 export function scenarioInput(scenario: Lesson21Scenario): GraphInput {
   if (scenario === 'collapse') {
     return {
+    initialAnalogyCaption: 'A quiet night: three flats, three spots, nobody parked yet.',
       nodes: COLLAPSE_NODES,
       initialEdges: [],
       events: collapseEvents(),
@@ -438,9 +463,10 @@ export class Lesson21GraphEngine extends GraphEngine implements PlaygroundCapabl
     const steps: Step<GraphState>[] = [];
     let t = 0;
 
-    const snapshot = (caption: string, highlight: string[]): Step<GraphState> => ({
+    const snapshot = (caption: string, highlight: string[], analogyCaption?: string): Step<GraphState> => ({
       t: t++,
       caption: caption.slice(0, 120),
+      analogyCaption: analogyCaption?.slice(0, 320),
       highlight,
       state: {
         edges: edges.map((e) => ({ ...e })),
@@ -449,7 +475,7 @@ export class Lesson21GraphEngine extends GraphEngine implements PlaygroundCapabl
       }
     });
 
-    steps.push(snapshot('The driveway before anyone parks.', []));
+    steps.push(snapshot('The driveway before anyone parks.', [], 'A quiet night: three flats, three spots, nobody parked yet.'));
 
     for (const ev of events) {
       if (ev.addEdge) edges.push({ ...ev.addEdge });
@@ -460,7 +486,7 @@ export class Lesson21GraphEngine extends GraphEngine implements PlaygroundCapabl
       }
       if (ev.clearCycle) cycleIds = [];
       if (ev.setCycle) cycleIds = [...ev.setCycle];
-      steps.push(snapshot(ev.caption, ev.activeNodes ?? []));
+      steps.push(snapshot(ev.caption, ev.activeNodes ?? [], ev.analogyCaption));
     }
     return steps;
   }

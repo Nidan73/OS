@@ -36,6 +36,8 @@ export interface MatrixInput {
   max: number[][];
   allocation: number[][];
   events: MatrixEvent[];
+  /** The opening beat in the scene's words, shown on the analogy lens. */
+  initialAnalogyCaption?: string;
   /** Overlay: pretend-grant to show beside the committed state. */
   pretend?: { available: number[]; allocation: number[][] };
   analogy?: {
@@ -80,6 +82,7 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
     steps.push({
       t: t++,
       caption: 'The ledger opens, ceilings declared, holdings drawn, cash on hand.',
+      analogyCaption: input.initialAnalogyCaption,
       highlight: [...input.processes],
       state: {
         probeCells: [],

@@ -220,6 +220,7 @@ function sweepBeats(
       const funded = `P${probe.pid} fits [${probe.need.join(', ')}], fund, collect back.`;
       events.push({
         caption: funded.slice(0, 120),
+        analogyCaption: `Ammu lends to P${probe.pid} from the envelope and gathers the notes back when the loan is repaid.`,
         probeCells: cells,
         finishedRows: [...done],
         work: [...prevWork],
@@ -395,6 +396,7 @@ export function modeInput(mode: Lesson20Mode): MatrixInput {
           }
         : undefined;
   return {
+    initialAnalogyCaption: 'Ammu opens the envelope beside the ledger: what each may still ask, what each already holds, the notes on the table.',
     resources: [...L20_RESOURCES],
     processes: [...L20_PROCESSES],
     available: [...L20_AVAILABLE],

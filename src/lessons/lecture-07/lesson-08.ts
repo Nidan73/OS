@@ -13,9 +13,9 @@ export type MigrationScenario = 'push' | 'pull' | 'affinity';
 /** New work lands here before joining a core's runqueue, arrivals are events. */
 
 const ARRIVAL_EVENTS: QueueEvent[] = [
-  { caption: "P1 arrives, joins Core 0's runqueue.", action: 'enqueue', itemId: 'P1', toQueue: 'q_core0' },
+  { caption: "P1 arrives, joins Core 0's runqueue.", analogyCaption: "The first party arrives and sits in waiter one's section.", action: 'enqueue', itemId: 'P1', toQueue: 'q_core0' },
   { caption: 'P2 arrives, queues behind P1 on Core 0.', analogyCaption: 'A second table sits down in the same section, behind the one already waiting.', action: 'enqueue', itemId: 'P2', toQueue: 'q_core0' },
-  { caption: "P3 arrives. Core 0's line grows to three while Core 1 idles.", action: 'enqueue', itemId: 'P3', toQueue: 'q_core0' }
+  { caption: "P3 arrives. Core 0's line grows to three while Core 1 idles.", analogyCaption: 'A third party arrives: waiter one now holds three tables while waiter two has none.', action: 'enqueue', itemId: 'P3', toQueue: 'q_core0' }
 ];
 
 export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
@@ -24,7 +24,7 @@ export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
     { caption: 'Core 0 dispatches P1, cache warm from the start.', analogyCaption: 'The waiter takes the first table. It is his own section, so he already knows them.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
     { caption: 'P1 runs its slice on Core 0 with a warm cache.', analogyCaption: 'That table is served quickly, because nothing had to be asked twice.', action: 'complete', itemId: 'P1' },
     { caption: 'Balancer tick: Core 0 still holds P2 and P3 while Core 1 sits empty. P3 is chosen.', analogyCaption: 'The manager looks up and sees one waiter with two tables waiting and the other with none. He picks the third table to hand over.', action: 'stall', itemId: 'P3' },
-    { caption: "Balancer pushes P3 to Core 1's runqueue.", action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
+    { caption: "Balancer pushes P3 to Core 1's runqueue.", analogyCaption: 'The manager walks one table over: the idle waiter gets work.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
     { caption: 'Core 1 dispatches P3, busy at last, but its cache is cold.', analogyCaption: 'The second waiter takes that table. He is busy now, but he is starting from nothing: he does not know the order, the allergies, or what is already late.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
     { caption: 'P3 stalls on Core 1, cold lines refill before it can run.', analogyCaption: 'So he stands there asking all of it again, and nothing moves while he does.', action: 'stall', itemId: 'P3' },
     { caption: 'P3 finishes on Core 1 after paying the reload cost.', analogyCaption: 'That table is served in the end, but it took longer than it would have with the waiter who already knew them.', action: 'complete', itemId: 'P3' },
@@ -216,6 +216,7 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
       { id: 'P3', name: 'Regular Diner', burst: 20, queueId: 'incoming', affinity: 'core0' }
     ],
     events: SCENARIO_EVENTS.push,
+    initialAnalogyCaption: 'Two sections open for service: each waiter keeps his own tables.',
     analogy: {
       domain: 'food',
       serviceLabel: 'Host Desk',

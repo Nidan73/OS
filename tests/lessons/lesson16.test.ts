@@ -48,8 +48,15 @@ describe('Lesson 16 · every verdict is computed', () => {
 
   it('the ring caption branches on isDeadlock, never typed', () => {
     const story = storyEvents();
-    expect(story[7].caption).toMatch(/deadlock|Neither will ever eat/);
-    expect(shareEvents().at(-1)?.caption).toMatch(/impossible/);
+    // Captions follow the lens: the deadlock verdict is the scene sentence on
+    // the analogy lens, and the mechanism lens states the graph fact, so the
+    // guard reads both fields for either wording.
+    const both = (ev: { caption: string; analogyCaption?: string }) =>
+      `${ev.caption} ${ev.analogyCaption ?? ''}`;
+    expect(both(story[7])).toMatch(/deadlock|Neither will ever eat/);
+    expect(story[7].analogyCaption).toMatch(/Neither will ever eat/);
+    expect(story[7].caption).toMatch(/cycle is present/);
+    expect(both(shareEvents().at(-1)!)).toMatch(/impossible/);
   });
 
   it('cycle highlights fall out of detectCycle, not stored answers', () => {

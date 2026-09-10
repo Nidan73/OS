@@ -3,6 +3,7 @@ import { DiagramEngine } from '../../src/engines/diagram.js';
 import {
   Lesson18DiagramEngine,
   PREVENTION_NODES,
+  STRATEGY_CAPTIONS,
   applyPrevention,
   lesson18,
   preventionInput,
@@ -119,7 +120,8 @@ describe('Lesson 18 · lesson wiring and copy', () => {
   it('every reveal of every strategy speaks both lenses, within the rail', () => {
     for (const strategy of ['none', ...PREVENTIONS] as PreventionStrategy[]) {
       const reveals = preventionInput(strategy).reveals;
-      expect(reveals.length).toBe(2);
+      // intro + four conditions + strike + verdict + cost
+      expect(reveals.length).toBe(8);
       for (const r of reveals) {
         expect(r.caption.length, r.caption).toBeLessThanOrEqual(320);
         expect(r.analogyCaption, `${strategy}: ${r.caption}`).toBeDefined();
@@ -138,8 +140,14 @@ describe('Lesson 18 · lesson wiring and copy', () => {
       ['order', /numbers the dishes/]
     ];
     for (const [strategy, rx] of expectations) {
-      const second = preventionInput(strategy).reveals[1];
-      expect(second.analogyCaption ?? '', strategy).toMatch(rx);
+      const reveals = preventionInput(strategy).reveals;
+      const strike = reveals.find((r) => r.caption === STRATEGY_CAPTIONS[strategy])!;
+      expect(strike.analogyCaption ?? '', strategy).toMatch(rx);
+      // the strike beat sits after the four condition beats it acts on
+      expect(reveals.indexOf(strike)).toBe(5);
+      // and the timeline closes with the computed verdict and its price
+      expect(reveals[6].caption).toMatch(/deadlock (remains possible|is impossible)/);
+      expect(reveals[7].caption).toBe(applyPrevention(strategy).cost);
     }
   });
 });

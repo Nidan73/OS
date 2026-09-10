@@ -20,10 +20,16 @@ describe('Lesson 17 · every verdict is computed', () => {
   it('the ring captions branch on isDeadlock, never typed', () => {
     const spare = spareEvents();
     const dead = deadlockEvents();
+    // Captions follow the lens: the scene verdict lives on the analogy side,
+    // the graph fact on the mechanism side. Guard reads both fields.
+    const both = (ev: { caption: string; analogyCaption?: string }) =>
+      `${ev.caption} ${ev.analogyCaption ?? ''}`;
     // Spare ring: a cycle exists, nobody is stuck.
-    expect(spare[6].caption).toMatch(/nobody is stuck/);
+    expect(both(spare[6])).toMatch(/nobody is stuck/);
+    expect(spare[6].caption).toMatch(/A cycle is present/);
     // Deadlock ring: stuck.
-    expect(dead[6].caption).toMatch(/deadlock/);
+    expect(both(dead[6])).toMatch(/deadlock/);
+    expect(dead[6].analogyCaption).toMatch(/nobody can move/);
   });
 
   it('cycle highlights fall out of detectCycle, not stored answers', () => {

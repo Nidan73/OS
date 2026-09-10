@@ -458,6 +458,7 @@ export const lesson06Input: QueueInput = {
     { id: 'P3', name: 'Order 3', burst: 15, queueId: 'incoming' }
   ],
   events: lesson06Events,
+  initialAnalogyCaption: 'The host desk opens: three orders arrive, and the kitchen tiers decide who cooks first.',
   analogy: {
     domain: 'food',
     serviceLabel: 'Host Desk',

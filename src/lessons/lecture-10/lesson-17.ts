@@ -127,6 +127,35 @@ function ragOf(nodes: GraphNodeInput[], edges: RagEdge[]): RagGraph {
   };
 }
 
+/** Driveway-scene beats invert to the analogy lens; the mechanism lens gets
+ * the same transition in resource-allocation-graph terms. */
+function edgeMechanism(from: string, to: string, kind: string | undefined, adding: boolean): string {
+  if (adding) {
+    return kind === 'request'
+      ? `${from} requests ${to}: a request edge.`
+      : `${from} is allocated to ${to}: an assignment edge.`;
+  }
+  return from.startsWith('R') ? `${to} releases ${from}.` : `${from} stops waiting for ${to}.`;
+}
+function enrichEdges(events: GraphEvent[]): GraphEvent[] {
+  return events.map((ev) => {
+    if (ev.analogyCaption) return ev;
+    if (ev.addEdge) {
+      return { ...ev, caption: edgeMechanism(ev.addEdge.from, ev.addEdge.to, ev.addEdge.kind, true), analogyCaption: ev.caption };
+    }
+    if (ev.removeEdge) {
+      return { ...ev, caption: edgeMechanism(ev.removeEdge.from, ev.removeEdge.to, undefined, false), analogyCaption: ev.caption };
+    }
+    if (ev.setCycle) {
+      return { ...ev, caption: ev.setCycle.length > 0 ? 'A cycle is present in the resource-allocation graph.' : 'No cycle in the resource-allocation graph.', analogyCaption: ev.caption };
+    }
+    if (ev.clearCycle) {
+      return { ...ev, caption: 'The cycle is gone from the resource-allocation graph.', analogyCaption: ev.caption };
+    }
+    return ev;
+  });
+}
+
 /** Verdict caption, branched on the computed isDeadlock, never typed. */
 function ringCaption(nodes: GraphNodeInput[], edges: RagEdge[]): string {
   const v = isDeadlock(ragOf(nodes, edges));
@@ -198,7 +227,7 @@ export function spareEvents(): GraphEvent[] {
     caption: 'No process is blocked. With several instances of a resource, a cycle in the graph is necessary for deadlock but not sufficient: this cycle resolved itself.', analogyCaption: 'Everyone finishes, the ring dissolved. A cycle is not a deadlock.'.slice(0, 120),
     clearCycle: true
   });
-  return out;
+  return enrichEdges(out);
 }
 
 /** The conclusive ring (unit 70): single instance per type, nobody can leave. */
@@ -218,7 +247,7 @@ export function deadlockEvents(): GraphEvent[] {
     take('Sister needs R3, Abbu blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
-  return out;
+  return enrichEdges(out);
 }
 
 /** The open chain (unit 69): requests without a ring. */
@@ -251,6 +280,7 @@ export function scenarioEvents(id: Lesson17Scenario): GraphEvent[] {
 
 export function scenarioInput(id: Lesson17Scenario): GraphInput {
   return {
+    initialAnalogyCaption: 'Two lanes, two cars each: the driveway fills, and the waiting decides who moves.',
     nodes: SCENARIO_NODES[id].map((n) => ({ ...n })),
     initialEdges: [],
     events: scenarioEvents(id),

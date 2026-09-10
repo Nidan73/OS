@@ -146,6 +146,36 @@ function takeEdge(caption: string, req: { from: string; to: string }): GraphEven
  * and every condition caption fall out of detectCycle/isDeadlock run on the
  * edge prefix, not out of stored answers.
  */
+/** Dinner-scene beats invert to the analogy lens; the mechanism lens gets the
+ * same transition named in resource-allocation-graph terms, generated from the
+ * structured edge change so the two voices cannot drift. */
+function edgeMechanism(from: string, to: string, kind: string | undefined, adding: boolean): string {
+  if (adding) {
+    return kind === 'request'
+      ? `${from} requests ${to}: a request edge.`
+      : `${from} is held by ${to}: an assignment edge.`;
+  }
+  return from.startsWith('M') ? `${to} releases ${from}.` : `${from} stops waiting for ${to}.`;
+}
+function enrichEdges(events: GraphEvent[]): GraphEvent[] {
+  return events.map((ev) => {
+    if (ev.analogyCaption) return ev;
+    if (ev.addEdge) {
+      return { ...ev, caption: edgeMechanism(ev.addEdge.from, ev.addEdge.to, ev.addEdge.kind, true), analogyCaption: ev.caption };
+    }
+    if (ev.removeEdge) {
+      return { ...ev, caption: edgeMechanism(ev.removeEdge.from, ev.removeEdge.to, undefined, false), analogyCaption: ev.caption };
+    }
+    if (ev.setCycle) {
+      return { ...ev, caption: ev.setCycle.length > 0 ? 'A cycle is present in the resource-allocation graph.' : 'No cycle in the resource-allocation graph.', analogyCaption: ev.caption };
+    }
+    if (ev.clearCycle) {
+      return { ...ev, caption: 'The cycle is gone from the resource-allocation graph.', analogyCaption: ev.caption };
+    }
+    return ev;
+  });
+}
+
 export function storyEvents(): GraphEvent[] {
   const edges: RagEdge[] = [];
   const ask = (caption: string, edge: RagEdge): GraphEvent => {
@@ -192,7 +222,8 @@ export function storyEvents(): GraphEvent[] {
       activeNodes: ['T1', 'T2']
     },
     {
-      caption: "No preemption, Ammu's grip breaks only when she lets go.".slice(0, 120),
+      caption: 'No preemption: a held resource is never taken away, it must be released.',
+      analogyCaption: "Nothing pries a spoon out of a hand; it lets go when its owner does.".slice(0, 120),
       activeNodes: ['T1', 'M1']
     },
     {
@@ -201,7 +232,7 @@ export function storyEvents(): GraphEvent[] {
     }
   );
   requireVerdict('story', 'ending', edges, true);
-  return out;
+  return enrichEdges(out);
 }
 
 /** Without mutual exclusion: spoons that split, nobody ever waits. */
@@ -235,7 +266,7 @@ export function shareEvents(): GraphEvent[] {
   ];
   requireVerdict('share', 'ending', edges, false);
   out.push({ caption: ringCaption('share', edges), clearCycle: true });
-  return out;
+  return enrichEdges(out);
 }
 
 /**
@@ -274,7 +305,7 @@ export function atomicEvents(): GraphEvent[] {
   ];
   requireVerdict('atomic', 'ending', edges, false);
   out.push({ caption: ringCaption('atomic', edges), clearCycle: true });
-  return out;
+  return enrichEdges(out);
 }
 
 /**
@@ -311,7 +342,7 @@ export function preemptEvents(): GraphEvent[] {
   ];
   requireVerdict('preempt', 'ending', edges, false);
   out.push({ caption: ringCaption('preempt', edges), clearCycle: true });
-  return out;
+  return enrichEdges(out);
 }
 
 /**
@@ -342,7 +373,7 @@ export function orderedEvents(): GraphEvent[] {
   ];
   requireVerdict('ordered', 'ending', edges, false);
   out.push({ caption: ringCaption('ordered', edges), clearCycle: true });
-  return out;
+  return enrichEdges(out);
 }
 
 export function modeEvents(mode: Lesson16Mode): GraphEvent[] {
@@ -362,6 +393,7 @@ export function modeEvents(mode: Lesson16Mode): GraphEvent[] {
 
 export function modeInput(mode: Lesson16Mode): GraphInput {
   return {
+    initialAnalogyCaption: 'The table is set: Ammu and Abbu each reach for a spoon, and the four rules decide whether dinner freezes.',
     nodes: MODE_NODES[mode].map((n) => ({ ...n })),
     initialEdges: [],
     events: modeEvents(mode),

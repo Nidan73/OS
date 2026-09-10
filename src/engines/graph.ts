@@ -42,6 +42,8 @@ export interface GraphInput {
   nodes: GraphNodeInput[];
   initialEdges?: RagEdge[];
   events: GraphEvent[];
+  /** The opening beat in the scene's words, shown on the analogy lens. */
+  initialAnalogyCaption?: string;
   analogy?: {
     domain: 'travel' | 'food' | 'friends';
     title?: string;
@@ -104,7 +106,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
       }
     });
 
-    steps.push(snapshot('The system starts idle, nodes placed, no requests yet.', []));
+    steps.push(snapshot('The system starts idle, nodes placed, no requests yet.', [], input.initialAnalogyCaption));
 
     for (const ev of input.events ?? []) {
       if (ev.addEdge) edges.push({ ...ev.addEdge });
