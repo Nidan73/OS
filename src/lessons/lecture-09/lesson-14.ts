@@ -31,10 +31,10 @@ import {
 // The carrying property of the morph is OCCUPANCY-AS-WIDTH. At the hotel each
 // token is a person — width means a body, and the queue at the door is
 // shoulder-to-shoulder regardless of how long the occupant stays. In the lock
-// the holder token's width means the critical-section length the learner
-// drags: stretch it and spinning flips from optimal to wasteful, because the
-// wasted cycles ARE the width. Same tokens, same queue — width changes what
-// it prices.
+// width means the claim on the room (holder wide, waiters compressed); the
+// stay length is priced in the computed captions and scoreboard, not the
+// width — dragging it moves the spin bill past the wakeup price. Same tokens,
+// same queue — width changes what it means, numbers change what they cost.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface LockParams {
@@ -370,7 +370,7 @@ export const lesson14: Lesson<LockLessonInput, CounterState> = {
   concept:
     'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the key, use the room, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when the occupant leaves at once; blocking pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price — set it, set the clock, and the verdict recomputes.',
   morphReveals:
-    'At the hotel every token is the same width — a guest at the door — and the queue stays shoulder-to-shoulder however long the occupant stays. In the lock the holder token widens with the stay length: width stops meaning a body and starts meaning burned cycles, so dragging it stretches the spin price until it crosses the wakeup price and sitting down wins.',
+    'At the hotel every token is the same width — a guest at the door — and the queue stays shoulder-to-shoulder however long the occupant stays. In the lock width stops meaning a body and starts meaning the claim on the room: the holder fills it wide while the queued compress behind. The stay itself is priced in numbers, not width — drag it and the spin bill climbs past the wakeup price until sitting down wins.',
   morphMode: 'morph',
   analogyMapping: [
     'One hotel key ➔ the mutex (available or held)',

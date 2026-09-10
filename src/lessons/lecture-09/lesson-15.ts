@@ -23,12 +23,11 @@ import {
 // is not a debt but the number of seated waiters. Overriding render() would
 // reimplement identical interpolation for no gain.
 //
-// The carrying property of the morph is SIGN-AS-PLACE. At the gate the count
-// board is a number on a post — sign means nothing, and a negative would be
-// nonsense. In the semaphore a negative count IS the queue: minus-two means
-// two people seated, waiting. Sign stops meaning arithmetic and starts
-// meaning where bodies are — the number walks off the post and becomes the
-// row of chairs.
+// The carrying property of the morph is WIDTH-as-claim (equal dock bodies →
+// plugged-in wide, seated compressed). The sign story is meter truth, not the
+// carrying geometry: a negative count IS the seated queue (tested: |value| ==
+// waiters), and the dock slider rebalances wide holders against narrow seated.
+// Width carries occupancy; the board carries the sign.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type SemOp = 'wait' | 'signal' | 'omit_signal';
@@ -409,7 +408,7 @@ export const lesson15: Lesson<SemaphoreLessonInput, CounterState> = {
   concept:
     'A semaphore is an integer with two indivisible operations: wait takes a slot and signal returns one. The initial count is the whole difference between five rental bikes and one platform toilet — same tool, different dock. The count board is itself shared, so the tool that solves the problem has the problem; and sitting down with a ticket beats hovering once the wait grows. Used wrongly — swapped calls, a doubled take, a forgotten signal — the same integer deadlocks the room, each mistake with its own computed outcome.',
   morphReveals:
-    'On the post the count is just a number — sign means nothing, and below zero would be nonsense. In the semaphore the count walks off the post: minus-two is two seated travellers, so sign stops meaning arithmetic and starts meaning where bodies are. Drag the dock from five ports to one and the same integer becomes a binary lock.',
+    'At the gate every token is the same width — a traveller at the dock. In the semaphore width stops meaning a body and starts meaning the claim on a port: plugged-in tokens fill wide while the seated compress behind, so a full dock reads wide and an overflowing one reads narrow. The count board tells the rest — below zero it counts the seated, not the ports — and dragging the dock from five ports to one turns the same integer into a binary lock.',
   morphMode: 'morph',
   analogyMapping: [
     'Five charging ports ➔ the resource pool (capacity is the initial count)',

@@ -296,12 +296,42 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
     this.waitingGroup.append(waitBg, waitTitle);
 
     // 4. Render Isomorphic Actors with [id^="bar-${actor.id}"]
+    //
+    // Width encodes OCCUPANCY, computed from state — never a constant. In the
+    // analogy every token is the same 54px: people at a hook stand in a row
+    // with equal footprints, because that is what the analogy looks like
+    // (§3C.2a rule 1 — authored independently of the mechanism). In the
+    // mechanism the holder's token fills the holder slot it occupies while
+    // queued tokens compress: width stops meaning a body and starts meaning
+    // the claim on the resource. Idle tokens sit between the two.
+    const A_TOKEN_W = 54;
+    const M_HOLDER_W = 96;
+    const M_IDLE_W = 84;
+    const M_WAITING_W = 60;
+    // Crowded rows shrink to fit their slots. One factor per render, applied
+    // to holder AND waiter widths alike, so the holder:waiter ratio — the
+    // occupancy meaning — survives crowding instead of overflowing the slots.
+    // Computed from this render's own occupancy (no typed layout).
+    const rowFit = (n: number, base: number, slotW: number): number => {
+      if (n <= 1) return 1;
+      return Math.min(1, (slotW - 32 - (n - 1) * 8) / (n * base));
+    };
+    const fitFactor = Math.max(
+      0.35,
+      Math.min(
+        rowFit(state.holders.length, M_HOLDER_W, holderW),
+        rowFit(state.waiting.length, M_WAITING_W, waitW)
+      )
+    );
+    const holderWNow = M_HOLDER_W * fitFactor;
+    const waiterWNow = M_WAITING_W * fitFactor;
+    const idleWNow = M_IDLE_W * fitFactor;
     this.input.actors.forEach((actor, aIdx) => {
       const isHolder = state.holders.includes(actor.id);
       const isWaiting = state.waiting.includes(actor.id);
 
       // Analogy Geometry: equal width tokens standing or seated
-      const aTokenW = 54;
+      const aTokenW = A_TOKEN_W;
       const aTokenH = 44;
       let aX = 30 + aIdx * (aTokenW + 12);
       let aY = 190;
@@ -315,18 +345,20 @@ export class CounterEngine extends AnimationEngine<CounterInput, CounterState> {
         aY = waitY + 54;
       }
 
-      // Mechanism Geometry: execution bar / token
-      const mTokenW = 84;
+      // Mechanism Geometry: execution bar / token. Width is occupancy, read
+      // off this render's own holders/waiting — the same state every lesson
+      // maps 1:1 from its simulation, so no lesson file is special-cased.
+      const mTokenW = isHolder ? holderWNow : isWaiting ? waiterWNow : idleWNow;
       const mTokenH = 44;
-      let mX = 24 + aIdx * (mTokenW + 10);
+      let mX = 24 + aIdx * (idleWNow + 10);
       let mY = 190;
       if (isHolder) {
         const hPos = state.holders.indexOf(actor.id);
-        mX = holderX + 16 + hPos * (mTokenW + 8);
+        mX = holderX + 16 + hPos * (holderWNow + 8);
         mY = holderY + 54;
       } else if (isWaiting) {
         const wPos = state.waiting.indexOf(actor.id);
-        mX = waitX + 16 + wPos * (mTokenW + 8);
+        mX = waitX + 16 + wPos * (waiterWNow + 8);
         mY = waitY + 54;
       }
 

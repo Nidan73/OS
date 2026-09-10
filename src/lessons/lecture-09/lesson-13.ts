@@ -31,12 +31,13 @@ import {
 // explicit as read-then-write so the window another thread fits inside is a
 // visible step, not an assertion.
 //
-// The carrying property of the morph is WIDTH (54px hook tokens → 84px lock
-// tokens). At the hook, each token is a person standing at the wall — width
-// means a body, and the gap between "look" and "grab" is empty wall space,
-// just how far a hand travels. In the lock, width means the instruction
-// window another thread fits inside — and atomicity collapses that window to
-// zero, which is why the same two looks produce one holder instead of two.
+// The carrying property of the morph is WIDTH-as-claim (equal 54px hook bodies
+// → holder 96 / waiter 60 lock tokens, computed from state.holders/waiting).
+// At the hook, width means a body. In the lock, width means the claim on the
+// room: holders fill it wide, waiters compress. Split-vs-fused then reads as
+// occupancy — two wide holders versus one — and the look/grab window itself is
+// carried by the steps (read, read, write, write vs one fused grab) plus the
+// tally beats, not by the width.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AtomicParams {
@@ -341,7 +342,7 @@ export const lesson13: Lesson<AtomicLessonInput, CounterState> = {
   concept:
     'Hardware offers two indivisible primitives for the doorway in one lesson. test_and_set reads the lock and claims it before any other thread can slip between the read and the claim; compare_and_swap goes further and only swaps when the lock still reads what was expected, so a price change mid-transaction cannot slip through. Either one builds a lock by spinning until it reads free — correct, and wasteful — and the bounded-waiting variant hands the key to the next waiter in line instead of hanging it back, so nobody is skipped forever. Wrapped once more, the same primitive becomes the tally counter application code actually uses.',
   morphReveals:
-    'At the hook every token is the same width — a body standing at the wall — and the gap between looking and grabbing is empty wall space, just how far a hand travels. In the lock that same gap is time between two instructions, and width stops meaning a body and starts meaning the window another thread fits inside; atomicity collapses the window to zero, which is why the same two looks leave one holder instead of two.',
+    'At the hook every token is the same width — a body standing at the wall — and the gap between looking and grabbing is empty wall space, just how far a hand travels. In the lock width stops meaning a body and starts meaning the claim on the room: the holder fills it wide while waiters compress, so the split run shows two wide holders where the fused run shows one. The window itself is in the steps — read, read, write, write versus one fused grab — and the tally beats prove what it costs.',
   morphMode: 'morph',
   analogyMapping: [
     'Looking at the hook ➔ reading the lock (test) / checking the tag (compare)',
