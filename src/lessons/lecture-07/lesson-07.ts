@@ -1,6 +1,12 @@
 import type { Lesson, PlaygroundCapable } from "../../core/types.js";
 import { QueueEngine, type QueueInput, type QueueState } from "../../engines/queue.js";
 
+// DENSITY (Task A audit): correct at 11 — four dispatches, four completions,
+// the stall, the instant hardware switch onto Thread 1, and the resume, plus
+// the initial frame. T3 and T4 run straight through with no contention: each
+// contributes exactly its dispatch and its completion, and a contention-free
+// run has no further mechanism event to name. Eleven is the full stall story.
+
 /**
  * Lesson 07's engine. A subclass, not a prototype patch: the queue engine is
  * shared with lessons 6 and 8, and patching it there made behaviour depend on

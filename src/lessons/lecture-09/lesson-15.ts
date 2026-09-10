@@ -54,13 +54,13 @@ const ANALOGY_NAMES: Record<string, string> = {
   T5: 'Traveller E', T6: 'Traveller F', T7: 'Traveller G'
 };
 
-/**
- * The op script for a scenario — the deck's wait()/signal() definitions
- * (slide 21) staged with seven contenders so every mode overflows the dock:
- * takes fill the ports, the excess seat themselves, releases wake them in
- * order. The three mistakes follow slide 22 verbatim: swapped calls, a
- * doubled wait, an omitted signal.
- */
+// DENSITY (Task A audit): correct at 10 — seven takes (each port claimed once,
+// the overflow past zero IS the seating event), one release, the woken
+// handoff, and the computed room verdict. The three slide-22 mistakes (swap,
+// double, omit) are the same ten-beat shape with different outcomes under the
+// playground buttons — not new events. An eighth contender would add a beat,
+// but seven already overflows the five-port dock by two, which is all the sign
+// story needs: positive, zero, negative.
 export function semaphoreOps(p: SemaphoreParams): Array<{ actorId: string; op: SemOp }> {
   const ops: Array<{ actorId: string; op: SemOp }> = [];
   switch (p.mistake) {

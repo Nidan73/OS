@@ -1,6 +1,11 @@
 import type { Lesson } from '../../core/types.js';
 import type { GanttInput } from '../../engines/gantt.js';
 
+// DENSITY (Task A audit): correct at 8 — same FCFS trio as L01 (three
+// dispatches, three completions, arrival frame, computed summary), because the
+// convoy story IS L01's schedule re-read: the playground reversal to 3 ms is
+// a recomputed schedule, not a new timeline beat. Splitting dispatch from
+// completion is already done; further beats would narrate, not eventuate.
 export const lesson02: Lesson<GanttInput> = {
   id: 2,
   lecture: 6,

@@ -15,6 +15,12 @@ import {
   type AtomicIncrementResult
 } from '../../algorithms/synchronization.js';
 
+// DENSITY (Task A audit): correct at 11 — the six trace beats (free, read,
+// read, write, write, verdict: the full look-then-grab window) plus the five
+// computed tally beats from simulateAtomicIncrement (start, stale snapshot,
+// lost update, refused swap + retry, landed retry). The CAS side is the same
+// eleven beats under the playground toggle — a different outcome over the same
+// event shape, not new events.
 // ─────────────────────────────────────────────────────────────────────────────
 // L13 · One indivisible motion (ATLAS units 50–55, slides 6–13)
 //

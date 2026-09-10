@@ -20,6 +20,13 @@ import {
 export const P12_CANVAS_W = 720;
 export const P12_CANVAS_H = 260;
 
+// DENSITY (Task A audit): correct at 6 — the print test is six discrete
+// mechanism events (open frame, x = 100, flag = true, spin pass, print x,
+// computed verdict). The doorway protocol's own interleaving (flag[0], turn,
+// flag[1], entries, spins, exits) is a different mechanism — Peterson's proof,
+// told next lesson's way — and folding it in would double-count one lesson as
+// two. Inventing a seventh beat (e.g. splitting the open frame) would be
+// padding: the given example of a legitimate "correct at this count" answer.
 export interface PetersonInput {
   reordered: boolean;
 }

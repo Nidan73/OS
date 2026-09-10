@@ -1,6 +1,12 @@
 import type { Lesson } from '../../core/types.js';
 import type { GanttInput } from '../../engines/gantt.js';
 
+// DENSITY (Task A audit): correct at 8 — three dispatches, three completions,
+// the arrival frame and the computed summary. A fourth (P4) process would add
+// two honest beats, but the deck's slide-5 burst cycle needs exactly this
+// trio: one long CPU-bound burst against two short ones, the contrast the
+// convoy lesson reuses. A summary split (e.g. wait-then-turnaround) would be
+// padding — one computed average pair, one beat.
 export const lesson01: Lesson<GanttInput> = {
   id: 1,
   lecture: 6,

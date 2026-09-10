@@ -68,14 +68,13 @@ export function lockCosts(p: LockParams): LockCostModel {
   return evaluateLockCost(p.csDurationUs, p.contextSwitchCostUs, p.cpuFreqGHz);
 }
 
-/**
- * Pure mapping: evaluateLockCost output → CounterEngine steps. One holder
- * keeps the room while two waiters queue; the holder leaves, the first
- * waiter is handed the key (bounded waiting, cf. L13). The meter reads the
- * wait in the currency of the mode: spinning burns cycles on the CPU, so
- * the meter shows the spin-wasted cycles; blocking pays the switch, so the
- * meter shows the switch cost. Both numbers come from lockCosts().
- */
+// DENSITY (Task A audit): 12 steps — the idle frame, the holder's arrival and
+// its acquire (asking distinct from taking, the way L8's tick and move
+// differ), one beat per waiter arrival, the settle that fixes the queue order,
+// the priced wait, the stay ending (done distinct from returned), the release,
+// the both-ways verdict, the handoff-order beat that names who is still queued,
+// and the handoff itself. No beat repeats a state with new words: each moves
+// the simulation (holders, waiting or the priced stay) or names the verdict.
 export function lockSteps(p: LockParams): Step<CounterState>[] {
   const m = lockCosts(p);
   const waiting: 'spin' | 'block' = p.mode;
@@ -99,74 +98,114 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 1,
+      caption: `The holder arrives and asks for the key.`,
+      highlight: ['T1'],
+      state: {
+        stepIndex: 1, value: 1, capacity: 1, activeActorId: 'T1',
+        holders: [], waiting: [], action: 'acquire',
+        caption: `The holder arrives and asks for the key.`
+      }
+    },
+    {
+      t: 2,
       caption: `The holder takes the key for ${m.csDurationUs}µs.`,
       highlight: ['T1'],
       state: {
-        stepIndex: 1, value: 0, capacity: 1, activeActorId: 'T1',
+        stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T1',
         holders: ['T1'], waiting: [], action: 'acquire',
         caption: `The holder takes the key for ${m.csDurationUs}µs.`
       }
     },
     {
-      t: 2,
+      t: 3,
       caption: `The first waiter arrives and ${arriveCaption}`,
       highlight: ['T2'],
       state: {
-        stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T2',
+        stepIndex: 3, value: 0, capacity: 1, activeActorId: 'T2',
         holders: ['T1'], waiting: ['T2'], action: 'spin',
         caption: 'The first waiter queues at the door.'
       }
     },
     {
-      t: 3,
+      t: 4,
       caption: `The second waiter queues ${how} behind the first.`,
       highlight: ['T3'],
       state: {
-        stepIndex: 3, value: 0, capacity: 1, activeActorId: 'T3',
+        stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T3',
         holders: ['T1'], waiting: ['T2', 'T3'], action: 'spin',
         caption: 'Two waiters queue at the door.'
       }
     },
     {
-      t: 4,
+      t: 5,
+      caption: `The second waiter settles ${how} — the queue order is now fixed.`,
+      highlight: ['T3'],
+      state: {
+        stepIndex: 5, value: 0, capacity: 1, activeActorId: 'T3',
+        holders: ['T1'], waiting: ['T2', 'T3'], action: 'spin',
+        caption: 'The queue order is fixed.'
+      }
+    },
+    {
+      t: 6,
       caption: waiting === 'spin'
         ? `Both waiters jiggle — the wait prices at ${price} burned cycles.`
         : `Both waiters sit — the wait prices at one ${price}-cycle wakeup.`,
       highlight: ['T2', 'T3'],
       state: {
-        stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T2',
+        stepIndex: 6, value: 0, capacity: 1, activeActorId: 'T2',
         holders: ['T1'], waiting: ['T2', 'T3'], action: 'spin',
         caption: 'The queue waits out the stay.'
       }
     },
     {
-      t: 5,
+      t: 7,
+      caption: `The stay ends — the holder is done, the key is due back.`,
+      highlight: ['T1'],
+      state: {
+        stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T1',
+        holders: ['T1'], waiting: ['T2', 'T3'], action: 'release',
+        caption: 'The stay ends.'
+      }
+    },
+    {
+      t: 8,
       caption: 'The holder returns the key after its stay.',
       highlight: ['T1'],
       state: {
-        stepIndex: 5, value: 1, capacity: 1, activeActorId: 'T1',
+        stepIndex: 8, value: 1, capacity: 1, activeActorId: 'T1',
         holders: [], waiting: ['T2', 'T3'], action: 'release',
         caption: 'The holder returns the key.'
       }
     },
     {
-      t: 6,
+      t: 9,
       caption: m.preferSpinlock
         ? `Short stay: spinning wastes ${m.spinWastedCycles} cycles, less than a ${m.contextSwitchWastedCycles}-cycle wakeup.`
         : `Long stay: spinning would waste ${m.spinWastedCycles} cycles — sitting down costs ${m.contextSwitchWastedCycles}.`,
       highlight: ['T1'],
       state: {
-        stepIndex: 6, value: 1, capacity: 1, activeActorId: 'T1',
+        stepIndex: 9, value: 1, capacity: 1, activeActorId: 'T1',
         holders: [], waiting: ['T2', 'T3'], action: 'release',
         caption: 'The stay is priced both ways.'
       }
     },
     {
-      t: 7,
+      t: 10,
+      caption: 'The second waiter is still queued — the handoff order is set.',
+      highlight: ['T3'],
+      state: {
+        stepIndex: 10, value: 1, capacity: 1, activeActorId: 'T3',
+        holders: [], waiting: ['T2', 'T3'], action: 'release',
+        caption: 'The handoff order is set.'
+      }
+    },
+    {
+      t: 11,
       caption: 'The key goes to the first waiter in line — nobody is skipped.',
       highlight: ['T2'],
       state: {
-        stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T2',
+        stepIndex: 11, value: 0, capacity: 1, activeActorId: 'T2',
         holders: ['T2'], waiting: ['T3'], action: 'acquire',
         caption: 'Handoff to the first waiter.'
       }

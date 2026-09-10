@@ -1,6 +1,14 @@
 import type { Lesson } from '../../core/types.js';
 import type { GanttInput } from '../../engines/gantt.js';
 
+// DENSITY (Task A audit): correct at 10 — four dispatches, four completions,
+// the arrival frame and the computed 7 ms summary. The deck's units 9–11
+// (SJF, the slide-11 discrepancy, burst prediction, SRTF) live in the concept
+// copy and the playground's SRTF toggle, not the timeline: prediction has no
+// discrete mechanism event to step through, and the staggered-arrival variant
+// would contradict the published 7 ms the lesson preserves. Ten is the full
+// SJF event set.
+
 /**
  * Lesson 03: Shortest Job First — and Why You Can't Have It
  * Absorbs Atlas Units 9, 10, 11 (Slides 10–15).

@@ -133,8 +133,27 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
           }
           coreMap[targetCore] = ev.itemId;
           itemLocations[ev.itemId] = { queueId: null, coreId: targetCore, progress: 0.5 };
-        } else if (ev.action === 'demote' || ev.action === 'promote' || ev.action === 'migrate' || ev.action === 'enqueue') {
+        } else if (ev.action === 'demote' || ev.action === 'promote' || ev.action === 'migrate' || ev.action === 'enqueue' || ev.action === 'stall' || ev.action === 'resume') {
           const toQ = ev.toQueue ?? input.queues[0].id;
+          // A tick that names no new queue is still an event (the scan fired,
+          // the refill landed) — record the beat without moving the item.
+          const isTick = ev.action === 'stall' || ev.action === 'resume';
+          const alreadyThere = queueMap[toQ]?.includes(ev.itemId) || itemLocations[ev.itemId]?.coreId !== null;
+          if (isTick && (!ev.toQueue || alreadyThere)) {
+            steps.push({
+              t: ev.t ?? curT++,
+              caption: ev.caption,
+              state: {
+                time: curT,
+                queues: cloneQueues(),
+                cores: { ...coreMap },
+                completed: [...completed],
+                activeItemId: ev.itemId,
+                itemLocations: JSON.parse(JSON.stringify(itemLocations))
+              }
+            });
+            continue;
+          }
           // Clear core if it was running
           for (const cId of Object.keys(coreMap)) {
             if (coreMap[cId] === ev.itemId) coreMap[cId] = null;

@@ -13,8 +13,19 @@ import {
 } from '../../algorithms/synchronization.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// L9 · When late means failed (ATLAS units 27–30, slides 18–22)
-//
+// DENSITY (Task A audit): 12 reveals — the gate frame, the siren sounding and
+// the state save (one discrete phase each), the aisle blocked and the aisle
+// clearing (slide 21's phase split into its two states), the staged crew and
+// the crew's swap (arrival distinct from handover), the dispatch subtotal the
+// deck names, the held ambulance and its run (staging distinct from running),
+// the stacked-total accumulation, and the computed verdict. "Arrival" and
+// "sounding" differ the way L8's balancer tick and move differ: naming the
+// start of a mechanism event is not the event. The knock-on slide-20 rescue
+// run (soft deadline, still a failure on retry) is a different verdict over
+// the same budget — told by the playground burst, not a thirteenth reveal.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CANVAS_W = 720;
 // ENGINE VERDICT (a): extend DiagramEngine and use its render() unmodified.
 // Why: the lesson IS a stacked bar whose segment widths encode latencies —
 // exactly what DiagramEngine interpolates (analogy x/y/width/height fields
@@ -31,7 +42,6 @@ import {
 // response bar overshoots the gate marker.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const CANVAS_W = 720;
 export const CANVAS_H = 260;
 
 /** Latency budget under test — every number below is an input or computed. */
@@ -256,10 +266,24 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       metrics
     },
     {
-      caption: `The aisle crowds the crew: clearing preemption takes ${b.conflictPhase}ms.`,
+      caption: `The aisle is still crowded — the outgoing task holds the exit.`,
+      highlightNodeIds: ['aisle'],
+      activeNodeIds: ['alarm', 'aisle'],
+      badgeText: `Blocked ${b.conflictPhase}ms`,
+      metrics
+    },
+    {
+      caption: `The aisle clears over ${b.conflictPhase}ms — preemption done, resources released.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Aisle ${b.conflictPhase}ms`,
+      metrics
+    },
+    {
+      caption: `The crew is staged but waiting — the aisle has not cleared yet.`,
+      highlightNodeIds: ['switch'],
+      activeNodeIds: ['alarm', 'aisle'],
+      badgeText: `Crew waits`,
       metrics
     },
     {
@@ -274,6 +298,13 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       highlightNodeIds: ['aisle', 'switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Dispatch ${b.totalDispatchLatency}ms`,
+      metrics
+    },
+    {
+      caption: `The ambulance is staged but held — the dispatch has not handed over yet.`,
+      highlightNodeIds: ['run'],
+      activeNodeIds: ['alarm', 'aisle', 'switch'],
+      badgeText: `Held ${b.executionTime}ms`,
       metrics
     },
     {

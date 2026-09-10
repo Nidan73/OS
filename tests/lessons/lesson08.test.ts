@@ -89,35 +89,49 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
 
   test('push migration scenario correctly balances workload to core 1', () => {
     const steps = engine.getSteps();
-    expect(steps.length).toBe(8); // Initial step + 7 dispatch/migrate/complete beats
+    expect(steps.length).toBe(14); // Initial step + 3 arrivals + dispatch/run + tick/migrate/dispatch/stall/run + dispatch/run + verdict
 
-    // Initial state: all on Core 0 queue
-    expect(steps[0].state.queues.q_core0).toEqual(['P1', 'P2', 'P3']);
+    // Initial state: new work stages in the incoming lane
+    expect(steps[0].state.queues.incoming).toEqual(['P1', 'P2', 'P3']);
     expect(steps[0].state.cores.core0).toBeNull();
     expect(steps[0].state.cores.core1).toBeNull();
 
-    // P1 runs and completes on Core 0 before the balancer acts
-    expect(steps[1].state.cores.core0).toBe('P1');
-    expect(steps[2].state.completed).toContain('P1');
+    // Arrivals join Core 0's runqueue one by one
+    expect(steps[1].state.queues.q_core0).toEqual(['P1']);
+    expect(steps[3].state.queues.q_core0).toEqual(['P1', 'P2', 'P3']);
 
-    // Push migration moves P3 to Core 1 queue
-    const stepPush = steps[3];
+    // P1 runs and completes on Core 0 before the balancer acts
+    expect(steps[4].state.cores.core0).toBe('P1');
+    expect(steps[5].state.completed).toContain('P1');
+
+    // The balancer tick fires before the move — detection and migration differ
+    expect(steps[6].caption).toMatch(/Balancer tick/);
+    const stepPush = steps[7];
     expect(stepPush.state.queues.q_core1).toContain('P3');
 
-    // Core 1 dispatches P3
-    const stepDispatchCore1 = steps[4];
+    // Core 1 dispatches P3, then the cold lines refill mid-execution
+    const stepDispatchCore1 = steps[8];
     expect(stepDispatchCore1.state.cores.core1).toBe('P3');
+    expect(steps[9].caption).toMatch(/cold/);
+    expect(steps[10].state.completed).toContain('P3');
+
+    // Core 0 dispatches P2, warm throughout, and the verdict closes
+    expect(steps[11].state.cores.core0).toBe('P2');
+    expect(steps[12].state.completed).toContain('P2');
+    expect(steps[13].caption).toMatch(/Balanced/);
   });
 
   test('playground scenarios reconfigure steps properly', () => {
     // Pull scenario
     engine.reconfigure(SCENARIO_EVENTS.pull);
-    expect(engine.getSteps().length).toBe(8);
-    expect(engine.getSteps()[3].caption).toContain('steals');
+    expect(engine.getSteps().length).toBe(14);
+    expect(engine.getSteps()[7].caption).toContain('steals');
 
-    // Affinity scenario
+    // Affinity scenario: the refusal is two honest beats — the tick fires,
+    // then the move is forbidden — instead of one lesson doing two jobs
     engine.reconfigure(SCENARIO_EVENTS.affinity);
-    expect(engine.getSteps().length).toBe(7);
-    expect(engine.getSteps()[3].caption).toContain('forbidden');
+    expect(engine.getSteps().length).toBe(13);
+    expect(engine.getSteps()[6].caption).toContain('tick');
+    expect(engine.getSteps()[7].caption).toContain('forbidden');
   });
 });
