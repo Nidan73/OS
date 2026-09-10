@@ -5,6 +5,8 @@ import { QueueEngine } from '../engines/queue.js';
 import { DiagramEngine } from '../engines/diagram.js';
 import { TraceEngine } from '../engines/trace.js';
 import { CounterEngine } from '../engines/counter.js';
+import { GraphEngine } from '../engines/graph.js';
+import { MatrixEngine } from '../engines/matrix.js';
 
 export type EngineConstructor = new (container: HTMLElement, input: any) => AnimationEngine<any, any>;
 
@@ -13,7 +15,9 @@ const engineRegistry: Partial<Record<EngineId, EngineConstructor>> = {
   queue: QueueEngine as any,
   diagram: DiagramEngine as any,
   trace: TraceEngine as any,
-  counter: CounterEngine as any
+  counter: CounterEngine as any,
+  graph: GraphEngine as any,
+  matrix: MatrixEngine as any
 };
 
 // Vite lazy glob mapping for dynamic unit and lesson loading (§3A.3)
