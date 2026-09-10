@@ -41,6 +41,7 @@ const LESSONS = [
   { slug: 'lesson-20', chapter: 'lecture-10', name: "The banker's algorithm" },
   { slug: 'lesson-21', chapter: 'lecture-10', name: 'Spotting a deadlock' },
   { slug: 'lesson-22', chapter: 'lecture-10', name: 'Getting out' },
+  { slug: 'lesson-23', chapter: 'lecture-07', name: 'Guessing before you build' },
 ];
 
 /** Reference pages to gate. */

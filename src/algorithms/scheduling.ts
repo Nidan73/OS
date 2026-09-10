@@ -373,3 +373,163 @@ export function mlfq(
 
   return computeMetrics(processes, mergedBars);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Algorithm evaluation — L23, ATLAS units 31–33, Lecture 7 slides 24–30.
+//
+// Three ways to answer "which scheduler?", in increasing generality and cost:
+// deterministic modelling (exact, one workload), queueing models / Little's
+// formula (statistical, any workload), and simulation (accurate, expensive).
+// Every figure the lesson shows comes from here.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One algorithm's result on one fixed workload — slide 25's deterministic evaluation. */
+export interface AlgorithmVerdict {
+  algorithm: 'fcfs' | 'sjf' | 'rr';
+  label: string;
+  avgWaiting: number;
+  bars: GanttBar[];
+}
+
+const round2 = (num: number) => Math.round(num * 100) / 100;
+
+/**
+ * Deterministic modelling (slides 24–25): run every candidate over one
+ * predetermined workload and read off the average waiting time. Order is
+ * fixed — fcfs, sjf, rr — so the caller compares, never the callee.
+ */
+export function deterministicComparison(
+  processes: Process[],
+  quantum = 10
+): AlgorithmVerdict[] {
+  const f = fcfs(processes);
+  const s = sjf(processes);
+  const r = roundRobin(processes, quantum);
+  return [
+    { algorithm: 'fcfs', label: 'FCFS', avgWaiting: f.avgWaiting, bars: f.bars },
+    { algorithm: 'sjf', label: 'Non-preemptive SJF', avgWaiting: s.avgWaiting, bars: s.bars },
+    { algorithm: 'rr', label: `RR (q=${quantum})`, avgWaiting: r.avgWaiting, bars: r.bars }
+  ];
+}
+
+/** The lowest average waiting time in a comparison. Ties resolve to the earliest listed. */
+export function bestOf(verdicts: AlgorithmVerdict[]): AlgorithmVerdict {
+  if (verdicts.length === 0) throw new Error('bestOf: no verdicts to compare');
+  return verdicts.reduce((best, v) => (v.avgWaiting < best.avgWaiting ? v : best));
+}
+
+/**
+ * Little's formula (slide 27): n = lambda x W, in steady state, valid for any
+ * scheduling algorithm and any arrival distribution. Supply exactly two of the
+ * three terms and the third is derived — the lesson never types the third.
+ */
+export interface LittlesLaw {
+  /** average queue length */
+  n: number;
+  /** average arrival rate into the queue */
+  lambda: number;
+  /** average waiting time in the queue */
+  w: number;
+  /** which term was derived rather than supplied */
+  solvedFor: 'n' | 'lambda' | 'w';
+}
+
+export function littlesLaw(known: { n?: number; lambda?: number; w?: number }): LittlesLaw {
+  const has = (v: number | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
+  const given = [has(known.n), has(known.lambda), has(known.w)].filter(Boolean).length;
+  if (given !== 2) {
+    throw new Error(`littlesLaw: supply exactly two of n, lambda, w — got ${given}`);
+  }
+  if (!has(known.n)) {
+    if (known.lambda! < 0 || known.w! < 0) throw new Error('littlesLaw: rates and waits must be >= 0');
+    return { n: round2(known.lambda! * known.w!), lambda: known.lambda!, w: known.w!, solvedFor: 'n' };
+  }
+  if (!has(known.lambda)) {
+    if (known.w! <= 0) throw new Error('littlesLaw: cannot solve for lambda when W is 0');
+    return { n: known.n!, lambda: round2(known.n! / known.w!), w: known.w!, solvedFor: 'lambda' };
+  }
+  if (known.lambda! <= 0) throw new Error('littlesLaw: cannot solve for W when lambda is 0');
+  return { n: known.n!, lambda: known.lambda!, w: round2(known.n! / known.lambda!), solvedFor: 'w' };
+}
+
+/**
+ * Simulation (slides 28–30): instead of one exact answer for one workload,
+ * run the same algorithms over every ordering of the same job sizes and
+ * report the spread. This is what slide 25's caveat — "applies only to those
+ * inputs" — costs you: an algorithm whose spread is wide was never really
+ * measured by a single deterministic run.
+ */
+export interface OrderingSpread {
+  algorithm: 'fcfs' | 'sjf' | 'rr';
+  label: string;
+  min: number;
+  max: number;
+  mean: number;
+  /** true when every ordering gives the same average waiting time */
+  invariant: boolean;
+}
+
+export interface SimulationRun {
+  orderings: number;
+  spread: OrderingSpread[];
+  /** how often each algorithm had the lowest average waiting time (ties count for each) */
+  winCounts: Record<'fcfs' | 'sjf' | 'rr', number>;
+}
+
+/** Every distinct ordering of a multiset of burst times. Guarded — 8! is the ceiling. */
+export function orderingsOf(bursts: number[]): number[][] {
+  if (bursts.length > 8) {
+    throw new Error(`orderingsOf: ${bursts.length} bursts is too many to enumerate (max 8)`);
+  }
+  const out: number[][] = [];
+  const seen = new Set<string>();
+  const walk = (rest: number[], acc: number[]): void => {
+    if (rest.length === 0) {
+      const key = acc.join(',');
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push([...acc]);
+      }
+      return;
+    }
+    for (let i = 0; i < rest.length; i++) {
+      walk([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, rest[i]]);
+    }
+  };
+  walk(bursts, []);
+  return out;
+}
+
+export function simulateOrderings(bursts: number[], quantum = 10): SimulationRun {
+  const orderings = orderingsOf(bursts);
+  const cols: Record<'fcfs' | 'sjf' | 'rr', number[]> = { fcfs: [], sjf: [], rr: [] };
+  const winCounts: Record<'fcfs' | 'sjf' | 'rr', number> = { fcfs: 0, sjf: 0, rr: 0 };
+  const labels: Record<string, string> = {};
+
+  for (const order of orderings) {
+    const workload: Process[] = order.map((burst, i) => ({ id: `P${i + 1}`, arrival: 0, burst }));
+    const verdicts = deterministicComparison(workload, quantum);
+    const low = Math.min(...verdicts.map((v) => v.avgWaiting));
+    for (const v of verdicts) {
+      cols[v.algorithm].push(v.avgWaiting);
+      labels[v.algorithm] = v.label;
+      if (v.avgWaiting === low) winCounts[v.algorithm] += 1;
+    }
+  }
+
+  const spread = (['fcfs', 'sjf', 'rr'] as const).map((algorithm) => {
+    const vals = cols[algorithm];
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    return {
+      algorithm,
+      label: labels[algorithm],
+      min: round2(min),
+      max: round2(max),
+      mean: round2(vals.reduce((a, b) => a + b, 0) / vals.length),
+      invariant: max - min < 0.005
+    };
+  });
+
+  return { orderings: orderings.length, spread, winCounts };
+}
