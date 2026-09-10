@@ -28,9 +28,9 @@ import {
 
 // Lecture 7 slides 24–30, read off the slide images (slide 24 = image16.png,
 // slide 25 = image17/18/19.png) before the lesson was written. If any of these
-// fail, the deck and the lesson have diverged — fix the lesson, never the deck.
+// fail, the deck and the lesson have diverged, fix the lesson, never the deck.
 
-describe('L23 · deck fidelity — slide 24 workload', () => {
+describe('L23 · deck fidelity, slide 24 workload', () => {
   it('carries slide 24s five bursts, all arriving at time 0', () => {
     expect(DECK_BURSTS).toEqual({ P1: 10, P2: 29, P3: 3, P4: 7, P5: 12 });
     expect(workloadOf(DECK_ORDER).every((p) => p.arrival === 0)).toBe(true);
@@ -48,17 +48,17 @@ describe('L23 · deck fidelity — slide 24 workload', () => {
     const w = workloadOf(DECK_ORDER);
     const seg = (bars: { id: string; start: number; end: number }[]) =>
       bars.map((b) => `${b.id}:${b.start}-${b.end}`).join(' ');
-    // image17 — FCFS: 0 · 10 · 39 · 42 · 49 · 61
+    // image17. FCFS: 0 · 10 · 39 · 42 · 49 · 61
     expect(seg(fcfs(w).bars)).toBe('P1:0-10 P2:10-39 P3:39-42 P4:42-49 P5:49-61');
-    // image18 — SJF: 0 · 3 · 10 · 20 · 32 · 61
+    // image18. SJF: 0 · 3 · 10 · 20 · 32 · 61
     expect(seg(sjf(w).bars)).toBe('P3:0-3 P4:3-10 P1:10-20 P5:20-32 P2:32-61');
-    // image19 — RR q=10, eight segments ending at 61
+    // image19. RR q=10, eight segments ending at 61
     const rr = roundRobin(w, DECK_QUANTUM);
     expect(rr.bars).toHaveLength(8);
     expect(seg(rr.bars)).toBe('P1:0-10 P2:10-20 P3:20-23 P4:23-30 P5:30-40 P2:40-50 P5:50-52 P2:52-61');
   });
 
-  it('conserves total work — every rule finishes at 61', () => {
+  it('conserves total work, every rule finishes at 61', () => {
     const w = workloadOf(DECK_ORDER);
     for (const r of [fcfs(w), sjf(w), roundRobin(w, DECK_QUANTUM)]) {
       expect(r.totalTime).toBe(61);
@@ -97,7 +97,7 @@ describe('L23 · Littles formula (slide 27) closes in all three directions', () 
     expect(littlesLaw({ lambda: 0, w: 5 }).n).toBe(0);
   });
 
-  it('holds at the decks stated scale and at other scales — it is unit-agnostic', () => {
+  it('holds at the decks stated scale and at other scales, it is unit-agnostic', () => {
     expect(littlesLaw({ lambda: DECK_LITTLE.lambda, w: 2 }).n).toBe(DECK_LITTLE.n);
     expect(littlesLaw({ lambda: 0.5, w: 30 }).n).toBe(15);
     expect(littlesLaw({ n: 1000, lambda: 250 }).w).toBe(4);
@@ -112,7 +112,7 @@ describe('L23 · simulation over every ordering (slides 28–30)', () => {
     expect(orderingsOf([10, 29, 3, 7, 12])).toHaveLength(120);
   });
 
-  it('shows SJF invariant at 13 — optimality demonstrated, not asserted', () => {
+  it('shows SJF invariant at 13, optimality demonstrated, not asserted', () => {
     const s = sim.spread.find((r) => r.algorithm === 'sjf')!;
     expect(s.invariant).toBe(true);
     expect(s.min).toBe(13);
@@ -144,7 +144,7 @@ describe('L23 · simulation over every ordering (slides 28–30)', () => {
     expect(() => orderingsOf([1, 2, 3, 4, 5, 6, 7, 8, 9])).toThrow(/too many/);
   });
 
-  it('is deterministic — the same sweep twice gives the same spread', () => {
+  it('is deterministic, the same sweep twice gives the same spread', () => {
     expect(simulateOrderings([10, 29, 3, 7, 12], 10)).toEqual(simulateOrderings([10, 29, 3, 7, 12], 10));
   });
 });
@@ -183,7 +183,7 @@ describe('L23 · scenarios compute, never declare', () => {
     expect(new Set(ASCENDING_ORDER)).toEqual(new Set(DECK_ORDER));
   });
 
-  it('keeps SJF at 13 under the reorder — the invariant survives the snapshot change', () => {
+  it('keeps SJF at 13 under the reorder, the invariant survives the snapshot change', () => {
     expect(comparisonFor('reorder').find((v) => v.algorithm === 'sjf')!.avgWaiting).toBe(13);
   });
 
@@ -238,8 +238,11 @@ describe('L23 · engine', () => {
 
   it('derives the average before the engine summary states it', () => {
     const steps = engine.getSteps();
-    const derived = steps.findIndex((s) => s.caption.includes('minutes each'));
-    const stated = steps.findIndex((s) => s.caption.includes('Avg Wait'));
+    // both lenses are student-facing; the tally wording lives on the analogy side
+    const both = (st: { caption: string; analogyCaption?: string }) =>
+      `${st.caption} ${st.analogyCaption ?? ''}`;
+    const derived = steps.findIndex((s) => both(s).includes('minutes each'));
+    const stated = steps.findIndex((s) => both(s).includes('Avg Wait'));
     expect(derived).toBeGreaterThan(-1);
     expect(stated).toBeGreaterThan(-1);
     expect(derived).toBeLessThan(stated);
@@ -252,16 +255,18 @@ describe('L23 · engine', () => {
 
   it('reads the running total off the schedule, so the tally sums to the average', () => {
     const steps = engine.getSteps();
-    const divide = steps.find((s) => s.caption.includes('minutes each'))!;
+    const divide = steps.find((s) => `${s.caption} ${s.analogyCaption ?? ''}`.includes('minutes each'))!;
     const result = engine.getScheduleResult();
     const total = Object.values(result.waiting).reduce((a, b) => a + b, 0);
-    expect(divide.caption).toContain(String(total));
+    expect(`${divide.caption} ${divide.analogyCaption ?? ''}`).toContain(String(total));
     expect(divide.state.averages.avgWaiting).toBe(result.avgWaiting);
     expect(divide.state.averages.avgWaiting).toBe(28);
     // and the running totals actually accumulate to it, beat by beat
-    const tally = steps.filter((s) => s.caption.includes('Running total'));
+    const tally = steps.filter((s) => `${s.caption} ${s.analogyCaption ?? ''}`.includes('Running total'));
     expect(tally).toHaveLength(5);
-    expect(tally[tally.length - 1].caption).toContain(String(total));
+    expect(
+      `${tally[tally.length - 1].caption} ${tally[tally.length - 1].analogyCaption ?? ''}`
+    ).toContain(String(total));
   });
 
   it('moves the highlight to a different party on each tally beat', () => {
@@ -360,5 +365,61 @@ describe('L23 · lesson contract', () => {
     for (const row of lesson23.analogyMapping!) {
       expect(row).toContain('➔');
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Added after an audit caught an arithmetic error in morphReveals: it claimed
+// the engagement party was "wider than the other four together" when 29 < 32.
+// Nothing bound that sentence to DECK_BURSTS, so prose could assert anything.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('L23 · the prose agrees with the burst data', () => {
+  const biggest = Math.max(...Object.values(DECK_BURSTS));
+  const rest = Object.values(DECK_BURSTS).reduce((a, b) => a + b, 0) - biggest;
+
+  it('quotes both figures, and they are the real ones', () => {
+    expect(biggest).toBe(29);
+    expect(rest).toBe(32);
+    expect(lesson23.morphReveals).toContain(String(biggest));
+    expect(lesson23.morphReveals).toContain(String(rest));
+  });
+
+  it('does not claim the biggest exceeds the rest, because it does not', () => {
+    expect(biggest).toBeLessThan(rest);
+    expect(lesson23.morphReveals!.toLowerCase()).not.toMatch(
+      /wider than the other four together|larger than the other four together/
+    );
+    // it must say "almost", which is the true relation
+    expect(lesson23.morphReveals!.toLowerCase()).toMatch(/almost as wide/);
+  });
+
+  it('every number in morphReveals is one the algorithms produce', () => {
+    const known = new Set<number>([
+      ...Object.values(DECK_BURSTS),
+      biggest,
+      rest,
+      ...comparisonFor('fcfs').map((v) => v.avgWaiting),
+      Object.keys(DECK_BURSTS).length
+    ]);
+    const quoted = (lesson23.morphReveals!.match(/\b\d+(\.\d+)?\b/g) ?? []).map(Number);
+    expect(quoted.length).toBeGreaterThan(0);
+    for (const n of quoted) {
+      expect(known.has(n), `morphReveals quotes ${n}, which no algorithm produces`).toBe(true);
+    }
+  });
+
+  it('the tally walks the chart, not the input order. SJF reorders the bars', () => {
+    const e = new Lesson23GanttEngine(document.createElement('div'), scenarioInput('sjf'));
+    e.init();
+    e.applyScenario('sjf');
+    const tally = e
+      .getSteps()
+      .filter((s) => `${s.caption} ${s.analogyCaption ?? ''}`.includes('Running total'))
+      .map((s) => s.state.activeProcessId);
+    const barOrder = Array.from(new Set(e.getScheduleResult().bars.map((b) => b.id)));
+    expect(tally).toEqual(barOrder);
+    // and SJF genuinely reorders, so this is not vacuously true
+    expect(barOrder).not.toEqual(DECK_ORDER);
   });
 });

@@ -49,14 +49,32 @@ describe('Lesson 09 · every displayed number is computed', () => {
         expect(r.metrics?.totalResponseTime).toBe(b.totalResponseTime);
         expect(r.metrics?.slackTime).toBe(b.slackTime);
         expect(r.metrics?.deadline).toBe(b.deadline);
-        expect(r.caption.length).toBeLessThanOrEqual(120);
+        expect(r.caption.length).toBeLessThanOrEqual(320);
+        expect(r.caption.length).toBeGreaterThan(0);
+        // Both lenses are student-facing: the analogy sentence must exist and
+        // fit the rail too, a missing one silently falls back to the mechanism.
+        expect(r.analogyCaption, r.caption).toBeDefined();
+        expect((r.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
       const last = reveals[reveals.length - 1];
       expect(last.caption).toContain(`${b.totalResponseTime}ms`);
       expect(last.caption).toContain(`${b.deadline}ms`);
+      expect(last.analogyCaption).toContain(`${b.totalResponseTime}ms`);
+      expect(last.analogyCaption).toContain(`${b.deadline}ms`);
       expect(last.metrics?.verdict).toBe(b.met ? 'met' : 'missed');
       expect(last.badgeText).toContain(`${Math.abs(b.slackTime)}ms`);
     }
+  });
+
+  it('the verdict sentence flips truthfully on both lenses when the deadline breaks', () => {
+    const b = evaluateRealtimeDeadline(
+      PARAM_CASES[2].interruptLatency, PARAM_CASES[2].conflictPhase,
+      PARAM_CASES[2].dispatchPhase, PARAM_CASES[2].executionTime, PARAM_CASES[2].deadline
+    );
+    expect(b.met).toBe(false);
+    const last = realtimeReveals(PARAM_CASES[2]).at(-1)!;
+    expect(last.caption).toContain(`missed by ${Math.abs(b.slackTime)}ms`);
+    expect(last.analogyCaption).toContain('the car has already left');
   });
 
   it('bar width is proportional to its latency on one computed scale', () => {
@@ -109,7 +127,7 @@ describe('Lesson 09 · every displayed number is computed', () => {
 });
 
 describe('Lesson 09 · the morph is geometric, not cosmetic (§3C.2a)', () => {
-  it('analogy layout is native: the scene is placed, not timed — latencies cannot move it', () => {
+  it('analogy layout is native: the scene is placed, not timed, latencies cannot move it', () => {
     const a = realtimeGeometry(0, PARAM_CASES[0]);
     for (const p of PARAM_CASES.slice(1)) {
       expect(realtimeGeometry(0, p)).toStrictEqual(a);
@@ -142,7 +160,7 @@ describe('Lesson 09 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(m3.gate.x - m1.gate.x).toBeCloseTo(PX_PER_MS, 9);
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     for (const p of PARAM_CASES) {
       for (const id of IDS) {
         const a = realtimeGeometry(0, p)[id];
@@ -179,7 +197,7 @@ describe('Lesson 09 · copy agrees with the mechanism', () => {
     expect(digits(lesson09.morphReveals)).toEqual([]);
   });
 
-  it('soft-vs-hard wording holds in every reachable state — no outcome is asserted', () => {
+  it('soft-vs-hard wording holds in every reachable state, no outcome is asserted', () => {
     expect(lesson09.concept.toLowerCase()).toContain('soft');
     expect(lesson09.concept.toLowerCase()).toContain('hard');
     const fixed = `${lesson09.analogy.text} ${lesson09.concept} ${lesson09.morphReveals}`;

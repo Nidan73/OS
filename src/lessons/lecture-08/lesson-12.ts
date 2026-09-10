@@ -9,9 +9,8 @@ import {
 } from '../../algorithms/synchronization.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layout (pure) — the carrying property of the morph is VERTICAL POSITION.
-// In the kitchen, where father's two acts sit — the call high, the dish low —
-// is furniture; nothing about order can be read off it, and
+// Layout (pure), the carrying property of the morph is VERTICAL POSITION.
+// In the kitchen, where Abbu's two acts sit, the call high, the dish low, // is furniture; nothing about order can be read off it, and
 // the furniture does not move when the hardware reorders. In the machine,
 // vertical position is execution order: toggling the reorder physically
 // swaps the two rows, and the printed number flips with them.
@@ -20,11 +19,11 @@ import {
 export const P12_CANVAS_W = 720;
 export const P12_CANVAS_H = 260;
 
-// DENSITY (Task A audit): correct at 6 — the print test is six discrete
+// DENSITY (Task A audit): correct at 6, the print test is six discrete
 // mechanism events (open frame, x = 100, flag = true, spin pass, print x,
 // computed verdict). The doorway protocol's own interleaving (flag[0], turn,
-// flag[1], entries, spins, exits) is a different mechanism — Peterson's proof,
-// told next lesson's way — and folding it in would double-count one lesson as
+// flag[1], entries, spins, exits) is a different mechanism. Peterson's proof,
+// told next lesson's way, and folding it in would double-count one lesson as
 // two. Inventing a seventh beat (e.g. splitting the open frame) would be
 // padding: the given example of a legitimate "correct at this count" answer.
 export interface PetersonInput {
@@ -51,7 +50,7 @@ export function actRows(reordered: boolean): { msg: number; pack: number; print:
 }
 
 /**
- * Geometry of every morphable entity at any view — pure, exported for tests.
+ * Geometry of every morphable entity at any view, pure, exported for tests.
  * The analogy positions are FIXED: the room's furniture never reorders.
  * The mechanism rows follow the toggle.
  */
@@ -89,6 +88,25 @@ export interface PublicationState extends PublicationStep {
 }
 
 /**
+ * The doorway sentence for one print-test action, derived from the structured
+ * PublicationStep.action rather than parsed from the algorithm's caption.
+ */
+export function doorwayCaption(action: string, x: number): string {
+  switch (action) {
+    case 'x = 100':
+      return 'Abbu puts the dish back on the flame to finish: the fact is being made.';
+    case 'flag = true':
+      return 'Abbu calls out that the food is ready: the announcement, made whether or not the dish is done.';
+    case 'while (!flag); passes':
+      return 'Ammu hears the announcement and stops waiting at the door.';
+    case 'print x':
+      return `Ammu serves what the announcement promised, and what she carries out is ${x}.`;
+    default:
+      return '';
+  }
+}
+
+/**
  * The timeline IS the print test: the toggled reorder re-orders the very
  * steps the learner scrubs through. The doorway protocol's verdict travels
  * alongside as bothInside, computed by simulatePeterson for this mode.
@@ -98,16 +116,21 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
   const pub = simulateReorderingOutput(input.reordered);
   const open: Step<PublicationState> = {
     t: 0,
-    caption: 'Mother and father share one kitchen doorway: father calls while cooking, mother waits to serve.',
+    caption: 'The print test opens: T1 will spin on the flag, then print x.',
+    analogyCaption: 'Ammu and Abbu share one kitchen doorway: Abbu calls while cooking, Ammu waits to serve.',
     highlight: ['T1', 'T2'],
     state: { ...pub.steps[0], step: 0, printed: null, caption: 'The room before the test.' , bothInside }
   };
   const verdictText = pub.flipped
-    ? `Printed ${pub.output}, expected ${pub.expectedOutput} — the announcement overtook the act.`
-    : `Printed ${pub.output} as announced — the fact landed before the flag.`;
+    ? `Printed ${pub.output}, expected ${pub.expectedOutput}, the announcement overtook the act.`
+    : `Printed ${pub.output} as announced, the fact landed before the flag.`;
+  const verdictAnalogy = pub.flipped
+    ? 'The announcement ran ahead of the cooking: Ammu served before the dish was ready, and the doorway protocol could not save her.'
+    : 'The dish was finished before the call, so Ammu serves exactly what was announced. The doorway holds.';
   const verdict: Step<PublicationState> = {
     t: pub.steps.length + 1,
     caption: verdictText,
+    analogyCaption: verdictAnalogy,
     highlight: ['T1', 'T2'],
     state: { ...pub.steps[pub.steps.length - 1], step: pub.steps.length + 1, caption: verdictText, bothInside }
   };
@@ -116,6 +139,7 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
     ...pub.steps.map(s => ({
       t: s.step,
       caption: s.caption,
+      analogyCaption: doorwayCaption(s.action, s.printed ?? s.x),
       highlight: [s.actorId],
       state: { ...s, bothInside }
     })),
@@ -125,8 +149,8 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
 
 const t1WaitText = (reordered: boolean): string =>
   reordered
-    ? 'flag[1] is up but turn says go — walks in'
-    : 'wants in — sees flag[1] down or turn';
+    ? 'flag[1] is up but turn says go, walks in'
+    : 'wants in, sees flag[1] down or turn';
 const t1ExitText = 'exits, flag down';
 
 export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationState> implements PlaygroundCapable {
@@ -210,7 +234,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       const active = state.actorId === tid;
       g.appendChild(this.rectAt(box, 10, active ? 'rgba(0, 102, 204, 0.12)' : 'var(--surface-alt)', active ? 'var(--accent)' : 'var(--hairline)', active ? 2 : 1));
       const label = v < 0.5
-        ? (tIdx === 0 ? 'Mother · at the door' : 'Father · cooking')
+        ? (tIdx === 0 ? 'Ammu · at the door' : 'Abbu · cooking')
         : tid === 'T1'
           ? 'T1 · spins, then prints'
           : 'T2 · stores, then raises flag';
@@ -218,7 +242,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       scene.appendChild(g);
     });
 
-    // Father's two acts → T2's two instruction rows. The toggle swaps them.
+    // Abbu's two acts → T2's two instruction rows. The toggle swaps them.
     const rows = actRows(this.input.reordered);
     const acts: Array<{ key: 'msg' | 'pack'; row: number; analogy: string; mech: string }> = [
       { key: 'msg', row: rows.msg, analogy: 'the call: "Food is ready!"', mech: 'flag = true' },
@@ -234,7 +258,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       scene.appendChild(g);
     }
 
-    // Mother's side (paint): the spin, the print, the exit.
+    // Ammu's side (paint): the spin, the print, the exit.
     const t1RowY = 44 + rows.print * 34;
     if (v < 0.5) {
       scene.appendChild(this.text(geometry.T1.x + geometry.T1.w / 2, geometry.T1.y + geometry.T1.h + 14, 'waiting for the call', 9, 'var(--muted)'));
@@ -325,7 +349,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
         <div style="padding: 5px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">The doorway protocol</div>
           <div style="padding: 2px 0; font-size: 0.72rem; font-weight: 600; color: ${peterson.mutualExclusionViolated ? 'var(--waiting)' : 'var(--running)'};">${peterson.mutualExclusionViolated ? '⚠️ Both parents inside at once' : '🛡️ One parent at a time'}</div>
-          <div style="font-size: 0.68rem; color: var(--muted); margin-top: 2px; line-height: 1.3;">Under sequential consistency the three promises hold — the slide traces every interleaving. Reordering is what breaks it.</div>
+          <div style="font-size: 0.68rem; color: var(--muted); margin-top: 2px; line-height: 1.3;">Under sequential consistency the three promises hold, the slide traces every interleaving. Reordering is what breaks it.</div>
         </div>
       </div>
     `;
@@ -346,21 +370,25 @@ export const lesson12: Lesson<PetersonInput, PublicationState> = {
   engine: 'standalone',
   engineClass: PetersonEngine,
   lensLabels: {
-    analogy: '🚪 Mother and father at the door',
+    analogy: '🚪 Ammu and Abbu at the door',
     mechanism: '⚙️ Flags, turn and the print test',
-    analogyTitle: 'View as mother and father waving each other through',
+    analogyTitle: 'View as Ammu and Abbu waving each other through',
     mechanismTitle: 'View as the flag and turn protocol over time'
   },
   analogy: {
     domain: 'friends',
-    text: 'Mother and father meet at the narrow kitchen doorway, each waving the other through: a raised hand meaning "I want in," then "you first." Before dinner, father calls out "Food is ready!" while the dish is still on the flame — and mother acts on the announcement, not the fact.'
+    text: 
+      'The kitchen doorway in the flat fits one person. Ammu and Abbu arrive at it at the same moment, both carrying dishes.\n\n' +
+      'What they do is completely ordinary. Each raises a hand, meaning I would like to go through. Then each says the other should go first. And because they both said it, the rule that breaks the tie is simple: whoever offered most recently is the one who waits, so the other one goes.\n\n' +
+      'Written down carefully, that is a genuine solution. Two flags saying I want in, one variable saying whose turn it is to defer, and it provably works.\n\n' +
+      'Then here is the part that ruins it. Abbu calls out that the food is ready while the dish is still on the flame, because he knows it will be ready by the time anyone gets up. Ammu hears the announcement and acts on it. The processor does the same thing with your carefully ordered instructions, and the proof quietly stops holding.'
   },
-  concept: 'Peterson\u2019s solution lets two processes share a doorway with one shared flag each and a single turn variable: announce "I want in" (flag[i] = true), then defer (turn = j), then wait while the other wants in and it is their turn. Walking every interleaving proves all three promises hold — mutual exclusion, progress and bounded waiting. The proof assumes stores land in the order written. Processors and compilers reorder independent operations: in a single thread the result is always the same, but across threads the announcement can overtake the act, and the door stands open for both. The print test shows it: the flag rises before the store lands, and what gets printed flips.',
-  morphReveals: 'In the kitchen, where the two acts sit — the call high, the dish low — is furniture; no order can be read off it, and it does not move when the hardware reorders. In the machine, vertical position is execution order: flip to reordered and the two rows physically swap, the call now precedes the cooking, and the printed number flips with them.',
+  concept: 'Peterson\u2019s solution lets two processes share a doorway with one shared flag each and a single turn variable: announce "I want in" (flag[i] = true), then defer (turn = j), then wait while the other wants in and it is their turn. Walking every interleaving proves all three promises hold, mutual exclusion, progress and bounded waiting. The proof assumes stores land in the order written. Processors and compilers reorder independent operations: in a single thread the result is always the same, but across threads the announcement can overtake the act, and the door stands open for both. The print test shows it: the flag rises before the store lands, and what gets printed flips.',
+  morphReveals: 'In the kitchen, where the two acts sit, the call high, the dish low, is furniture; no order can be read off it, and it does not move when the hardware reorders. In the machine, vertical position is execution order: flip to reordered and the two rows physically swap, the call now precedes the cooking, and the printed number flips with them.',
   morphMode: 'morph',
   analogyMapping: [
-    'Mother waiting at the door ➔ thread 1 spinning on flag[1] and turn',
-    'Father, and the two acts of cooking ➔ thread 2\u2019s two stores: x = 100, then flag = true',
+    'Ammu waiting at the door ➔ thread 1 spinning on flag[1] and turn',
+    'Abbu, and the two acts of cooking ➔ thread 2\u2019s two stores: x = 100, then flag = true',
     'The call "Food is ready!" ➔ flag = true (the announcement)',
     'The dish still on the flame ➔ x = 100 (the fact, still in flight when reordered)',
     'Waving the other through ➔ turn = j',

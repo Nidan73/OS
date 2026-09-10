@@ -48,14 +48,14 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     vi.useRealTimers();
   });
 
-  test('seek is idempotent — §4A.2', () => {
+  test('seek is idempotent, §4A.2', () => {
     const e = new FakeEngine(el); e.init();
     e.seek(2); const a = e.renders.at(-1);
     e.seek(2); const b = e.renders.at(-1);
     expect(a).toBe(b);
   });
 
-  test('seek backwards equals seek forwards — §4A.3', () => {
+  test('seek backwards equals seek forwards, §4A.3', () => {
     const fwd = new FakeEngine(el); fwd.init(); fwd.seek(0); fwd.seek(2);
     const back = new FakeEngine(el); back.init(); back.seek(2); back.seek(0); back.seek(2);
     expect(fwd.renders.at(-1)).toBe(back.renders.at(-1));
@@ -67,7 +67,7 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     e.seek(-5); expect(e.getCurrentIndex()).toBe(0);
   });
 
-  test('destroy is safe twice and no-ops afterwards — §3A.2', () => {
+  test('destroy is safe twice and no-ops afterwards, §3A.2', () => {
     const e = new FakeEngine(el); e.init();
     expect(() => { e.destroy(); e.destroy(); }).not.toThrow();
     const before = e.renders.length;
@@ -93,7 +93,7 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     expect(calls).toBe(after);
   });
 
-  test('an engine that throws renders the fallback and does not escape — §3A.3', () => {
+  test('an engine that throws renders the fallback and does not escape, §3A.3', () => {
     class Broken extends FakeEngine { protected mount() { throw new Error('boom'); } }
     registerEngine('broken' as any, Broken as any);
     const host = document.createElement('div');
@@ -106,7 +106,7 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     expect(() => new Empty(el).init()).toThrow();
   });
 
-  test('pause() stops playback under reduced motion — regression', () => {
+  test('pause() stops playback under reduced motion, regression', () => {
     vi.useFakeTimers();
     matchMediaMock('(prefers-reduced-motion: reduce)', true);
     const e = new FakeEngine(el); e.init();
@@ -135,7 +135,7 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     expect(e.getCurrentIndex()).toBe(0);
   });
 
-  test('setView updates view axis, clamps [0, 1], and notifies listeners — §3C.3', () => {
+  test('setView updates view axis, clamps [0, 1], and notifies listeners, §3C.3', () => {
     const e = new FakeEngine(el); e.init(0);
     expect(e.getView()).toBe(0);
     let notifiedView = -1;
@@ -156,7 +156,7 @@ describe('AnimationEngine Lifecycle (§7.1)', () => {
     expect(notifiedView).toBe(0.0); // listener detached
   });
 
-  test('morphView snaps under prefers-reduced-motion — §3C.3', async () => {
+  test('morphView snaps under prefers-reduced-motion, §3C.3', async () => {
     matchMediaMock('(prefers-reduced-motion: reduce)', true);
     const e = new FakeEngine(el); e.init(0);
     await e.morphView(1.0);

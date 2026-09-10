@@ -38,11 +38,11 @@ describe('Lesson 21 · the deck reproduces itself', () => {
   it('slide 40: P2 asks one more C and the deck\'s exact four are deadlocked', () => {
     const r = sweepOf(SWEEP_REQUEST_T1);
     expect(r.deadlocked).toEqual(['P1', 'P2', 'P3', 'P4']);
-    // Slide 40: "Can reclaim resources held by P0" — P0 alone finishes.
+    // Slide 40: "Can reclaim resources held by P0". P0 alone finishes.
     expect(r.finish).toEqual([true, false, false, false, false]);
   });
 
-  it('the two snapshots differ in exactly one cell — P2\'s C request', () => {
+  it('the two snapshots differ in exactly one cell. P2\'s C request', () => {
     let diffs = 0;
     SWEEP_REQUEST_T0.forEach((row, i) =>
       row.forEach((v, j) => {
@@ -90,7 +90,7 @@ describe('Lesson 21 · the collapse is computed, not drawn', () => {
     }
   });
 
-  it('the ring survives the collapse — same loop, half the arrows', () => {
+  it('the ring survives the collapse, same loop, half the arrows', () => {
     const { engine } = mount('collapse');
     const steps = engine.getSteps();
     const last = steps[steps.length - 1].state;
@@ -117,7 +117,7 @@ describe('Lesson 21 · unit 87 is a cost the learner can move', () => {
     );
   });
 
-  it('the two costs move in opposite directions — that is the trade', () => {
+  it('the two costs move in opposite directions, that is the trade', () => {
     const tight = cadenceOf(CADENCE_SAMPLES[0], 4);
     const loose = cadenceOf(CADENCE_SAMPLES[1], 4);
     expect(tight.detectionOpsPerHour).toBeGreaterThan(loose.detectionOpsPerHour);
@@ -188,11 +188,11 @@ describe('Lesson 21 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     const pools = SWEEP_NODES.filter((n) => n.kind === 'resource').map((n) => w[`bar-${n.id}`]);
     const flats = SWEEP_NODES.filter((n) => n.kind === 'process').map((n) => w[`bar-${n.id}`]);
     expect(Math.max(...pools)).toBeGreaterThan(Math.min(...flats));
-    // Different entities differ — a uniform resize is a reskin.
+    // Different entities differ, a uniform resize is a reskin.
     expect(new Set([...pools, ...flats].map((v) => Math.round(v))).size).toBeGreaterThan(1);
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     const a = widthsAt(0, 'sweep-t0');
     const mid = widthsAt(0.5, 'sweep-t0');
     const b = widthsAt(1, 'sweep-t0');
@@ -222,10 +222,16 @@ describe('Lesson 21 · copy agrees with the mechanism', () => {
     expect(copy).not.toMatch(/§\s*\d|Atlas unit|isomorph|morphMode|SPEC\.md|ABSORBS/i);
   });
 
-  it('every caption fits the 120-char rail', () => {
+  it('every caption fits the caption rail', () => {
     for (const id of ['collapse', 'sweep-t0', 'sweep-t1', 'cadence'] as Lesson21Scenario[]) {
       for (const ev of scenarioInput(id).events) {
-        expect(ev.caption.length).toBeLessThanOrEqual(120);
+        // The rail is 320, not 120. Captions became story beats and the
+        // layout was changed to hold them: morphReveals moved out from above
+        // the animation, which put a four-line caption at y=819 to 897, above
+        // the fold at 1440x900. Measured, not assumed. 320 is still a rail:
+        // it is roughly four lines and it is enforced here.
+        expect(ev.caption.length).toBeLessThanOrEqual(320);
+        expect((ev.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
     }
   });

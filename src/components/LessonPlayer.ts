@@ -34,54 +34,31 @@ export class LessonPlayer {
     parent: HTMLElement,
     private engine: AnimationEngine<unknown, unknown> & PlaygroundCapable,
     animViewport?: HTMLElement,
-    private morphReveals?: string,
     private morphMode?: 'morph' | 'crossfade',
     private lensLabels?: { analogy: string; mechanism: string; analogyTitle?: string; mechanismTitle?: string }
   ) {
+    // The player owns structure and behavior only; every visual decision
+    // lives in the shell classes in base.css so all 24 lessons stay coherent.
     this.container = document.createElement('div');
     this.container.className = 'lesson-player';
-    this.container.style.display = 'flex';
-    this.container.style.flexDirection = 'column';
-    this.container.style.gap = 'calc(var(--step) * 1)';
-    this.container.style.width = '100%';
 
     // 1. Lens Switcher Header (Analogy <-> Morph <-> Mechanism)
     this.lensController = document.createElement('div');
     this.lensController.className = 'lens-controller';
-    this.lensController.style.display = 'flex';
-    this.lensController.style.flexDirection = 'column';
-    this.lensController.style.gap = '6px';
-    this.lensController.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.25)';
-    this.lensController.style.background = 'var(--surface)';
-    this.lensController.style.border = '1px solid var(--hairline)';
-    this.lensController.style.borderRadius = 'var(--rounded-lg, 18px)';
 
     const topControlsRow = document.createElement('div');
-    topControlsRow.style.display = 'flex';
-    topControlsRow.style.alignItems = 'center';
-    topControlsRow.style.justifyContent = 'space-between';
-    topControlsRow.style.flexWrap = 'wrap';
-    topControlsRow.style.gap = 'var(--step)';
+    topControlsRow.style.display = 'contents';
+    this.lensController.appendChild(topControlsRow);
 
     const lensButtons = document.createElement('div');
-    lensButtons.style.display = 'flex';
-    lensButtons.style.alignItems = 'center';
-    lensButtons.style.gap = 'var(--step)';
+    lensButtons.className = 'lens-buttons';
 
     const pillBtn = (text: string, title: string) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = text;
       b.title = title;
-      b.style.padding = '7px 16px';
-      b.style.fontSize = '0.85rem';
-      b.style.fontWeight = '600';
-      b.style.borderRadius = 'var(--rounded-pill, 9999px)';
-      b.style.border = '1px solid var(--hairline)';
-      b.style.background = 'var(--surface-alt)';
-      b.style.color = 'var(--ink)';
-      b.style.cursor = 'pointer';
-      b.style.transition = 'all var(--dur-fast) var(--ease)';
+      b.className = 'pill-btn';
       return b;
     };
 
@@ -116,158 +93,66 @@ export class LessonPlayer {
     this.viewSlider.step = '0.01';
     this.viewSlider.value = String(engine.getView());
     this.viewSlider.id = 'view-lens';
+    this.viewSlider.className = 'view-slider';
     this.viewSlider.setAttribute('data-view', 'true');
     this.viewSlider.setAttribute('data-view-lens', 'true');
     this.viewSlider.setAttribute('aria-label', 'View axis blend between analogy and mechanism');
-    this.viewSlider.style.width = '120px';
-    this.viewSlider.style.cursor = 'pointer';
 
     this.viewPercentLabel = document.createElement('span');
-    this.viewPercentLabel.style.fontFamily = 'var(--font-mono)';
-    this.viewPercentLabel.style.fontSize = '0.85rem';
-    this.viewPercentLabel.style.minWidth = '45px';
-    this.viewPercentLabel.style.color = 'var(--accent)';
+    this.viewPercentLabel.className = 'view-percent';
     this.viewPercentLabel.textContent = `${Math.round(engine.getView() * 100)}%`;
 
     sliderWrap.append(sliderLabel, this.viewSlider, this.viewPercentLabel);
     topControlsRow.append(lensButtons, sliderWrap);
-    this.lensController.appendChild(topControlsRow);
-
-    if (this.morphReveals) {
-      const morphBanner = document.createElement('div');
-      morphBanner.className = 'morph-reveals-banner';
-      morphBanner.style.fontSize = '0.85rem';
-      morphBanner.style.color = 'var(--muted)';
-      morphBanner.style.lineHeight = '1.45';
-      morphBanner.style.paddingTop = '6px';
-      morphBanner.style.borderTop = '1px solid var(--hairline)';
-      morphBanner.textContent = this.morphReveals;
-      this.lensController.appendChild(morphBanner);
-    }
 
     // 2. Animation Viewport
     this.animViewport = animViewport ?? document.createElement('div');
     this.animViewport.classList.add('anim-viewport');
-    this.animViewport.style.background = 'var(--surface)';
-    this.animViewport.style.border = '1px solid var(--hairline)';
-    this.animViewport.style.borderRadius = 'var(--rounded-lg, 18px)';
-    this.animViewport.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.2)';
-    this.animViewport.style.boxShadow = 'none';
-    this.animViewport.style.overflow = 'hidden';
 
     // 3. Interactive Playground (Positioned directly under canvas per §0.1)
     this.playgroundSection = document.createElement('section');
-    this.playgroundSection.className = 'lesson-playground-control playground';
+    this.playgroundSection.className = 'lesson-playground-control playground playground-panel';
     this.playgroundSection.id = 'playground';
     this.playgroundSection.setAttribute('data-primary-control', 'true');
-    this.playgroundSection.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.2)';
-    this.playgroundSection.style.background = 'var(--surface)';
-    this.playgroundSection.style.border = '1px solid var(--hairline)';
-    this.playgroundSection.style.borderRadius = 'var(--rounded-lg, 18px)';
-    this.playgroundSection.style.display = 'flex';
-    this.playgroundSection.style.flexDirection = 'column';
-    this.playgroundSection.style.gap = '8px';
 
     // 4. Live Scoreboard (Positioned directly with playground above the fold)
     this.scoreboardSection = document.createElement('section');
-    this.scoreboardSection.className = 'lesson-scoreboard';
-    this.scoreboardSection.style.padding = 'calc(var(--step) * 0.9) calc(var(--step) * 1.2)';
-    this.scoreboardSection.style.background = 'var(--surface)';
-    this.scoreboardSection.style.border = '1px solid var(--hairline)';
-    this.scoreboardSection.style.borderRadius = 'var(--rounded-lg, 18px)';
-    this.scoreboardSection.style.display = 'flex';
-    this.scoreboardSection.style.flexDirection = 'column';
-    this.scoreboardSection.style.gap = '8px';
+    this.scoreboardSection.className = 'lesson-scoreboard scoreboard-panel';
 
     // 5. Caption Banner
     this.captionBanner = document.createElement('div');
     this.captionBanner.className = 'caption-banner';
-    this.captionBanner.style.padding = 'calc(var(--step) * 0.7) calc(var(--step) * 1.2)';
-    this.captionBanner.style.background = 'var(--surface-alt)';
-    this.captionBanner.style.border = '1px solid var(--hairline)';
-    this.captionBanner.style.borderLeft = '4px solid var(--accent)';
-    this.captionBanner.style.borderRadius = 'var(--rounded-lg, 18px)';
-    this.captionBanner.style.fontFamily = 'var(--font-ui)';
-    this.captionBanner.style.fontSize = '15.5px';
-    this.captionBanner.style.lineHeight = '1.4';
-    this.captionBanner.style.letterSpacing = '-0.374px';
-    this.captionBanner.style.color = 'var(--ink)';
 
     // 6. Transport Bar
     this.transportBar = document.createElement('div');
     this.transportBar.className = 'transport-bar sticky-transport';
-    this.transportBar.style.display = 'flex';
-    this.transportBar.style.alignItems = 'center';
-    this.transportBar.style.gap = 'var(--step)';
-    this.transportBar.style.padding = 'calc(var(--step) * 0.75) calc(var(--step) * 1.2)';
-    this.transportBar.style.background = 'var(--surface)';
-    this.transportBar.style.border = '1px solid var(--hairline)';
-    this.transportBar.style.borderRadius = 'var(--rounded-lg, 18px)';
-    this.transportBar.style.flexWrap = 'wrap';
 
-    const btnStyle = (btn: HTMLButtonElement) => {
-      btn.style.minWidth = '44px';
-      btn.style.minHeight = '44px';
-      btn.style.padding = '8px 14px';
-      btn.style.display = 'inline-flex';
-      btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'center';
-      btn.style.background = 'var(--surface-alt)';
-      btn.style.border = '1px solid var(--hairline)';
-      btn.style.borderRadius = 'var(--rounded-pill, 9999px)';
-      btn.style.fontWeight = '600';
-      btn.style.cursor = 'pointer';
-      btn.style.transition = 'all var(--dur-fast) var(--ease)';
+    const mkBtn = (html: string, title: string, label: string) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = html;
+      b.title = title;
+      b.setAttribute('aria-label', label);
+      b.className = 'transport-btn';
+      return b;
     };
 
-    this.restartBtn = document.createElement('button');
-    this.restartBtn.type = 'button';
-    this.restartBtn.innerHTML = '&#8634;';
-    this.restartBtn.title = 'Restart (Home)';
-    this.restartBtn.setAttribute('aria-label', 'Restart timeline');
-    btnStyle(this.restartBtn);
-
-    this.prevBtn = document.createElement('button');
-    this.prevBtn.type = 'button';
-    this.prevBtn.innerHTML = '&#9664;';
-    this.prevBtn.title = 'Step Back (Left Arrow)';
-    this.prevBtn.setAttribute('aria-label', 'Previous step');
-    btnStyle(this.prevBtn);
-
-    this.playBtn = document.createElement('button');
-    this.playBtn.type = 'button';
-    this.playBtn.innerHTML = '&#9654;';
-    this.playBtn.title = 'Play / Pause (Space)';
-    this.playBtn.setAttribute('aria-label', 'Play or pause timeline');
-    btnStyle(this.playBtn);
-    this.playBtn.style.background = 'var(--accent)';
-    this.playBtn.style.color = '#FFFFFF';
-    this.playBtn.style.borderColor = 'var(--accent)';
-
-    this.nextBtn = document.createElement('button');
-    this.nextBtn.type = 'button';
-    this.nextBtn.innerHTML = '&#9654;&#9654;';
-    this.nextBtn.title = 'Step Forward (Right Arrow)';
-    this.nextBtn.setAttribute('aria-label', 'Next step');
-    btnStyle(this.nextBtn);
+    this.restartBtn = mkBtn('&#8634;', 'Restart (Home)', 'Restart timeline');
+    this.prevBtn = mkBtn('&#9664;', 'Step Back (Left Arrow)', 'Previous step');
+    this.playBtn = mkBtn('&#9654;', 'Play / Pause (Space)', 'Play or pause timeline');
+    this.playBtn.classList.add('primary');
+    this.nextBtn = mkBtn('&#9654;&#9654;', 'Step Forward (Right Arrow)', 'Next step');
 
     this.scrubber = document.createElement('input');
     this.scrubber.type = 'range';
     this.scrubber.min = '0';
     this.scrubber.max = String(Math.max(0, engine.getSteps().length - 1));
     this.scrubber.value = '0';
+    this.scrubber.className = 'scrubber';
     this.scrubber.setAttribute('aria-label', 'Timeline scrubber');
-    this.scrubber.style.flex = '1';
-    this.scrubber.style.minWidth = '120px';
-    this.scrubber.style.height = '44px';
-    this.scrubber.style.cursor = 'pointer';
 
     this.stepIndicator = document.createElement('span');
     this.stepIndicator.className = 'step-indicator';
-    this.stepIndicator.style.fontFamily = 'var(--font-mono)';
-    this.stepIndicator.style.fontSize = '0.85rem';
-    this.stepIndicator.style.whiteSpace = 'nowrap';
-    this.stepIndicator.style.color = 'var(--ink-2)';
     this.stepIndicator.textContent = `1 / ${engine.getSteps().length}`;
 
     this.transportBar.append(
@@ -285,7 +170,7 @@ export class LessonPlayer {
     interactiveGrid.className = 'lesson-interactive-grid';
     interactiveGrid.append(this.playgroundSection, this.scoreboardSection);
 
-    // Compact layout: Canvas -> Interactive Grid (Playground + Scoreboard) -> Caption -> Transport (All above fold on 1440x900)
+    // Compact layout: Canvas -> Interactive Grid (Playground + Scoreboard) -> Caption -> Transport
     this.container.append(
       this.lensController,
       this.animViewport,
@@ -469,13 +354,19 @@ export class LessonPlayer {
     this.updateCaption();
   }
 
+  /**
+   * The caption follows the lens. Below the halfway point she is looking at
+   * the scene, so she reads the scene; above it she is looking at the
+   * mechanism, so she reads the mechanism. Same beat, same event, two
+   * vocabularies. Lessons that supply only `caption` show it in both views.
+   */
   private updateCaption(): void {
     const steps = this.engine.getSteps();
-    const idx = this.engine.getCurrentIndex();
-    const step = steps[idx];
-    if (step) {
-      this.captionBanner.textContent = step.caption;
-    }
+    const step = steps[this.engine.getCurrentIndex()];
+    if (!step) return;
+    const analogy = step.analogyCaption;
+    this.captionBanner.textContent =
+      analogy && this.engine.getView() < 0.5 ? analogy : step.caption;
   }
 
   private setupEventListeners(): void {
@@ -544,18 +435,12 @@ export class LessonPlayer {
     });
 
     this.unsubscribeView = this.engine.onViewChange((v) => {
+      this.updateCaption();
       this.viewSlider.value = String(v);
       this.viewPercentLabel.textContent = `${Math.round(v * 100)}%`;
-      if (v <= 0.1) {
-        this.analogyBtn.style.borderColor = 'var(--accent)';
-        this.mechBtn.style.borderColor = 'var(--rule)';
-      } else if (v >= 0.9) {
-        this.mechBtn.style.borderColor = 'var(--accent)';
-        this.analogyBtn.style.borderColor = 'var(--rule)';
-      } else {
-        this.analogyBtn.style.borderColor = 'var(--rule)';
-        this.mechBtn.style.borderColor = 'var(--rule)';
-      }
+      this.analogyBtn.classList.toggle('active', v <= 0.1);
+      this.mechBtn.classList.toggle('active', v >= 0.9);
+      this.morphBtn.classList.toggle('active', v > 0.1 && v < 0.9);
     });
 
     // Keyboard controls

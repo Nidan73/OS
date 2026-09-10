@@ -27,6 +27,8 @@ export interface ProcessorCore {
 }
 
 export interface QueueEvent {
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   t?: number;
   caption: string;
   action: 'enqueue' | 'dispatch' | 'demote' | 'promote' | 'migrate' | 'complete' | 'stall' | 'resume';
@@ -50,6 +52,8 @@ export interface QueueInput {
   items: QueueItem[];
   events?: QueueEvent[];
   analogy?: QueueAnalogyConfig;
+  /** The opening beat in the scene's words, shown on the analogy lens. */
+  initialAnalogyCaption?: string;
 }
 
 export interface QueueState {
@@ -109,6 +113,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
     steps.push({
       t: 0,
       caption: 'Initial queue layout: tasks arrive and await assignment.',
+      analogyCaption: input.initialAnalogyCaption,
       state: {
         time: 0,
         queues: cloneQueues(),
@@ -136,13 +141,14 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
         } else if (ev.action === 'demote' || ev.action === 'promote' || ev.action === 'migrate' || ev.action === 'enqueue' || ev.action === 'stall' || ev.action === 'resume') {
           const toQ = ev.toQueue ?? input.queues[0].id;
           // A tick that names no new queue is still an event (the scan fired,
-          // the refill landed) — record the beat without moving the item.
+          // the refill landed), record the beat without moving the item.
           const isTick = ev.action === 'stall' || ev.action === 'resume';
           const alreadyThere = queueMap[toQ]?.includes(ev.itemId) || itemLocations[ev.itemId]?.coreId !== null;
           if (isTick && (!ev.toQueue || alreadyThere)) {
             steps.push({
               t: ev.t ?? curT++,
               caption: ev.caption,
+              analogyCaption: ev.analogyCaption,
               state: {
                 time: curT,
                 queues: cloneQueues(),
@@ -179,6 +185,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
         steps.push({
           t: ev.t ?? curT++,
           caption: ev.caption,
+          analogyCaption: ev.analogyCaption,
           state: {
             time: curT,
             queues: cloneQueues(),
@@ -297,11 +304,14 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
       const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       label.setAttribute('x', '26');
       label.setAttribute('y', String(y + laneHeight / 2 + 4));
-      label.setAttribute('font-size', '11');
+      label.setAttribute('font-size', '10');
       label.setAttribute('font-weight', '600');
       label.setAttribute('fill', 'var(--muted)');
       const laneName = (v < 0.5 && input.analogy?.queueLabels?.[q.id]) ? input.analogy.queueLabels[q.id] : q.label;
-      label.textContent = laneName;
+      // The label shares the lane with the items, so it gets a fixed budget
+      // and is truncated rather than allowed to run underneath them. At 10px
+      // roughly 30 characters fit in the 145px before the first item starts.
+      label.textContent = laneName.length > 30 ? laneName.slice(0, 29) + '…' : laneName;
 
       this.lanesGroup.append(laneRect, label);
     });
@@ -344,6 +354,45 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
       this.coresGroup.append(coreBox, coreText, coreSubtext);
     });
 
+    // ── Fit items inside their lane ────────────────────────────────────────
+    // The lane is a fixed 440 wide and items are burst-proportional, so a lane
+    // holding three long bursts used to run past its own right edge and sit on
+    // top of the core boxes. Reported from a screenshot: P3 (20ms) landed at
+    // x=390 with width 100, ending at 490, while the lane ends at 456.
+    //
+    // Rather than clipping, which hides a process, the row is scaled to fit:
+    // work out what the widest lane needs and shrink every item by the same
+    // factor, so relative widths still carry burst length.
+    const LANE_X = 16;
+    const LANE_W = 440;
+    const ITEM_LEFT = LANE_X + 158; // clear of the truncated lane label
+    const ITEM_RIGHT = LANE_X + LANE_W - 10;
+    const laneSpan = ITEM_RIGHT - ITEM_LEFT;
+
+    const rawWidth = (it: { burst?: number }): number =>
+      Math.max(40, Math.min(100, (it.burst ?? 10) * 5));
+
+    let fit = 1;
+    for (const q of input.queues) {
+      const ids = queues[q.id] ?? [];
+      if (ids.length === 0) continue;
+      const need = ids.reduce((sum, id) => {
+        const it = input.items.find((i) => i.id === id);
+        return sum + rawWidth(it ?? {}) + 10;
+      }, -10);
+      if (need > laneSpan) fit = Math.min(fit, laneSpan / need);
+    }
+    const analogyFit = (() => {
+      let f = 1;
+      for (const q of input.queues) {
+        const n = (queues[q.id] ?? []).length;
+        if (n === 0) continue;
+        const need = n * 58 - 8;
+        if (need > laneSpan) f = Math.min(f, laneSpan / need);
+      }
+      return f;
+    })();
+
     // Render Items with Isomorphic IDs: [id^="bar-${item.id}"]
     input.items.forEach(item => {
       const loc = state.itemLocations[item.id] ?? { queueId: item.queueId, coreId: null, progress: 0 };
@@ -356,7 +405,7 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
         const laneIdx = input.queues.findIndex(q => q.id === loc.queueId);
         const posInQueue = queues[loc.queueId]?.indexOf(item.id) ?? 0;
         analogyY = laneStartY + Math.max(0, laneIdx) * (laneHeight + 12) + 6;
-        analogyX = 160 + posInQueue * (analogyW + 8);
+        analogyX = ITEM_LEFT + posInQueue * (analogyW + 8) * analogyFit;
       } else if (loc.coreId) {
         const cIdx = coreList.findIndex(c => c.id === loc.coreId);
         analogyX = coreStartX + 80;
@@ -367,14 +416,21 @@ export class QueueEngine extends AnimationEngine<QueueInput, QueueState> {
 
       // Calculate Mechanism Geometry (view=1): burst-proportional or PCB block
       const burst = item.burst ?? 10;
-      const mechW = Math.max(40, Math.min(100, burst * 5));
+      const mechW = Math.max(40, Math.min(100, burst * 5)) * fit;
       let mechX = 140;
       let mechY = analogyY;
       if (loc.queueId) {
         const laneIdx = input.queues.findIndex(q => q.id === loc.queueId);
         const posInQueue = queues[loc.queueId]?.indexOf(item.id) ?? 0;
         mechY = laneStartY + Math.max(0, laneIdx) * (laneHeight + 12) + 6;
-        mechX = 170 + posInQueue * (mechW + 10);
+        // stride from the items actually ahead of it, so unequal widths stack
+        // without gaps or overlaps
+        const ahead = (queues[loc.queueId] ?? []).slice(0, posInQueue);
+        const offset = ahead.reduce((sum, id) => {
+          const it = input.items.find((i) => i.id === id);
+          return sum + Math.max(40, Math.min(100, (it?.burst ?? 10) * 5)) * fit + 10;
+        }, 0);
+        mechX = ITEM_LEFT + offset;
       } else if (loc.coreId) {
         const cIdx = coreList.findIndex(c => c.id === loc.coreId);
         mechX = coreStartX + 70;

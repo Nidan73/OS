@@ -36,12 +36,12 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
     }
     const last = run.steps[run.steps.length - 1];
     // one release wakes one waiter; one traveller is still seated, so the
-    // count stays negative — the sign keeps meaning "waiters here"
+    // count stays negative, the sign keeps meaning "waiters here"
     expect(last.value).toBeLessThan(0);
     expect(last.waitingQueue.length).toBeGreaterThan(0);
   });
 
-  it('mapped steps carry the simulation 1:1 — count, holders, seated queue', () => {
+  it('mapped steps carry the simulation 1:1, count, holders, seated queue', () => {
     const run = semaphoreRun(DEFAULT_SEM);
     const steps = semaphoreSteps(DEFAULT_SEM);
     // one step per op plus the computed room verdict at the end
@@ -51,14 +51,14 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
       expect(st.value).toBe(s.value);
       expect(st.holders).toStrictEqual(s.holders);
       expect(st.waiting).toStrictEqual(s.waitingQueue);
-      expect(steps[i + 1].caption.length).toBeLessThanOrEqual(120);
+      expect(steps[i + 1].caption.length).toBeLessThanOrEqual(320);
     });
     const verdict = steps[steps.length - 1];
     const last = run.steps[run.steps.length - 1];
     expect(verdict.state.value).toBe(run.finalValue);
     expect(verdict.state.holders).toStrictEqual(last.holders);
     expect(verdict.state.waiting).toStrictEqual(last.waitingQueue);
-    expect(verdict.caption.length).toBeLessThanOrEqual(120);
+    expect(verdict.caption.length).toBeLessThanOrEqual(320);
   });
 
   it('the intact run wakes in order; the dock slider reaches the binary lock', () => {
@@ -77,14 +77,14 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
     const double = semaphoreRun({ ...DEFAULT_SEM, mistake: 'double' });
     const omit = semaphoreRun({ ...DEFAULT_SEM, mistake: 'omit' });
     const intact = semaphoreRun(DEFAULT_SEM);
-    // all three differ from the intact run — none is a canned animation.
+    // all three differ from the intact run, none is a canned animation.
     // (swap lands on the same final number by a different road: one phantom
-    // release, one extra take — so compare traces, not just finals)
+    // release, one extra take, so compare traces, not just finals)
     expect(swap.steps.map((s) => s.action)).not.toStrictEqual(intact.steps.map((s) => s.action));
     expect(swap.steps[0].value).toBe(DEFAULT_SEM.initial + 1);
     expect(omit.deadlocked).toBe(true);
     expect(intact.deadlocked).toBe(false);
-    // double holds two ports on one traveller — the room disagrees with the
+    // double holds two ports on one traveller, the room disagrees with the
     // board even where the final numbers coincide
     expect(double.steps.some((s) => s.holders.filter((h) => h === 'T1').length > 1)).toBe(true);
   });
@@ -94,7 +94,7 @@ describe('Lesson 15 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('analogy tokens are native: family at the lot, equal footprints', () => {
     const input = semaphoreLessonInput(DEFAULT_SEM);
     expect(input.actors.length).toBe(7);
-    expect(input.actors[0].analogyName).toBe('Father');
+    expect(input.actors[0].analogyName).toBe('Abbu');
     expect(input.analogy?.resourceLabel).toContain('BOARD');
   });
 
@@ -119,10 +119,10 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
   it('analogy, concept and morph copy contain no bare outcome number the playground can change', () => {
     const strip = (s: string): string => s.replace(/slides?\s*\d[\d–-]*/gi, '');
     const digits = (s: string): string[] => [...strip(s).matchAll(/\d+/g)].map((m) => m[0]);
-    // the analogy names no count at all — the lot slider owns the number
+    // the analogy names no count at all, the lot slider owns the number
     expect(digits(lesson15.analogy.text)).toEqual([]);
     // concept/morph name only the slider endpoints (five/one) and the slide
-    // number — never a live outcome
+    // number, never a live outcome
     for (const copy of [lesson15.concept, lesson15.morphReveals]) {
       for (const d of digits(copy)) {
         expect(['5', '22', '1'].includes(d)).toBe(true);
@@ -130,7 +130,7 @@ describe('Lesson 15 · copy agrees with the mechanism', () => {
     }
   });
 
-  it('the negative-count claim is conditional on overflow — true in every state', () => {
+  it('the negative-count claim is conditional on overflow, true in every state', () => {
     expect(lesson15.analogy.text).toMatch(/When every spot is taken|past zero/i);
     expect(lesson15.concept).toMatch(/negative|waiting|bench|token/i);
   });
@@ -159,12 +159,57 @@ describe('Lesson 15 · lesson wiring', () => {
     expect(lesson15.slug).toBe('lesson-15');
   });
 
-  it('opens on five spots with seven contenders — overflow is one run away', () => {
+  it('opens on five spots with seven contenders, overflow is one run away', () => {
     expect(lesson15Input.params).toStrictEqual(DEFAULT_SEM);
     expect(DEFAULT_SEM.initial).toBe(5);
     const run = semaphoreRun(lesson15Input.params);
     expect(run.steps.some((s) => s.value < 0)).toBe(true);
     expect(lesson15.input.events.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Lesson 15 · captions follow the lens', () => {
+  it('every step of every reachable configuration speaks both lenses, within the rail', () => {
+    for (const initial of [SEM_RANGES.initial.min, DEFAULT_SEM.initial, SEM_RANGES.initial.max]) {
+      for (const mode of ['spin', 'block'] as const) {
+        for (const mistake of ['none', 'swap', 'double', 'omit'] as const) {
+          const steps = semaphoreSteps({ initial, mode, mistake });
+          for (const s of steps) {
+            expect(s.caption.length, s.caption).toBeLessThanOrEqual(320);
+            expect(s.caption.length).toBeGreaterThan(0);
+            expect(s.analogyCaption, `${initial}/${mode}/${mistake}: ${s.caption}`).toBeDefined();
+            expect((s.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+            expect((s.analogyCaption ?? '').length).toBeGreaterThan(0);
+          }
+        }
+      }
+    }
+  });
+
+  it('mechanism captions carry the count transition and the wait/signal name', () => {
+    const steps = semaphoreSteps(DEFAULT_SEM);
+    const first = steps[1];
+    expect(first.caption).toMatch(/executes wait\(\): count 5 → 4/);
+    const waking = steps.find((s) => s.caption.includes('A waiter is woken'));
+    expect(waking, 'the intact run ends with a wakeup').toBeDefined();
+    // parking voice for the release beat, mechanism voice names who woke
+    expect(waking!.analogyCaption).toMatch(/leaves a spot|woken/);
+    expect(waking!.caption).toMatch(/A waiter is woken: T\d/);
+  });
+
+  it('each misuse names its own mechanism diagnosis', () => {
+    const swap = semaphoreSteps({ ...DEFAULT_SEM, mistake: 'swap' });
+    expect(swap.at(-1)!.caption).toMatch(/misused the semaphore/);
+    const double = semaphoreSteps({ ...DEFAULT_SEM, mistake: 'double' });
+    expect(double.at(-1)!.caption).toMatch(/misused the semaphore/);
+    const omit = semaphoreSteps({ ...DEFAULT_SEM, mistake: 'omit' });
+    expect(omit.at(-1)!.caption).toMatch(/This is deadlock/);
+    expect(omit.at(-1)!.analogyCaption).toMatch(/deadlocks the lot/);
+    expect(omit.some((s) => s.caption.includes('omits signal()'))).toBe(true);
+    // spin and block describe the same count with the right waiting verb
+    const spin = semaphoreSteps({ ...DEFAULT_SEM, mode: 'spin' });
+    expect(spin.some((s) => s.caption.includes('spins on the count'))).toBe(true);
+    expect(spin.every((s) => !s.caption.includes('blocks on the bench'))).toBe(true);
   });
 });
 
@@ -197,7 +242,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     host.remove();
     return steps;
   };
-  // A step where the lot holds AND waits — wide holders against narrow waiting.
+  // A step where the lot holds AND waits, wide holders against narrow waiting.
   const occupiedStep = (): number =>
     mountSteps().findIndex((s) => s.state.holders.length > 0 && s.state.waiting.length > 0);
 
@@ -212,8 +257,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     const step = occupiedStep();
     expect(step).toBeGreaterThanOrEqual(0);
     const states = mountSteps()[step].state;
-    // Crowded lots shrink to fit, but the holder:waiter RATIO survives —
-    // assert the ratio, not the absolute pixel constants.
+    // Crowded lots shrink to fit, but the holder:waiter RATIO survives, // assert the ratio, not the absolute pixel constants.
     const w = widthsAt(1, step);
     const holder = states.holders[0];
     const waiter = states.waiting[0];
@@ -221,7 +265,7 @@ describe('Lesson 15 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w[holder]).toBeGreaterThan(w[waiter]);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const step = occupiedStep();
     for (const id of IDS) {
       const a = widthsAt(0, step)[id];

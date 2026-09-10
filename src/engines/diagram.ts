@@ -30,6 +30,8 @@ export interface DiagramConnection {
 
 export interface DiagramReveal {
   caption: string;
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   highlightNodeIds: string[];
   activeNodeIds?: string[];
   connectionIds?: string[];
@@ -84,6 +86,7 @@ export class DiagramEngine extends AnimationEngine<DiagramInput, DiagramState> {
       steps.push({
         t: i * 1.0,
         caption: rev.caption,
+        analogyCaption: rev.analogyCaption,
         highlight: rev.highlightNodeIds,
         state: {
           stepIndex: i,

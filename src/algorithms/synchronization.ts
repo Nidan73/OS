@@ -1,4 +1,4 @@
-// src/algorithms/synchronization.ts — Pure algorithms for synchronization & real-time latency (§2.1)
+// src/algorithms/synchronization.ts. Pure algorithms for synchronization & real-time latency (§2.1)
 
 // ── 1. Real-Time Latency & Deadline Evaluation (L9, Units 27–30) ──
 
@@ -59,7 +59,7 @@ export interface RaceSimulationResult {
 /**
  * The register-level instruction sequences simulateRaceCondition actually
  * executes, exported so a lesson's displayed instruction text is bound to
- * the simulation — the two cannot drift.
+ * the simulation, the two cannot drift.
  */
 export const RACE_INSTRUCTIONS: { T1: string[]; T2: string[] } = {
   T1: ["register1 = counter", "register1 = register1 + 1", "counter = register1"],
@@ -222,7 +222,7 @@ export function simulatePeterson(
     steps.push({
       step: s++,
       thread: 1,
-      action: "T1 enters CS (sees flag[0]==false) — VIOLATION",
+      action: "T1 enters CS (sees flag[0]==false). VIOLATION",
       flag0,
       flag1,
       turn,
@@ -411,7 +411,7 @@ export function simulateTestAndSetLock(atomic: boolean): AtomicTestResult {
  * place only if *value == expected. Atomic (fused): T1 compares live 0
  * against expected 0, swaps to 1 and enters; T2 compares live 1 against
  * expected 0 and refuses. Split (check-then-act): both threads check 0
- * before either acts, so both write 1 and both enter — the change slips
+ * before either acts, so both write 1 and both enter, the change slips
  * through between the check and the act.
  */
 export function simulateCompareAndSwap(atomic: boolean): AtomicTestResult {
@@ -474,7 +474,7 @@ export interface AtomicTraceResult {
 
 /**
  * The full instruction-level story of two threads racing for one lock, as an
- * explicit script per (mechanism, atomicity) combination — the same style as
+ * explicit script per (mechanism, atomicity) combination, the same style as
  * simulatePeterson's scripts. TAS follows deck slide 8 (boolean lock, spin
  * until test_and_set reads free); CAS follows slide 10 (swap 0 for 1 only on
  * a live match). The split versions separate the read from the write so both
@@ -520,31 +520,31 @@ export function simulateAtomicSteps(
   };
 
   if (mechanism === "tas" && atomic) {
-    push("—", "free", 0, [], [], "The key hangs on the hook. The lock reads free and nobody holds it.");
-    push("T1", "acquire", 1, ["T1"], [], "T1 looks and grabs in one motion — the lock read free, so T1 steps in.");
+    push(", ", "free", 0, [], [], "The key hangs on the hook. The lock reads free and nobody holds it.");
+    push("T1", "acquire", 1, ["T1"], [], "T1 looks and grabs in one motion, the lock read free, so T1 steps in.");
     push("T2", "spin", 1, ["T1"], ["T2"], "T2 jiggles the handle: still held. T2 waits and checks again.");
     push("T1", "release", 0, [], ["T2"], "T1 hangs the key back. The lock reads free.");
-    push("T2", "acquire", 1, ["T2"], [], "T2's next check reads free — T2 steps in, first in line, handed the key directly.", { handoffTo: "T2" });
+    push("T2", "acquire", 1, ["T2"], [], "T2's next check reads free. T2 steps in, first in line, handed the key directly.", { handoffTo: "T2" });
   } else if (mechanism === "tas" && !atomic) {
-    push("—", "free", 0, [], [], "The key hangs on the hook. The lock reads free and nobody holds it.");
+    push(", ", "free", 0, [], [], "The key hangs on the hook. The lock reads free and nobody holds it.");
     push("T1", "read", 0, [], [], "T1 looks at the hook: the key is there.", { snapshot: 0 });
-    push("T2", "read", 0, [], [], "T2 looks: the key is still there — T1 looked but hasn't grabbed.", { snapshot: 0 });
+    push("T2", "read", 0, [], [], "T2 looks: the key is still there. T1 looked but hasn't grabbed.", { snapshot: 0 });
     push("T1", "write", 1, ["T1"], [], "T1 grabs on its earlier look and steps in.");
-    push("T2", "write", 1, ["T1", "T2"], [], "T2 grabs on its stale look — and steps in too. Two holders, one key.");
+    push("T2", "write", 1, ["T1", "T2"], [], "T2 grabs on its stale look, and steps in too. Two holders, one key.");
     push("T2", "verdict", 1, ["T1", "T2"], [], "The meter reads held, yet the room holds two. That disagreement is the corruption.");
   } else if (mechanism === "cas" && atomic) {
-    push("—", "free", 0, [], [], "The tag reads 0. Nobody holds the lock.");
-    push("T1", "swap", 1, ["T1"], [], "T1 compares: the lock still reads 0 — swaps in 1 and steps in.");
-    push("T2", "compare", 1, ["T1"], ["T2"], "T2 compares: the lock reads 1, not 0 — the swap refuses, and T2 waits.");
+    push(", ", "free", 0, [], [], "The tag reads 0. Nobody holds the lock.");
+    push("T1", "swap", 1, ["T1"], [], "T1 compares: the lock still reads 0, swaps in 1 and steps in.");
+    push("T2", "compare", 1, ["T1"], ["T2"], "T2 compares: the lock reads 1, not 0, the swap refuses, and T2 waits.");
     push("T1", "release", 0, [], ["T2"], "T1 writes the lock back to 0.");
-    push("T2", "swap", 1, ["T2"], [], "T2 compares again: 0 as expected — swaps and steps in, first in line.", { handoffTo: "T2" });
+    push("T2", "swap", 1, ["T2"], [], "T2 compares again: 0 as expected, swaps and steps in, first in line.", { handoffTo: "T2" });
   } else {
-    push("—", "free", 0, [], [], "The tag reads 0. Nobody holds the lock.");
+    push(", ", "free", 0, [], [], "The tag reads 0. Nobody holds the lock.");
     push("T1", "check", 0, [], [], "T1 checks the tag: 0.", { snapshot: 0 });
-    push("T2", "check", 0, [], [], "T2 checks the tag: still 0 — T1 hasn't acted.", { snapshot: 0 });
+    push("T2", "check", 0, [], [], "T2 checks the tag: still 0. T1 hasn't acted.", { snapshot: 0 });
     push("T1", "act", 1, ["T1"], [], "T1 acts on its check: writes 1 and steps in.");
     push("T2", "act", 1, ["T1", "T2"], [], "T2 acts on its stale check: writes 1 and steps in too.");
-    push("T2", "verdict", 1, ["T1", "T2"], [], "The tag reads claimed — twice. The change slipped through between check and act.");
+    push("T2", "verdict", 1, ["T1", "T2"], [], "The tag reads claimed, twice. The change slipped through between check and act.");
   }
 
   return {
@@ -571,7 +571,7 @@ export interface AtomicIncrementResult {
  * Deck slides 12–13: increment() retried through compare_and_swap until the
  * swap lands. Two threads increment once from 0. The plain version snapshots
  * a stale value and one update never lands; the CAS version's second thread
- * sees its swap refused, re-reads, and retries — so nothing is lost. The
+ * sees its swap refused, re-reads, and retries, so nothing is lost. The
  * retry count is executed, not asserted: it falls out of the interleaving.
  */
 export function simulateAtomicIncrement(): AtomicIncrementResult {
@@ -761,10 +761,10 @@ const CS_PROCS = ["P1", "P2", "P3"];
 /**
  * Simulates three processes taking turns through entry / critical / exit /
  * remainder under one protocol with exactly one guarantee disabled.
- * 'none'    — intact protocol: one occupant, empty room admits, FIFO order.
- * 'mutex'   — entry never checks the lock, so occupants overlap.
- * 'progress'— exit leaves the lock engaged: empty room, queue waits forever.
- * 'bounded' — the process that just exited may re-enter ahead of the queue.
+ * 'none', intact protocol: one occupant, empty room admits, FIFO order.
+ * 'mutex', entry never checks the lock, so occupants overlap.
+ * 'progress', exit leaves the lock engaged: empty room, queue waits forever.
+ * 'bounded', the process that just exited may re-enter ahead of the queue.
  * Every violation flag is computed from the trace, never asserted.
  */
 export function simulateCriticalSection(broken: CSGuarantee = "none"): CSResult {
@@ -825,10 +825,10 @@ export function simulateCriticalSection(broken: CSGuarantee = "none"): CSResult 
         lockCount++;
         if (broken === "mutex") {
           return inside().length > 1
-            ? `${p} walks in without checking the lock — ${inside().length} inside at once!`
+            ? `${p} walks in without checking the lock, ${inside().length} inside at once!`
             : `${p} walks in without checking the lock.`;
         }
-        return `${p} enters — the room was free.`;
+        return `${p} enters, the room was free.`;
       }
       case "critical":
         phases[p] = "exit";
@@ -836,7 +836,7 @@ export function simulateCriticalSection(broken: CSGuarantee = "none"): CSResult 
       case "exit":
         phases[p] = "remainder";
         if (broken === "progress") {
-          return `${p} returns to their seat — but leaves the lock engaged!`;
+          return `${p} returns to their seat, but leaves the lock engaged!`;
         }
         lockCount = Math.max(0, lockCount - 1);
         return `${p} releases the room and returns to their seat.`;
@@ -946,20 +946,20 @@ export function simulateReorderingOutput(reordered = false): PublicationResult {
 
   if (reordered) {
     flag = true;
-    push("T2", "flag = true", "T2 raises the flag first — the store to x is still in flight.");
+    push("T2", "flag = true", "T2 raises the flag first, the store to x is still in flight.");
     push("T1", "while (!flag); passes", "T1 sees the flag and leaves the spin loop.");
     printed = x;
-    push("T1", "print x", `T1 prints x — it is still ${x}. The announcement ran ahead of the fact.`);
+    push("T1", "print x", `T1 prints x, it is still ${x}. The announcement ran ahead of the fact.`);
     x = 100;
-    push("T2", "x = 100", "T2 finally stores 100 into x — too late for the print.");
+    push("T2", "x = 100", "T2 finally stores 100 into x, too late for the print.");
   } else {
     x = 100;
     push("T2", "x = 100", "T2 stores 100 into x.");
     flag = true;
-    push("T2", "flag = true", "T2 raises the flag — after the fact it announces.");
+    push("T2", "flag = true", "T2 raises the flag, after the fact it announces.");
     push("T1", "while (!flag); passes", "T1 sees the flag and leaves the spin loop.");
     printed = x;
-    push("T1", "print x", `T1 prints x — the store had already landed: ${printed}.`);
+    push("T1", "print x", `T1 prints x, the store had already landed: ${printed}.`);
   }
 
   const intact = reordered ? simulateReorderingOutput(false) : null;
@@ -989,7 +989,7 @@ export interface BarrierEvent {
   /** the instruction or micro-event, in the deck's own wording where it has one */
   action: string;
   kind: BarrierEventKind;
-  /** globally visible memory — what the OTHER processor can actually read */
+  /** globally visible memory, what the OTHER processor can actually read */
   visible: { x: number; flag: number };
   /** stores issued by T2 that have not reached T1 yet */
   pending: PendingStore[];
@@ -1018,7 +1018,7 @@ export interface BarrierRun {
  * ordered model (slide 4) a store by one processor is immediately visible to
  * all others, so nothing can go wrong. Under a weakly ordered model a store
  * sits in the issuing processor's buffer and reaches the others later, in an
- * order the program does not control — `drainOrder` is that freedom made
+ * order the program does not control, `drainOrder` is that freedom made
  * explicit rather than hidden. A memory barrier forces everything already
  * issued to become visible before execution continues, which is what makes
  * the deck's fix work.
@@ -1068,11 +1068,11 @@ export function simulateMemoryBarrier(
       return;
     }
     buffer.push({ name, value });
-    push('T2', text, 'buffer', `T2 issues ${name} = ${value}, but it sits in the buffer — nobody else can see it yet.`);
+    push('T2', text, 'buffer', `T2 issues ${name} = ${value}, but it sits in the buffer, nobody else can see it yet.`);
   };
 
   const barrier = (actor: 'T1' | 'T2'): void => {
-    push(actor, 'memory_barrier()', 'barrier', `${actor} hits the barrier — nothing goes further until what is already issued is visible.`);
+    push(actor, 'memory_barrier()', 'barrier', `${actor} hits the barrier, nothing goes further until what is already issued is visible.`);
     while (drainOne()) {
       /* drain in issue order until the buffer is empty */
     }
@@ -1097,11 +1097,11 @@ export function simulateMemoryBarrier(
   while (!passed && guard++ < 32) {
     // T1's tick: read the flag
     if (visible.flag !== 0) {
-      push('T1', 'while (!flag) — passes', 'pass', 'T1 sees the flag raised and leaves the spin loop.');
+      push('T1', 'while (!flag), passes', 'pass', 'T1 sees the flag raised and leaves the spin loop.');
       passed = true;
       break;
     }
-    push('T1', 'while (!flag)', 'spin', 'T1 reads the flag — still down, so it goes round the loop again.');
+    push('T1', 'while (!flag)', 'spin', 'T1 reads the flag, still down, so it goes round the loop again.');
 
     // T2's tick: one instruction, or one buffered store reaching the others
     if (t2pc < t2Program.length) {
@@ -1120,7 +1120,7 @@ export function simulateMemoryBarrier(
       barrier('T1');
     }
     printed = visible.x;
-    push('T1', 'print x', 'print', `T1 prints x — what it can actually see is ${printed}.`);
+    push('T1', 'print x', 'print', `T1 prints x, what it can actually see is ${printed}.`);
   }
 
   // anything still in flight lands after the fact, which is the whole failure

@@ -14,9 +14,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L23 · Guessing before you build (ATLAS units 31–33, Lecture 7 slides 24–30)
 //
-// LESSONS.md: L23 — units 31–33. Deterministic modelling → queueing models →
+// LESSONS.md: L23, units 31–33. Deterministic modelling → queueing models →
 //
-// ANALOGY: mechanism-fixed — deterministic scheduling, Little's formula, and
+// ANALOGY: mechanism-fixed, deterministic scheduling, Little's formula, and
 // simulation are structurally dictated by Lecture 7 slides 24–30.
 //
 // Playground: n = λ × W computed in all three directions, drag any
@@ -25,11 +25,11 @@ import {
 // only holds for one snapshot.
 //
 // ATLAS rows (kept for provenance):
-// | 31 | gantt   | Algorithm Evaluation — Deterministic Modelling | slides 24–25
+// | 31 | gantt   | Algorithm Evaluation. Deterministic Modelling | slides 24–25
 // | 32 | diagram | Queueing Models & Little's Formula             | slides 26–27
 // | 33 | diagram | Simulation vs Real Implementation              | slides 28–30
 //
-// DECK DATA — verified against the slide images before this file was written.
+// DECK DATA, verified against the slide images before this file was written.
 // Slide 24 carries the process table as a PNG (image16), slide 25 the three
 // Gantt charts (image17/18/19). Read directly, not recalled:
 //   bursts  P1=10  P2=29  P3=3  P4=7  P5=12, all arriving at time 0
@@ -39,13 +39,13 @@ import {
 // All three reproduce exactly from src/algorithms/scheduling.ts. Nothing here
 // is typed; every figure on screen comes back through a pure function.
 //
-// SCENE: Mother is choosing the serving rule for the family's kacchi
-// restaurant. Five parties are seated at eight o'clock — the kitchen times are
+// SCENE: Ammu is choosing the serving rule for the family's kacchi
+// restaurant. Five parties are seated at eight o'clock, the kitchen times are
 // known, because she has last Friday's tickets in front of her.
 //
 // ENGINE VERDICT (a): extend GanttEngine and use its render() unmodified.
-// Unit 31 IS a Gantt comparison — the deck's own artefacts are three Gantt
-// charts over one workload — and GanttEngine already owns the carrying
+// Unit 31 IS a Gantt comparison, the deck's own artefacts are three Gantt
+// charts over one workload, and GanttEngine already owns the carrying
 // property this lesson needs. Units 32 and 33 are not timelines and are not
 // forced into one: Little's formula and the ordering sweep live in the
 // playground, which is where LESSONS.md put them.
@@ -55,17 +55,17 @@ import {
 // place in the line: the widths are equal, because a booking is a booking.
 // On the timeline that same width becomes kitchen minutes, and the engagement
 // party alone is wider than the other four together. That is deterministic
-// modelling in one gesture — the line looks fair until you redraw it against
-// time, and the 28 minutes Mother computes is a fact about this Friday's
+// modelling in one gesture, the line looks fair until you redraw it against
+// time, and the 28 minutes Ammu computes is a fact about this Friday's
 // ordering, not a fact about the rule.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DENSITY: each scenario is a complete event set. GanttEngine emits the
 // arrival frame, a dispatch and a completion beat per bar, and one closing
-// summary beat — 12 for a five-bar schedule, 18 for the eight-segment round
+// summary beat, 12 for a five-bar schedule, 18 for the eight-segment round
 // robin. This lesson splices in the tally ahead of that summary: one beat per
 // party as her waiting time is read off the chart and added to the running
-// total, then the divide. Those six are not restatements — each moves
+// total, then the divide. Those six are not restatements, each moves
 // activeProcessId to a different party and changes the running sum, and
 // together they are how slide 25's number is actually produced.
 // Totals: 18 / 18 / 24 / 18.
@@ -79,12 +79,12 @@ export const DECK_BURSTS: Record<string, number> = {
   P5: 12
 };
 
-/** Slide 24's booking order — the order the deck evaluates. */
+/** Slide 24's booking order, the order the deck evaluates. */
 export const DECK_ORDER = ['P1', 'P2', 'P3', 'P4', 'P5'];
 
 /**
  * The same five parties with the same five orders, booked shortest-first.
- * Chosen because it is the one ordering in which FCFS ties the optimum — see
+ * Chosen because it is the one ordering in which FCFS ties the optimum, see
  * SCENARIOS below for why that is the honest choice and not a flattering one.
  */
 export const ASCENDING_ORDER = ['P3', 'P4', 'P1', 'P5', 'P2'];
@@ -143,7 +143,7 @@ export const SCENARIOS: Record<Lesson23Scenario, ScenarioSpec> = {
   rr: { order: DECK_ORDER, algorithm: 'rr', rule: 'give every table ten minutes, then move on' },
   // Unit 33's point, made without changing a single order size: the same five
   // parties, the same five kitchen times, booked in a different sequence. FCFS
-  // falls from 28 to 13 and RR from 23 to 15 — the ranking between them flips.
+  // falls from 28 to 13 and RR from 23 to 15, the ranking between them flips.
   // Nothing about the algorithms changed; only the snapshot did.
   reorder: { order: ASCENDING_ORDER, algorithm: 'fcfs', rule: 'serve them in the order they booked' }
 };
@@ -179,7 +179,7 @@ export function scenarioInput(id: Lesson23Scenario): GanttInput {
   };
 }
 
-/** The three rules run over one workload — slide 25, computed. */
+/** The three rules run over one workload, slide 25, computed. */
 export function comparisonFor(id: Lesson23Scenario): AlgorithmVerdict[] {
   return deterministicComparison(workloadOf(SCENARIOS[id].order), DECK_QUANTUM);
 }
@@ -192,7 +192,7 @@ export function verdictFor(id: Lesson23Scenario): AlgorithmVerdict {
   return found;
 }
 
-/** Slides 28–30 — every ordering of the same five tickets, not just this one. */
+/** Slides 28–30, every ordering of the same five tickets, not just this one. */
 export function simulation(): SimulationRun {
   return simulateOrderings(Object.values(DECK_BURSTS), DECK_QUANTUM);
 }
@@ -218,8 +218,7 @@ export class Lesson23GanttEngine extends GanttEngine {
     if (!result || steps.length === 0) return steps;
 
     // GanttEngine closes every schedule with its own summary beat, which
-    // states the average outright. The tally has to land BEFORE that beat —
-    // otherwise the lesson announces 28 and then spends six frames deriving a
+    // states the average outright. The tally has to land BEFORE that beat, // otherwise the lesson announces 28 and then spends six frames deriving a
     // number the student has already been given. Splice, do not append.
     const summary = steps[steps.length - 1];
     const body = steps.slice(0, -1);
@@ -238,7 +237,8 @@ export class Lesson23GanttEngine extends GanttEngine {
       t += 0.8;
       tally.push({
         t: Number(t.toFixed(2)),
-        caption: `${PARTY_NAMES[id]} waited ${wait} min before the food came. Running total ${running}.`.slice(0, 120),
+        caption: `${id} waiting time = ${wait}. Running total ${running}.`.slice(0, 320),
+        analogyCaption: `${PARTY_NAMES[id]} waited ${wait} minutes before the food came. Running total ${running}.`.slice(0, 320),
         highlight: [id],
         state: {
           ...last.state,
@@ -251,9 +251,13 @@ export class Lesson23GanttEngine extends GanttEngine {
     t += 0.8;
     tally.push({
       t: Number(t.toFixed(2)),
-      caption: `${running} minutes of waiting across ${order.length} tables — ${result.avgWaiting} minutes each.`.slice(
+      caption: `Total waiting time ${running} over ${order.length} processes gives an average waiting time of ${result.avgWaiting}. That is the figure deterministic modelling produces, and it holds for this workload only.`.slice(
         0,
-        120
+        320
+      ),
+      analogyCaption: `${running} minutes of waiting across ${order.length} tables, so ${result.avgWaiting} minutes each. That is the number Ammu can prove, for last Friday.`.slice(
+        0,
+        320
       ),
       highlight: order,
       state: {
@@ -275,7 +279,7 @@ export class Lesson23GanttEngine extends GanttEngine {
     this.scoreboardHost = scoreboardHost ?? null;
     host.innerHTML = `
       <div>
-        <h3 style="font-size: 0.78rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 3px; color: var(--ink);">Try a rule — then try another Friday</h3>
+        <h3 style="font-size: 0.78rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 3px; color: var(--ink);">Try a rule, then try another Friday</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(SCENARIO_LABELS) as Lesson23Scenario[])
             .map(
@@ -289,7 +293,7 @@ export class Lesson23GanttEngine extends GanttEngine {
 
       <div style="margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--hairline);">
         <div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-          <h4 style="font-size: 0.76rem; font-weight: 600; margin: 0; color: var(--ink);">At the counter — n = &lambda; &times; W</h4>
+          <h4 style="font-size: 0.76rem; font-weight: 600; margin: 0; color: var(--ink);">At the counter, n = &lambda; &times; W</h4>
           <div style="display: flex; gap: 3px;">
             ${(['n', 'lambda', 'w'] as const)
               .map(
@@ -400,7 +404,7 @@ export class Lesson23GanttEngine extends GanttEngine {
       const derived = l.solvedFor === key;
       return `
         <div style="flex: 1 1 84px; padding: 2px 5px; border: 1px solid ${derived ? 'var(--accent)' : 'var(--hairline)'}; border-radius: var(--rounded-lg, 12px); background: ${derived ? 'var(--surface-alt)' : 'transparent'};">
-          <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">${symbol} — ${meaning}</div>
+          <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">${symbol}, ${meaning}</div>
           <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 1px;">
             ${
               derived
@@ -428,7 +432,7 @@ export class Lesson23GanttEngine extends GanttEngine {
         try {
           this.setLittleTerm(input.dataset.term as 'n' | 'lambda' | 'w', v);
         } catch {
-          /* division by zero — leave the panel as it was */
+          /* division by zero, leave the panel as it was */
         }
       });
     });
@@ -509,12 +513,17 @@ export const lesson23: Lesson<GanttInput, GanttState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'Mother has last Friday\'s tickets in front of her and five tables seated at eight — a tea and a shingara, two kacchi, an engagement party for twenty. She can settle the argument exactly for that one night, or she can work in averages that hold for every night, or she can just try the new rule on real customers and find out.'
+    text: 
+      'Ammu wants to change how Yum Cha serves on a Friday, and Abbu wants to know why she thinks the new way is better.\n\n' +
+      'She has last Friday\'s tickets in a drawer. Five tables, and she knows exactly how long the kitchen took over each one, because she was there. So she can settle it properly: take those five tickets, work through them under each rule in turn, and add up how long people waited. No opinions, just arithmetic.\n\n' +
+      'She does it, and one rule wins clearly.\n\n' +
+      'Then Abbu asks the question that makes this a lecture rather than an afternoon. He asks whether it would still win next Friday.\n\n' +
+      'And she cannot say. What she has proved is a fact about one particular Friday, in one particular order, with those exact five tickets. Change nothing except the order the same five tables happened to book in, and the answer moves. One of the rules barely moves at all. The others swing wildly.'
   },
   concept:
-    'Choosing a scheduling algorithm means fixing your criteria first and then evaluating candidates against them. Deterministic modelling takes one predetermined workload and computes each algorithm\'s performance exactly — on the deck\'s five processes it gives FCFS 28 ms, non-preemptive SJF 13 ms and round robin 23 ms. It is simple and fast, and its weakness is in the definition: it needs exact numbers as input and its answer applies only to those inputs. Queueing models go the other way, describing arrivals and bursts probabilistically and computing averages; Little\'s formula, n = λ × W, says that in steady state the average queue length is the arrival rate times the average wait, and it holds for any scheduling algorithm and any arrival distribution. Simulation buys back accuracy by programming a model of the system with the clock as a variable, driven by random numbers or by trace tapes of real events, at much higher cost. Implementation is more accurate still and costs the most of all, and even then environments vary — which is why the most flexible schedulers can be tuned per site.',
+    'Choosing a scheduling algorithm means fixing your criteria first and then evaluating candidates against them. Deterministic modelling takes one predetermined workload and computes each algorithm\'s performance exactly, on the deck\'s five processes it gives FCFS 28 ms, non-preemptive SJF 13 ms and round robin 23 ms. It is simple and fast, and its weakness is in the definition: it needs exact numbers as input and its answer applies only to those inputs. Queueing models go the other way, describing arrivals and bursts probabilistically and computing averages; Little\'s formula, n = λ × W, says that in steady state the average queue length is the arrival rate times the average wait, and it holds for any scheduling algorithm and any arrival distribution. Simulation buys back accuracy by programming a model of the system with the clock as a variable, driven by random numbers or by trace tapes of real events, at much higher cost. Implementation is more accurate still and costs the most of all, and even then environments vary, which is why the most flexible schedulers can be tuned per site.',
   morphReveals:
-    'At the door every party takes up one place in the line: the widths are equal, because a booking is a booking and one table is one table. Redraw the same five on a time axis and width stops meaning a place and starts meaning kitchen minutes — the engagement party alone is almost as wide as the other four together (29 vs 32 minutes), and the little tea order that looked equal at the door is a sliver. That change of meaning is the whole of deterministic modelling: it is only once width is time that the 28 minutes exists at all, and it is a fact about this Friday\'s ordering, not about the rule.',
+    'At the door every party takes up one place in the line: the widths are equal, because a booking is a booking and one table is one table. Redraw the same five on a time axis and width stops meaning a place and starts meaning kitchen minutes, the engagement party alone is almost as wide as the other four together (29 vs 32 minutes), and the little tea order that looked equal at the door is a sliver. That change of meaning is the whole of deterministic modelling: it is only once width is time that the 28 minutes exists at all, and it is a fact about this Friday\'s ordering, not about the rule.',
   morphMode: 'morph',
   analogyMapping: [
     'A table seated at eight ➔ a process arriving at time 0',

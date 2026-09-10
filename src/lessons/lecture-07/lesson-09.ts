@@ -13,29 +13,28 @@ import {
 } from '../../algorithms/synchronization.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DENSITY (Task A audit): 12 reveals — the leaving frame, the doorbell call
+// DENSITY (Task A audit): 12 reveals, the leaving frame, the doorbell call
 // and the state save (one discrete phase each), the corridor blocked and the
 // corridor clearing (slide 21's phase split into its two states), the staged
-// father and the handover (arrival distinct from handover), the dispatch
+// Abbu and the handover (arrival distinct from handover), the dispatch
 // subtotal the deck names, the held school run and its run (staging distinct
 // from running), the stacked-total accumulation, and the computed verdict.
 // "Arrival" and "ringing" differ the way L8's balancer tick and move differ:
 // naming the start of a mechanism event is not the event. The knock-on slide-20 rescue
 // run (soft deadline, still a failure on retry) is a different verdict over
-// the same budget — told by the playground burst, not a thirteenth reveal.
+// the same budget, told by the playground burst, not a thirteenth reveal.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CANVAS_W = 720;
 // ENGINE VERDICT (a): extend DiagramEngine and use its render() unmodified.
-// Why: the lesson IS a stacked bar whose segment widths encode latencies —
-// exactly what DiagramEngine interpolates (analogy x/y/width/height fields
+// Why: the lesson IS a stacked bar whose segment widths encode latencies, // exactly what DiagramEngine interpolates (analogy x/y/width/height fields
 // → mechanism x/y/width/height, linear in `view`, rendered as [id^="bar-*"]
 // entities). No shared engine fits better; a standalone would reimplement
 // this interpolation for no gain.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position). In
-// the family scene a box is sized like the thing it pictures — the car door is
-// tall, the corridor crowd is wide — and where it stands says nothing about time. On
+// the family scene a box is sized like the thing it pictures, the car door is
+// tall, the corridor crowd is wide, and where it stands says nothing about time. On
 // the budget bar width stops meaning size and starts meaning milliseconds,
 // and left-to-right stops meaning standing room and starts meaning running
 // order. Every slider below changes a length the learner drags until the
@@ -44,7 +43,7 @@ export const CANVAS_W = 720;
 
 export const CANVAS_H = 260;
 
-/** Latency budget under test — every number below is an input or computed. */
+/** Latency budget under test, every number below is an input or computed. */
 export interface LatencyParams {
   interruptLatency: number;
   conflictPhase: number;
@@ -91,7 +90,7 @@ export const MAX_TOTAL =
   PARAM_RANGES.dispatchPhase.max +
   PARAM_RANGES.executionTime.max;
 
-/** Pixels per millisecond — computed by division, the only scale in the lesson. */
+/** Pixels per millisecond, computed by division, the only scale in the lesson. */
 export const PX_PER_MS = TRACK_W / MAX_TOTAL;
 
 export type NodeId = 'alarm' | 'aisle' | 'switch' | 'run' | 'slack' | 'gate';
@@ -105,7 +104,7 @@ export interface Box {
 
 /**
  * Analogy layout, authored independently FIRST (§3C.2a rule 1): the family
- * scene as it looks — doorbell high left, father high right, corridor
+ * scene as it looks, doorbell high left, Abbu high right, corridor
  * crowd mid-floor, school run low, car door tall at the right, spare-minutes
  * bench off to the side. Position here is PLACE; size is how big the thing
  * looks. Neither encodes any latency.
@@ -122,13 +121,13 @@ const ANALOGY_LAYOUT: Record<NodeId, Box> = {
 const ANALOGY_LABELS: Record<NodeId, { label: string; sub: string }> = {
   alarm: { label: 'Doorbell', sub: 'hear it' },
   aisle: { label: 'Crowded corridor', sub: 'clear it' },
-  switch: { label: 'Father', sub: 'takes over' },
+  switch: { label: 'Abbu', sub: 'takes over' },
   run: { label: 'School run', sub: 'green road' },
   slack: { label: 'Spare minutes', sub: 'buffer' },
   gate: { label: 'Car door', sub: 'leaves on time' }
 };
 
-/** Live breakdown — computed on every call, never cached, never typed. */
+/** Live breakdown, computed on every call, never cached, never typed. */
 export function realtimeBreakdown(p: LatencyParams): LatencyBreakdown {
   return evaluateRealtimeDeadline(
     p.interruptLatency,
@@ -175,7 +174,7 @@ export function mechanismBox(id: NodeId, p: LatencyParams): Box {
 const lerp = (a: number, b: number, v: number): number => a + (b - a) * v;
 
 /**
- * Geometry of every morphable entity at any view — pure, exported for tests.
+ * Geometry of every morphable entity at any view, pure, exported for tests.
  * DiagramEngine.render() performs exactly this interpolation; the function
  * exists so the §3C.2c trio can assert on it without a DOM.
  */
@@ -241,88 +240,92 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
     verdict
   };
   const finalCaption = b.met
-    ? `Total ${b.totalResponseTime}ms lands inside ${b.deadline}ms with ${b.slackTime}ms to spare — the car is still waiting.`
-    : `Total ${b.totalResponseTime}ms overshoots ${b.deadline}ms by ${Math.abs(b.slackTime)}ms — the car has already left.`;
+    ? `Total ${b.totalResponseTime}ms lands inside ${b.deadline}ms with ${b.slackTime}ms to spare, the car is still waiting.`
+    : `Total ${b.totalResponseTime}ms overshoots ${b.deadline}ms by ${Math.abs(b.slackTime)}ms, the car has already left.`;
+  const finalMechanism = b.met
+    ? `Total response time ${b.totalResponseTime}ms against a ${b.deadline}ms deadline: met, with ${b.slackTime}ms of slack.`
+    : `Total response time ${b.totalResponseTime}ms against a ${b.deadline}ms deadline: missed by ${Math.abs(b.slackTime)}ms.`;
   return [
     {
-      caption: `The car leaves at ${b.deadline}ms. Everything the system does must fit left of it — length is time.`,
+      caption: `The deadline is ${b.deadline}ms. Every phase of the response must fit inside it, and horizontal length is time.`, analogyCaption: `The car leaves at ${b.deadline}ms. Everything the system does must fit left of it, length is time.`,
       highlightNodeIds: ['gate', 'slack'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: `Leaves at ${b.deadline}ms`,
       metrics
     },
     {
-      caption: `The doorbell rings — the interrupt arrives and the clock starts.`,
+      caption: `The interrupt arrives. This is where the response time begins to be counted.`, analogyCaption: `The doorbell rings, the interrupt arrives and the clock starts.`,
       highlightNodeIds: ['alarm'],
       activeNodeIds: ['alarm'],
       badgeText: `Call ${b.interruptLatency}ms`,
       metrics
     },
     {
-      caption: `Noticing it and saving state already eats ${b.interruptLatency}ms of the budget.`,
+      caption: `INTERRUPT LATENCY: ${b.interruptLatency}ms to recognise the interrupt and save the current state, before any handling starts.`, analogyCaption: `Noticing it and saving state already eats ${b.interruptLatency}ms of the budget.`,
       highlightNodeIds: ['alarm'],
       activeNodeIds: ['alarm'],
       badgeText: `Call ${b.interruptLatency}ms`,
       metrics
     },
     {
-      caption: `The corridor is still crowded — the outgoing task holds the exit.`,
+      caption: `The conflict phase has not finished: the running task still holds resources the real-time task needs.`, analogyCaption: `The corridor is still crowded, the outgoing task holds the exit.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Blocked ${b.conflictPhase}ms`,
       metrics
     },
     {
-      caption: `The corridor clears over ${b.conflictPhase}ms — preemption done, resources released.`,
+      caption: `CONFLICT PHASE: ${b.conflictPhase}ms to preempt the running task and release the resources it held.`, analogyCaption: `The corridor clears over ${b.conflictPhase}ms, preemption done, resources released.`,
       highlightNodeIds: ['aisle'],
       activeNodeIds: ['alarm', 'aisle'],
       badgeText: `Corridor ${b.conflictPhase}ms`,
       metrics
     },
     {
-      caption: `Father is ready but waiting — the corridor has not cleared yet.`,
+      caption: `The real-time task is ready but not yet dispatched.`, analogyCaption: `Abbu is ready but waiting, the corridor has not cleared yet.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle'],
-      badgeText: `Father waits`,
+      badgeText: `Abbu waits`,
       metrics
     },
     {
-      caption: `Father takes over in ${b.dispatchPhase}ms — the context switch itself.`,
+      caption: `DISPATCH PHASE: ${b.dispatchPhase}ms for the context switch to the real-time task.`, analogyCaption: `Abbu takes over in ${b.dispatchPhase}ms, the context switch itself.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Handover ${b.dispatchPhase}ms`,
       metrics
     },
     {
-      caption: `Reaching the task costs ${b.totalDispatchLatency}ms before it even starts.`,
+      caption: `DISPATCH LATENCY is conflict plus dispatch, ${b.totalDispatchLatency}ms spent before the task executes a single instruction.`, analogyCaption: `Reaching the task costs ${b.totalDispatchLatency}ms before it even starts.`,
       highlightNodeIds: ['aisle', 'switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Dispatch ${b.totalDispatchLatency}ms`,
       metrics
     },
     {
-      caption: `The school run is staged but held — the handover has not happened yet.`,
+      caption: `The task is scheduled but has not been given the processor yet.`, analogyCaption: `The school run is staged but held, the handover has not happened yet.`,
       highlightNodeIds: ['run'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Held ${b.executionTime}ms`,
       metrics
     },
     {
-      caption: `The school run takes ${b.executionTime}ms while everything yields. Priority hurries it, but the clock still rules.`,
+      caption: `The task executes for ${b.executionTime}ms. Preemptive priority gets it to the front, which buys soft real-time; it does not by itself guarantee the deadline.`, analogyCaption: `The school run takes ${b.executionTime}ms while everything yields. Priority hurries it, but the clock still rules.`,
       highlightNodeIds: ['run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run'],
       badgeText: `Run ${b.executionTime}ms`,
       metrics
     },
     {
-      caption: `Stacked end to end, the response already spans ${b.totalResponseTime}ms.`,
+      caption: `TOTAL RESPONSE TIME is interrupt latency plus dispatch latency plus execution, ${b.totalResponseTime}ms against a deadline of ${b.deadline}ms.`, analogyCaption: `Stacked end to end, the response already spans ${b.totalResponseTime}ms.`,
       highlightNodeIds: ['alarm', 'aisle', 'switch', 'run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: `Total ${b.totalResponseTime}ms`,
       metrics
     },
     {
-      caption: finalCaption,
+      caption: finalMechanism,
+      analogyCaption: finalCaption,
       highlightNodeIds: b.met ? ['gate', 'slack'] : ['gate', 'run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
       badgeText: b.met ? `Inside by ${b.slackTime}ms` : `Over by ${Math.abs(b.slackTime)}ms`,
@@ -340,21 +343,21 @@ export function realtimeLessonInput(p: LatencyParams): RealtimeInput {
     params: { ...p },
     nodes: realtimeNodes(p),
     reveals: realtimeReveals(p),
-    analogy: { domain: 'friends', title: 'School run', subtitle: 'A doorbell, a corridor, father and a leaving car' }
+    analogy: { domain: 'friends', title: 'School run', subtitle: 'A doorbell, a corridor, Abbu and a leaving car' }
   };
 }
 
 const SLIDERS: Array<{ key: ParamKey; label: string }> = [
   { key: 'interruptLatency', label: 'Doorbell delay (notice + save)' },
   { key: 'conflictPhase', label: 'Corridor clearing (preemption)' },
-  { key: 'dispatchPhase', label: 'Father handover (context switch)' },
+  { key: 'dispatchPhase', label: 'Abbu handover (context switch)' },
   { key: 'executionTime', label: 'School run (task time)' },
   { key: 'deadline', label: 'Car leaving time (deadline)' }
 ];
 
 /**
  * Lesson 9's engine, scoped to this lesson. Uses DiagramEngine.render()
- * unchanged — the lesson adds the live latency budget: sliders recompute
+ * unchanged, the lesson adds the live latency budget: sliders recompute
  * the nodes (widths = latency × scale) and the reveals, then rebuild via
  * this.setSteps(this.buildSteps(this.input)).
  */
@@ -367,7 +370,7 @@ export class RealtimeDiagramEngine extends DiagramEngine implements PlaygroundCa
     return super.buildSteps({ ...input, reveals: realtimeReveals(params) });
   }
 
-  /** The live result, computed on every call — never cached, never typed. */
+  /** The live result, computed on every call, never cached, never typed. */
   public getBreakdown(): LatencyBreakdown {
     return realtimeBreakdown((this.input as RealtimeInput).params);
   }
@@ -391,7 +394,7 @@ export class RealtimeDiagramEngine extends DiagramEngine implements PlaygroundCa
     const p = this.getParams();
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Latency budget — drag a length</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Latency budget, drag a length</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           <button id="l9-inject" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--waiting); color: var(--waiting); cursor: pointer;">🚨 Inject interrupt burst</button>
           <button id="l9-reset" type="button" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid var(--hairline); color: var(--ink); cursor: pointer;">Reset budget</button>
@@ -469,7 +472,7 @@ export class RealtimeDiagramEngine extends DiagramEngine implements PlaygroundCa
     const ok = b.met;
     const verdictColor = ok ? 'var(--running)' : 'var(--waiting)';
     const verdictBg = ok ? 'rgba(8, 127, 91, 0.12)' : 'rgba(217, 119, 6, 0.12)';
-    const verdictText = ok ? '🟢 Inside the deadline — car waits' : '🔴 Past the deadline — car left';
+    const verdictText = ok ? '🟢 Inside the deadline, car waits' : '🔴 Past the deadline, car left';
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Budget check</h3>
@@ -512,22 +515,26 @@ export const lesson09: Lesson<RealtimeInput, DiagramState> = {
   lensLabels: {
     analogy: '🚗 School run scramble',
     mechanism: '⏱️ Latency budget bar',
-    analogyTitle: 'View as a doorbell, a corridor, father and a leaving car',
+    analogyTitle: 'View as a doorbell, a corridor, Abbu and a leaving car',
     mechanismTitle: 'View as latency lengths against the leaving time'
   },
   analogy: {
     domain: 'friends',
-    text: 'The doorbell rings, the corridor fills, father pushes through — and the car still leaves on time.'
+    text: 
+      'Abbu has to leave at eight for the airport. He is standing by the door with the keys.\n\n' +
+      'The doorbell goes. It takes a moment for anyone to register it over the noise of dinner. Then someone has to actually get up, and the corridor has Afra and a chair and Pechu in it, so getting to the door means clearing a path first. Only then does the door open.\n\n' +
+      'Every one of those delays is small and every one of them is real. Add them together and they are the difference between leaving at eight and leaving at ten past. For a dinner guest ten past eight is nothing. For a flight it is the whole trip.\n\n' +
+      'That is the distinction the lecture is built on: some deadlines degrade when you miss them, and some simply fail.'
   },
   concept:
-    'A real-time system must answer before its deadline, not just eventually. The answer waits on interrupt latency (noticing the request and saving state), dispatch latency (clearing preemption and switching context), and the task’s own run time. A soft miss only degrades the trip, while a hard miss fails it outright — so the budget is a length, and the deadline is a line it must not cross.',
+    'A real-time system must answer before its deadline, not just eventually. The answer waits on interrupt latency (noticing the request and saving state), dispatch latency (clearing preemption and switching context), and the task’s own run time. A soft miss only degrades the trip, while a hard miss fails it outright, so the budget is a length, and the deadline is a line it must not cross.',
   morphReveals:
-    'At home each box is sized like the thing it pictures — the car door stands tall, the corridor crowd spreads wide — and where it stands says nothing about time. On the budget bar width stops meaning size and starts meaning milliseconds, and left-to-right stops meaning standing room and starts meaning running order: stretch any length and watch the bar chase the car.',
+    'At home each box is sized like the thing it pictures, the car door stands tall, the corridor crowd spreads wide, and where it stands says nothing about time. On the budget bar width stops meaning size and starts meaning milliseconds, and left-to-right stops meaning standing room and starts meaning running order: stretch any length and watch the bar chase the car.',
   morphMode: 'morph',
   analogyMapping: [
     'Doorbell ➔ interrupt latency (notice the request, save state)',
     'Crowded corridor ➔ conflict phase (preemption and resource release)',
-    'Father taking over ➔ dispatch phase (context switch)',
+    'Abbu taking over ➔ dispatch phase (context switch)',
     'School run ➔ real-time task execution',
     'Car leaving ➔ deadline position',
     'Spare minutes ➔ slack time before the car leaves'

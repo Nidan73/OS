@@ -10,7 +10,7 @@ export const unit: Unit<GanttInput, GanttState> = {
   engine: 'gantt',
   analogy: {
     domain: 'food',
-    text: 'A single-file food truck queue. Fair, simple, and occasionally terrible — everyone waits while the first large order cooks.'
+    text: 'A single-file food truck queue. Fair, simple, and occasionally terrible, everyone waits while the first large order cooks.'
   },
   concept: 'First-Come, First-Served (FCFS) allocates the CPU strictly in order of arrival. While straightforward and fair, it suffers from the convoy effect when a long CPU-bound process delays all subsequent short processes, resulting in high average waiting times.',
   input: {

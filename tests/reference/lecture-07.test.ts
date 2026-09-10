@@ -116,7 +116,7 @@ describe('Lecture 7 Reference Page', () => {
     expect(text).toMatch(/booth/i);
     expect(text).toMatch(/kitchen/i);
     expect(text).toMatch(/ticket|order/i);
-    expect(text).toMatch(/family|father|sister/i);
+    expect(text).toMatch(/family|Abbu|sister/i);
   });
 
   it('renders static SVG architecture and comparison diagrams', () => {

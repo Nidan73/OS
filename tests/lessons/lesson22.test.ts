@@ -10,6 +10,8 @@ import {
   nodesFor,
   runFor,
   scenarioInput,
+  abortAllTotals,
+  tallyAt,
   type Lesson22Scenario
 } from '../../src/lessons/lecture-10/lesson-22.js';
 import { recoveryRounds, selectVictim, victimCost } from '../../src/algorithms/deadlock.js';
@@ -30,7 +32,7 @@ describe('Lesson 22 · starvation is demonstrated, not asserted', () => {
     expect(run.starvedId).toBe(run.picks[0]);
   });
 
-  it('counting tows rotates the victim — nobody absorbs every one', () => {
+  it('counting tows rotates the victim, nobody absorbs every one', () => {
     const run = recoveryRounds(CANDIDATES, ROUNDS, true);
     expect(new Set(run.picks).size).toBeGreaterThan(1);
     expect(run.starved).toBe(false);
@@ -40,13 +42,13 @@ describe('Lesson 22 · starvation is demonstrated, not asserted', () => {
   it('the only difference between the two runs is the rollback term', () => {
     const off = recoveryRounds(CANDIDATES, ROUNDS, false);
     const on = recoveryRounds(CANDIDATES, ROUNDS, true);
-    // Same candidates, same rounds, same first pick — they diverge only after
+    // Same candidates, same rounds, same first pick, they diverge only after
     // the first tow is priced in.
     expect(on.picks[0]).toBe(off.picks[0]);
     expect(on.picks.slice(1)).not.toEqual(off.picks.slice(1));
   });
 
-  it('one round could never show starvation — repetition is the mechanism', () => {
+  it('one round could never show starvation, repetition is the mechanism', () => {
     expect(recoveryRounds(CANDIDATES, 1, false).starved).toBe(false);
     expect(ROUNDS).toBeGreaterThan(1);
   });
@@ -124,7 +126,7 @@ describe('Lesson 22 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     expect(ws[0]).toBe(ANALOGY_CARD_W);
   });
 
-  it('the rendered DOM actually moves — width or x differs between views', () => {
+  it('the rendered DOM actually moves, width or x differs between views', () => {
     const a = widthsAt(0, 'one-at-a-time');
     const b = widthsAt(1, 'one-at-a-time');
     const moved = Object.keys(a).some((id) => Math.abs(a[id] - b[id]) > 1);
@@ -141,7 +143,7 @@ describe('Lesson 22 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     expect(new Set(ws.map((w) => Math.round(w))).size).toBeGreaterThan(1);
   });
 
-  it('each tow makes that card wider — the reason starvation ends', () => {
+  it('each tow makes that card wider, the reason starvation ends', () => {
     const clean = nodesFor(true, { 'Flat 1': 0, 'Flat 2': 0, 'Flat 3': 0 });
     const towed = nodesFor(true, { 'Flat 1': 0, 'Flat 2': 2, 'Flat 3': 0 });
     const before = clean.find((n) => n.label === 'Flat 2')!.width;
@@ -149,7 +151,7 @@ describe('Lesson 22 · the morph is geometric, not cosmetic (§3C.2c)', () => {
     expect(after).toBeGreaterThan(before);
   });
 
-  it('geometry interpolates — every card moves monotonically between views', () => {
+  it('geometry interpolates, every card moves monotonically between views', () => {
     const a = widthsAt(0, 'one-at-a-time');
     const mid = widthsAt(0.5, 'one-at-a-time');
     const b = widthsAt(1, 'one-at-a-time');
@@ -181,10 +183,12 @@ describe('Lesson 22 · copy agrees with the mechanism', () => {
     expect(copy).not.toMatch(/§\s*\d|Atlas unit|isomorph|morphMode|SPEC\.md|ABSORBS/i);
   });
 
-  it('every caption fits the 120-char rail', () => {
+  it('every caption fits the caption rail', () => {
     for (const s of Object.keys(SCENARIO_LABELS) as Lesson22Scenario[]) {
       for (const r of scenarioInput(s).reveals) {
-        expect(r.caption.length).toBeLessThanOrEqual(120);
+        // rail is 320 since captions became story beats; see the note above
+        expect(r.caption.length).toBeLessThanOrEqual(320);
+        expect((r.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
     }
   });
@@ -206,5 +210,65 @@ describe('Lesson 22 · copy agrees with the mechanism', () => {
   it('the analogy asserts no outcome the playground can falsify', () => {
     expect(lesson22.analogy.text).not.toMatch(/\bstarv/i);
     expect(lesson22.concept.toLowerCase()).toContain('number of rollbacks');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Added after an audit. Two defects it did not cover:
+//   1. the abort-all scoreboard typed "abort cost 183 · 6 spots freed"
+//   2. render() derived card widths from getCurrentIndex(), not from state
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('L22 · the abort-all figures are computed, not typed', () => {
+  it('sums every victim cost and every held unit from CANDIDATES', () => {
+    const t = abortAllTotals();
+    expect(t.cost).toBe(CANDIDATES.reduce((s, c) => s + victimCost(c, false).total, 0));
+    expect(t.unitsFreed).toBe(CANDIDATES.reduce((s, c) => s + c.heldUnits, 0));
+    expect(t.flats).toBe(CANDIDATES.length);
+  });
+
+  it('tracks the data instead of holding the old literals', () => {
+    // the values that were hardcoded, asserted here so the deck stays honest
+    expect(abortAllTotals().cost).toBe(183);
+    expect(abortAllTotals().unitsFreed).toBe(6);
+    // and moves when the data moves, which the literal could not
+    const heavier = CANDIDATES.map((c) => ({ ...c, heldUnits: c.heldUnits + 1 }));
+    expect(abortAllTotals(heavier).unitsFreed).toBe(9);
+    expect(abortAllTotals(heavier).cost).toBeGreaterThan(183);
+  });
+
+  it('costs at least as much as any single victim, aborting all is the blunt option', () => {
+    const worst = Math.max(...CANDIDATES.map((c) => victimCost(c, false).total));
+    expect(abortAllTotals().cost).toBeGreaterThan(worst);
+  });
+});
+
+describe('L22 · rollback geometry is a pure function of the step', () => {
+  it('prices in one more rollback per beat, and every pick by the verdict', () => {
+    const run = recoveryRounds(CANDIDATES, ROUNDS, true);
+    const counted = (i: number) => Object.values(tallyAt(i)).reduce((a, b) => a + b, 0);
+    expect(counted(0)).toBe(0);
+    expect(counted(1)).toBe(0);
+    for (let i = 2; i <= run.picks.length + 1; i++) expect(counted(i)).toBe(i - 1);
+    // the verdict beat prices in every pick and does not exceed them
+    expect(counted(run.picks.length + 2)).toBe(run.picks.length);
+    expect(counted(999)).toBe(run.picks.length);
+  });
+
+  it('is pure, same index in, same tally out, and no shared mutation', () => {
+    const a = tallyAt(4);
+    const b = tallyAt(4);
+    expect(a).toEqual(b);
+    a['Flat 1'] = 99;
+    expect(tallyAt(4)['Flat 1']).not.toBe(99);
+  });
+
+  it('never charges a flat a rollback it did not take', () => {
+    const run = recoveryRounds(CANDIDATES, ROUNDS, true);
+    for (let i = 0; i < run.picks.length + 3; i++) {
+      for (const [id, n] of Object.entries(tallyAt(i))) {
+        expect(n).toBeLessThanOrEqual(run.picks.filter((p) => p === id).length);
+      }
+    }
   });
 });

@@ -15,18 +15,18 @@ import {
   type AtomicIncrementResult
 } from '../../algorithms/synchronization.js';
 
-// DENSITY (Task A audit): correct at 11 — the six trace beats (free, read,
+// DENSITY (Task A audit): correct at 11, the six trace beats (free, read,
 // read, write, write, verdict: the full look-then-grab window) plus the five
 // computed tally beats from simulateAtomicIncrement (start, stale snapshot,
 // lost update, refused swap + retry, landed retry). The CAS side is the same
-// eleven beats under the playground toggle — a different outcome over the same
+// eleven beats under the playground toggle, a different outcome over the same
 // event shape, not new events.
 // ─────────────────────────────────────────────────────────────────────────────
 // L13 · One indivisible motion (ATLAS units 50–55, slides 6–13)
 //
 // ENGINE VERDICT (a): extend CounterEngine and use its render() unmodified.
 // Why: the lesson IS two threads racing for one holder slot with a waiting
-// area — exactly the shape CounterEngine renders (meter + holder + waiting,
+// area, exactly the shape CounterEngine renders (meter + holder + waiting,
 // [id^="bar-<actor>"] tokens that widen 54→84px across `view`, analogy labels
 // at view<0.5). Overriding render() would reimplement identical interpolation
 // for no gain; a standalone would too. The lesson adds the atomicity story:
@@ -41,7 +41,7 @@ import {
 // → holder 96 / waiter 60 lock tokens, computed from state.holders/waiting).
 // At the hook by the door, width means a body. In the lock, width means the
 // claim on the car: holders fill it wide, waiters compress. Split-vs-fused then
-// reads as occupancy — two wide holders versus one — and the look/grab window
+// reads as occupancy, two wide holders versus one, and the look/grab window
 // itself is carried by the steps (read, read, write, write vs one fused grab)
 // plus the tally beats, not by the width.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ export const MECHANISMS: Array<{ id: MechanismKey; label: string; deck: string }
   { id: 'cas', label: 'compare_and_swap', deck: 'slides 9–10' }
 ];
 
-/** Live trace — computed on every call, never cached, never typed. */
+/** Live trace, computed on every call, never cached, never typed. */
 export function atomicTrace(p: AtomicParams): AtomicTraceResult {
   return simulateAtomicSteps(p.mechanism, p.atomic);
 }
@@ -76,6 +76,51 @@ function tasVerdict(): ReturnType<typeof simulateTestAndSetLock> {
 
 function casVerdict(): ReturnType<typeof simulateCompareAndSwap> {
   return simulateCompareAndSwap(false);
+}
+
+/**
+ * The lock-instruction sentence for one trace step, derived from the
+ * structured AtomicTraceStep (action, lock, entered) rather than parsed from
+ * the algorithm's hook-scene caption. `mechanism` picks the primitive's name
+ * so test_and_set and compare_and_swap read differently.
+ */
+export function lockInstructionCaption(
+  s: { action: string; lock: number; entered: string[]; actorId: string },
+  mechanism: AtomicMechanism
+): string {
+  const primitive = mechanism === 'tas' ? 'test_and_set' : 'compare_and_swap';
+  switch (s.action) {
+    case 'free':
+      return mechanism === 'tas'
+        ? `The lock reads ${s.lock}: free, and no thread holds it.`
+        : `The tag reads ${s.lock}: unclaimed, the expected value for a swap.`;
+    case 'acquire':
+      return `${s.actorId} executes ${primitive}: it reads 0, writes 1, and holds the lock in one indivisible instruction.`;
+    case 'read':
+      return `${s.actorId} reads the lock into a register: it sees ${s.lock}. Nothing has been written yet.`;
+    case 'write':
+      return s.entered.length > 1
+        ? `${s.actorId} writes 1 from its stale register: the read and the write were separate steps, and both threads are inside now.`
+        : `${s.actorId} writes 1 from its register: the read and the write are two steps with a gap between them.`;
+    case 'spin':
+      return `${s.actorId} re-reads the lock in a loop: still ${s.lock}, so it keeps waiting.`;
+    case 'release':
+      return `${s.actorId} writes 0: the lock reads free again.`;
+    case 'swap':
+      return `${s.actorId} compares the lock with the expected 0 and swaps in 1: one indivisible ${primitive}.`;
+    case 'compare':
+      return `${s.actorId} compares: the lock reads ${s.lock}, not the expected 0, so ${primitive} refuses and nothing changes.`;
+    case 'check':
+      return `${s.actorId} reads the tag: it sees ${s.lock}.`;
+    case 'act':
+      return s.entered.length > 1
+        ? `${s.actorId} acts on its stale check and writes 1: the gap between check and act let a second thread through.`
+        : `${s.actorId} acts on its saved check and writes 1.`;
+    case 'verdict':
+      return `The lock reads ${s.lock} while ${s.entered.length} threads hold it: that disagreement is the corruption.`;
+    default:
+      return '';
+  }
 }
 
 /**
@@ -95,13 +140,14 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
       : 'spin';
     return {
       t: s.step,
-      caption: s.caption.slice(0, 120),
-      highlight: s.actorId === '—' ? [] : [s.actorId],
+      caption: lockInstructionCaption(s, p.mechanism),
+      analogyCaption: s.caption.slice(0, 120),
+      highlight: s.actorId === ', ' ? [] : [s.actorId],
       state: {
         stepIndex: s.step,
         value: s.lock === 0 ? 1 : 0,
         capacity: 1,
-        activeActorId: s.actorId === '—' ? null : s.actorId,
+        activeActorId: s.actorId === ', ' ? null : s.actorId,
         holders: [...s.entered],
         waiting: [...s.waiting],
         action,
@@ -110,14 +156,15 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     };
   });
   // Unit 55, same lesson: the tally counter application code actually uses.
-  // Each beat is computed by simulateAtomicIncrement — the plain snapshot, the
-  // lost update, the refused swap, the retry that lands — not a summary.
+  // Each beat is computed by simulateAtomicIncrement, the plain snapshot, the
+  // lost update, the refused swap, the retry that lands, not a summary.
   const base = mapped.length;
   const tallyHolders = trace.bothEnteredCS ? ['T1', 'T2'] : ['T1'];
   mapped.push(
     {
       t: base,
       caption: `The tally starts at ${inc.start}: two threads each add one, expecting ${inc.expected}.`,
+      analogyCaption: `Ammu and Abbu both keep the household tally. It reads ${inc.start}; each adds one, so together they expect ${inc.expected}.`,
       highlight: ['T1', 'T2'],
       state: {
         stepIndex: base, value: 1, capacity: 1, activeActorId: 'T1',
@@ -127,7 +174,8 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     },
     {
       t: base + 1,
-      caption: `Without atomics both threads snapshot ${inc.start} — one update is already doomed.`,
+      caption: `Without atomics both threads snapshot ${inc.start}, one update is already doomed.`,
+      analogyCaption: `Both write down ${inc.start} before either of them writes. Two notes taken from one moment.`,
       highlight: ['T1', 'T2'],
       state: {
         stepIndex: base + 1, value: 0, capacity: 1, activeActorId: 'T2',
@@ -137,17 +185,19 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     },
     {
       t: base + 2,
-      caption: `The plain tally lands at ${inc.finalPlain}, not ${inc.expected} — ${inc.lostPlain} update lost.`,
+      caption: `The plain tally lands at ${inc.finalPlain}, not ${inc.expected}, ${inc.lostPlain} update lost.`,
+      analogyCaption: `They write from their notes: the tally lands at ${inc.finalPlain}, and one addition vanished between the notes.`,
       highlight: ['T1'],
       state: {
         stepIndex: base + 2, value: 0, capacity: 1, activeActorId: 'T1',
         holders: [...tallyHolders], waiting: [], action: 'fail',
-        caption: `The plain tally lands at ${inc.finalPlain} — one update lost.`
+        caption: `The plain tally lands at ${inc.finalPlain}, one update lost.`
       }
     },
     {
       t: base + 3,
-      caption: `Through compare_and_swap the second swap refuses and retries ${inc.retriesCAS}x — nothing is lost.`,
+      caption: `Through compare_and_swap the second swap refuses and retries ${inc.retriesCAS}x, nothing is lost.`,
+      analogyCaption: `This time Abbu checks the tally against his note before writing: it has moved on, so he starts his addition again.`,
       highlight: ['T2'],
       state: {
         stepIndex: base + 3, value: 0, capacity: 1, activeActorId: 'T2',
@@ -158,6 +208,7 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
     {
       t: base + 4,
       caption: `The retry lands: the CAS tally ends at ${inc.finalCAS}, every update kept.`,
+      analogyCaption: `His retry carries both additions: the tally ends at ${inc.finalCAS}, and nothing is lost.`,
       highlight: ['T2'],
       state: {
         stepIndex: base + 4, value: 0, capacity: 1, activeActorId: 'T2',
@@ -176,7 +227,7 @@ export interface AtomicLessonInput extends CounterInput {
 export function atomicLessonInput(p: AtomicParams): AtomicLessonInput {
   const trace = atomicTrace(p);
   const events = trace.steps.slice(1).map((s) => ({
-    actorId: s.actorId === '—' ? 'T1' : s.actorId,
+    actorId: s.actorId === ', ' ? 'T1' : s.actorId,
     action: 'acquire' as const,
     caption: s.caption.slice(0, 120)
   }));
@@ -187,8 +238,8 @@ export function atomicLessonInput(p: AtomicParams): AtomicLessonInput {
     mode: 'spin',
     resourceLabel: p.mechanism === 'tas' ? 'LOCK (0 = FREE)' : 'TAG (EXPECTS 0)',
     actors: [
-      { id: 'T1', name: 'T1', analogyName: 'Father' },
-      { id: 'T2', name: 'T2', analogyName: 'Mother' }
+      { id: 'T1', name: 'T1', analogyName: 'Abbu' },
+      { id: 'T2', name: 'T2', analogyName: 'Ammu' }
     ],
     events,
     analogy: {
@@ -196,7 +247,7 @@ export function atomicLessonInput(p: AtomicParams): AtomicLessonInput {
       resourceLabel: 'THE HOOK (KEY THERE?)',
       holderLabel: 'THE CAR (KEY HOLDER)',
       waitingLabel: 'AT THE HOOK (CHECKING)',
-      actorNames: { T1: 'Father', T2: 'Mother' }
+      actorNames: { T1: 'Abbu', T2: 'Ammu' }
     }
   };
 }
@@ -210,10 +261,10 @@ const MODE_BUTTONS: Array<{ mechanism: MechanismKey; atomic: boolean; label: str
 
 /**
  * Lesson 13's engine, scoped to this lesson. Uses CounterEngine.render()
- * unchanged — the lesson adds the atomicity story: steps come from
+ * unchanged, the lesson adds the atomicity story: steps come from
  * atomicSteps() (the simulateAtomicSteps trace mapped 1:1, plus the computed
  * tally beats), and the playground re-maps them on every toggle. Steps are
- * never re-derived from CounterInput.events — the events array exists for
+ * never re-derived from CounterInput.events, the events array exists for
  * input-shape compatibility only; the trace mapping is the single source.
  */
 export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapable {
@@ -225,7 +276,7 @@ export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapa
     return atomicSteps(params);
   }
 
-  /** The live result, computed on every call — never cached, never typed. */
+  /** The live result, computed on every call, never cached, never typed. */
   public getTrace(): AtomicTraceResult {
     return atomicTrace(this.input.params);
   }
@@ -252,14 +303,14 @@ export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapa
     const p = this.getParams();
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">One motion or two — run the same race both ways</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">One motion or two, run the same race both ways</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${MODE_BUTTONS.map((m) => `
             <button type="button" class="l13-mode" data-mechanism="${m.mechanism}" data-atomic="${m.atomic}" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${p.mechanism === m.mechanism && p.atomic === m.atomic ? 'var(--accent)' : 'var(--hairline)'}; color: ${p.mechanism === m.mechanism && p.atomic === m.atomic ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">${m.label}</button>
           `).join('')}
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">The same two threads run in both modes — only whether look-and-grab is one motion changes.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">The same two threads run in both modes, only whether look-and-grab is one motion changes.</div>
     `;
 
     host.querySelectorAll('.l13-mode').forEach((el) => {
@@ -295,7 +346,7 @@ export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapa
     const ok = !trace.bothEnteredCS;
     const verdictColor = ok ? 'var(--running)' : 'var(--waiting)';
     const verdictBg = ok ? 'rgba(8, 127, 91, 0.12)' : 'rgba(217, 119, 6, 0.12)';
-    const verdictText = ok ? '🟢 One holder — the car is safe' : '🔴 Two holders, one key — corrupted';
+    const verdictText = ok ? '🟢 One holder, the car is safe' : '🔴 Two holders, one key, corrupted';
     const mechName = trace.mechanism === 'tas' ? 'test_and_set' : 'compare_and_swap';
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
@@ -305,7 +356,7 @@ export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapa
       <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 6px;">
         <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">This run</div>
-          <div style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.374px; color: ${ok ? 'var(--running)' : 'var(--waiting)'}; margin: 2px 0;">${trace.handoffOrder.join(' → ') || '—'}</div>
+          <div style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.374px; color: ${ok ? 'var(--running)' : 'var(--waiting)'}; margin: 2px 0;">${trace.handoffOrder.join(' → ') || ', '}</div>
           <div style="font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono);">${trace.atomic ? 'fused: one motion' : 'split: two motions'}</div>
         </div>
         <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
@@ -317,8 +368,8 @@ export class AtomicCounterEngine extends CounterEngine implements PlaygroundCapa
         </div>
         <div style="padding: 6px 8px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: var(--rounded-lg, 18px);">
           <div style="font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">The tally you would use</div>
-          <div style="font-family: var(--font-mono); font-size: 0.72rem; margin-top: 3px;">plain ends ${inc.finalPlain}, should be ${inc.expected} — one lost</div>
-          <div style="font-family: var(--font-mono); font-size: 0.72rem;">CAS ends ${inc.finalCAS} after ${inc.retriesCAS} retry — none lost</div>
+          <div style="font-family: var(--font-mono); font-size: 0.72rem; margin-top: 3px;">plain ends ${inc.finalPlain}, should be ${inc.expected}, one lost</div>
+          <div style="font-family: var(--font-mono); font-size: 0.72rem;">CAS ends ${inc.finalCAS} after ${inc.retriesCAS} retry, none lost</div>
         </div>
       </div>
     `;
@@ -341,22 +392,27 @@ export const lesson13: Lesson<AtomicLessonInput, CounterState> = {
   lensLabels: {
     analogy: '🔑 The car key',
     mechanism: '⚙️ test_and_set · compare_and_swap',
-    analogyTitle: 'View as father and mother and one key on a hook',
+    analogyTitle: 'View as Abbu and Ammu and one key on a hook',
     mechanismTitle: 'View as the lock the hardware guards'
   },
   analogy: {
     domain: 'friends',
-    text: 'The car key hangs on one hook by the door. Looking at the hook and grabbing the key happen as a single motion — nobody can look while another hand is already closing, so father and mother never drive off holding the same key.'
+    text: 
+      'The car key hangs on a hook by the front door, and there is one key.\n\n' +
+      'Watch what actually happens when Abbu takes it. He looks at the hook, sees the key, and his hand closes around it. But look closer, because those are two separate events: seeing that the key is there, and having it. In between there is a gap, and a gap is all it takes.\n\n' +
+      'Suppose Arijit looks at the same hook during that gap. He also sees a key. Both of them saw a key on the hook, both were telling the truth, and only one of them can drive.\n\n' +
+      'The fix is not to be more careful. It is to make looking and taking one single motion that cannot be interrupted in the middle, so that there is no moment where two people can both have seen an available key.'
   },
   concept:
-    'Hardware offers two indivisible primitives for the doorway in one lesson. test_and_set reads the lock and claims it before any other thread can slip between the read and the claim; compare_and_swap goes further and only swaps when the lock still reads what was expected, so a price change mid-transaction cannot slip through. Either one builds a lock by spinning until it reads free — correct, and wasteful — and the bounded-waiting variant hands the key to the next waiter in line instead of hanging it back, so nobody is skipped forever. Wrapped once more, the same primitive becomes the tally counter application code actually uses.',
+    'Hardware offers two indivisible primitives for the doorway in one lesson. test_and_set reads the lock and claims it before any other thread can slip between the read and the claim; compare_and_swap goes further and only swaps when the lock still reads what was expected, so a price change mid-transaction cannot slip through. Either one builds a lock by spinning until it reads free, correct, and wasteful, and the bounded-waiting variant hands the key to the next waiter in line instead of hanging it back, so nobody is skipped forever. Wrapped once more, the same primitive becomes the tally counter application code actually uses.'  +
+    '  The word for the fix is ATOMIC. An atomic operation is one that cannot be interrupted partway: from every other thread\'s point of view it has either not happened at all or has completely happened, with no visible in between. Hardware provides these as single instructions, and the two the lecture names are test_and_set, which writes true and returns whatever was there before, and compare_and_swap, which writes a new value only if the current one still matches what you expected. Both are atomic, and both exist because read, modify and write cannot be made safe by ordinary code.',
   morphReveals:
-    'At the hook every token is the same width — a body standing at the door — and the gap between looking and grabbing is empty wall space, just how far a hand travels. In the lock width stops meaning a body and starts meaning the claim on the car: the holder fills it wide while waiters compress, so the split run shows two wide holders where the fused run shows one. The window itself is in the steps — read, read, write, write versus one fused grab — and the tally beats prove what it costs.',
+    'At the hook every token is the same width, a body standing at the door, and the gap between looking and grabbing is empty wall space, just how far a hand travels. In the lock width stops meaning a body and starts meaning the claim on the car: the holder fills it wide while waiters compress, so the split run shows two wide holders where the fused run shows one. The window itself is in the steps, read, read, write, write versus one fused grab, and the tally beats prove what it costs.',
   morphMode: 'morph',
   analogyMapping: [
     'Looking at the hook ➔ reading the lock (test) / checking the tag (compare)',
     'Grabbing the key ➔ claiming the lock (set) / writing the new value (swap)',
-    'One indivisible motion ➔ the hardware fuses read and write — no gap',
+    'One indivisible motion ➔ the hardware fuses read and write, no gap',
     'Standing at the hook checking every second ➔ spinning on the lock',
     'Handing the key to the next in line ➔ bounded waiting: the exiting thread wakes waiter one',
     'The tally counter ➔ increment() retried through compare_and_swap until the swap lands'

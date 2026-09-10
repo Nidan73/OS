@@ -41,11 +41,11 @@ describe('Lesson 19 · every verdict is computed', () => {
     );
     expect(safety.safe).toBe(true);
     expect(safety.sequence).toEqual([1, 0, 2]);
-    expect(safeSequenceOf(end)).toBe('Mother → Father → Elder Sister');
+    expect(safeSequenceOf(end)).toBe('Afra → Abbu → Arijit');
     expect(regionOf(end)).toBe('safe');
   });
 
-  it('the grant loses the guarantee — unsafe, yet nobody is stuck', () => {
+  it('the grant loses the guarantee, unsafe, yet nobody is stuck', () => {
     const end = LAST('grant');
     const safety = safetyAlgorithm(
       [availableOf(end)],
@@ -59,7 +59,7 @@ describe('Lesson 19 · every verdict is computed', () => {
     expect(stuckOf(end)).toEqual([]);
   });
 
-  it('friendly completion finishes everyone — unsafe was not stuck', () => {
+  it('friendly completion finishes everyone, unsafe was not stuck', () => {
     const end = LAST('friendly');
     expect(allocationOf(end)).toEqual([0, 0, 0]);
     expect(availableOf(end)).toBe(TOTAL_NOTES);
@@ -79,10 +79,10 @@ describe('Lesson 19 · every verdict is computed', () => {
 
   it('the claim check refuses the ring and allows the same grant without the claim', () => {
     const events = claimsEvents();
-    // After the ask beat (index 4): Father's claim T1→C2 still stands.
+    // After the ask beat (index 4): Abbu's claim T1→C2 still stands.
     const withClaim = stateAfterEvents(events.slice(0, 5));
     expect(grantWouldCloseRing(CLAIM_NODES, withClaim.edges)).toBe(true);
-    // After Father drops his claim (index 7), the same grant closes no ring.
+    // After Abbu drops his claim (index 7), the same grant closes no ring.
     const withoutClaim = stateAfterEvents(events.slice(0, 8));
     expect(grantWouldCloseRing(CLAIM_NODES, withoutClaim.edges)).toBe(false);
   });
@@ -91,7 +91,7 @@ describe('Lesson 19 · every verdict is computed', () => {
     const events = claimsEvents();
     expect(events[5].caption).toMatch(/Refused/);
     expect(events[5].setCycle).toEqual(['T1', 'C2', 'T2', 'C1']);
-    expect(events[events.length - 1].caption).toMatch(/Mother gets Car 1/);
+    expect(events[events.length - 1].caption).toMatch(/allowed/i);
   });
 });
 
@@ -169,7 +169,7 @@ describe('Lesson 19 · the morph is geometric, not cosmetic (§3C.2a, §3C.2c)',
     expect(wClaim['bar-C1']).toBeLessThan(w['bar-R']);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const a = widthsAt(0, 'ledger');
     const mid = widthsAt(0.5, 'ledger');
     const b = widthsAt(1, 'ledger');
@@ -222,11 +222,13 @@ describe('Lesson 19 · lesson wiring and copy', () => {
       lesson19.concept,
       lesson19.morphReveals,
       ...friendlyEvents().map((e) => e.caption),
-      ...grantEvents().map((e) => e.caption)
+      // both lenses are student-facing, so both are scanned. The claim moved
+      // to the analogy caption when captions started following the lens.
+      ...grantEvents().flatMap((e) => [e.caption, e.analogyCaption ?? ''])
     ].join('\n').toLowerCase();
     expect(allCopy).toContain('unsafe means no guarantee');
-    expect(allCopy).toContain('nobody is stuck yet');
-    for (const word of ['mother', 'father', 'sister']) {
+    expect(allCopy).toContain('nobody is stuck');
+    for (const word of ['ammu', 'abbu', 'arijit']) {
       expect(allCopy).toContain(word);
     }
   });

@@ -10,13 +10,13 @@ export interface PlaygroundCapable {
   debugHooks?(): Record<string, unknown>;
 }
 
-// src/core/types.ts — §3.1 authoritative contract
+// src/core/types.ts, §3.1 authoritative contract
 
 export type Domain = 'travel' | 'food' | 'friends';
 /**
  * Which shared engine a lesson claims. `standalone` means the lesson's
  * engineClass extends AnimationEngine directly because no shared engine's
- * state shape fits — a legitimate choice that must be declared, not the
+ * state shape fits, a legitimate choice that must be declared, not the
  * default. A test (tests/engine-taxonomy.test.ts) enforces that this
  * field matches what engineClass actually extends.
  */
@@ -26,8 +26,20 @@ export type EngineId = 'gantt' | 'queue' | 'trace' | 'counter' | 'graph' | 'matr
 export interface Step<S = unknown> {
   /** seconds from timeline start; strictly increasing across the array */
   t: number;
-  /** the explanatory text for this step. Present tense, ≤ 120 chars. */
+  /**
+   * The explanatory text for this step. This is the fallback and is what the
+   * mechanism lens shows when `analogyCaption` is absent. Fits the caption
+   * rail: 320 chars (measured four lines above the fold at 1440x900).
+   */
   caption: string;
+  /**
+   * The same beat told in the scene's own words, shown while the analogy lens
+   * is active. The picture is different in the two views, so the sentence
+   * under it should be too: at view 0 she is watching Ammu count notes, at
+   * view 1 she is watching a safety sweep. Both must describe the SAME event.
+   * Same rail as `caption`. Omit to show `caption` in both views.
+   */
+  analogyCaption?: string;
   /** engine-specific render state at time t */
   state: S;
   /** optional emphasis hint for the renderer, e.g. ['P2', 'edge:R1->P2'] */

@@ -8,14 +8,16 @@ import type { Step } from '../core/types.js';
 // the safety sweep cell by cell. Row/column emphasis, and a pretend-grant
 // overlay on the committed state.
 //
-// Geometry contract (§3C.2a — the Wave 2 lesson): the engine computes
+// Geometry contract (§3C.2a, the Wave 2 lesson): the engine computes
 // mechanism widths from the ledger itself, so no lesson can inherit a reskin.
-// Analogy: every cell the same width — travellers' declared ceilings on
-// identical slips. Mechanism: width means amount — a Need cell is as wide as
+// Analogy: every cell the same width, travellers' declared ceilings on
+// identical slips. Mechanism: width means amount, a Need cell is as wide as
 // the units it still claims. Both differ per entity, and Need widths move
 // with state as the sweep reclaims.
 
 export interface MatrixEvent {
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   caption: string;
   /** Cell-by-cell comparison to highlight: [pid, resourceIdx]. */
   probeCells?: Array<[number, number]>;
@@ -34,6 +36,8 @@ export interface MatrixInput {
   max: number[][];
   allocation: number[][];
   events: MatrixEvent[];
+  /** The opening beat in the scene's words, shown on the analogy lens. */
+  initialAnalogyCaption?: string;
   /** Overlay: pretend-grant to show beside the committed state. */
   pretend?: { available: number[]; allocation: number[][] };
   analogy?: {
@@ -56,7 +60,7 @@ const CANVAS_H = 300;
 const ANALOGY_CELL_W = 44;
 const ANALOGY_CELL_H = 26;
 
-// Mechanism: base slot plus per-unit width — computed from the ledger.
+// Mechanism: base slot plus per-unit width, computed from the ledger.
 const MECH_BASE_W = 26;
 const MECH_PER_UNIT_W = 9;
 const MECH_CELL_H = 26;
@@ -77,7 +81,8 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
     let t = 0;
     steps.push({
       t: t++,
-      caption: 'The ledger opens — ceilings declared, holdings drawn, cash on hand.',
+      caption: 'The ledger opens, ceilings declared, holdings drawn, cash on hand.',
+      analogyCaption: input.initialAnalogyCaption,
       highlight: [...input.processes],
       state: {
         probeCells: [],
@@ -89,7 +94,8 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
     for (const ev of input.events ?? []) {
       steps.push({
         t: t++,
-        caption: ev.caption.slice(0, 120),
+        caption: ev.caption.slice(0, 320),
+        analogyCaption: ev.analogyCaption,
         highlight: ev.activeRow !== undefined ? [input.processes[ev.activeRow]] : [],
         state: {
           probeCells: (ev.probeCells ?? []).map(([p, r]) => [p, r] as [number, number]),
@@ -196,21 +202,65 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
     ];
 
     const probed = new Set(state.probeCells.map(([p, r]) => `${p}:${r}`));
-    const tableW = CANVAS_W / tables.length;
+    // ── Fit the mechanism layout inside the canvas ─────────────────────────
+    // Cell width encodes the amount, which is this lesson's carrying property
+    // and must stay. What was wrong is that the layout never checked whether
+    // the result fits: a table was given CANVAS_W / tables.length = 180px of
+    // slot while its own content came to about 291px, so tables overlapped
+    // each other and the fourth ran off the right edge. Reported from a
+    // screenshot showing Available clipped.
+    //
+    // The fix keeps width proportional to amount and solves for the per-unit
+    // width that fits, rather than assuming 9px always does.
+    // The row-label gutter and the gap between columns are the budget the
+    // cells do not get. Keeping them at 62 and 8 left only about 6px of width
+    // difference between the smallest and largest amount, which technically
+    // still encodes the amount but is not something anyone could read.
+    const GUTTER = 40;
+    const COL_GAP = 5;
+    let maxAmount = 1;
+    for (const t of tables) {
+      for (let ri = 0; ri < t.rows.length; ri++) {
+        for (let c = 0; c < m; c++) maxAmount = Math.max(maxAmount, t.cell(ri, c).amount);
+      }
+    }
+    const tableW = (CANVAS_W - 16) / tables.length;
+    const colStride = (tableW - GUTTER) / m;
+    const maxCellW = colStride - COL_GAP;
+    // Derive the base slot and the per-unit width from the space that exists,
+    // rather than clamping a fixed 9px per unit and overflowing when it does
+    // not fit. Width still rises with the amount, which is the carrying
+    // property; only the scale adapts.
+    const baseW = Math.min(MECH_BASE_W, maxCellW * 0.45);
+    const perUnitW = Math.max(0.5, Math.min(MECH_PER_UNIT_W, (maxCellW - baseW) / maxAmount));
+
+    // ── Fit the analogy column too ─────────────────────────────────────────
+    // The analogy view stacks every table's rows into one column of identical
+    // slips. With four tables of five rows that column reached y=788 on a
+    // 300px canvas, so most of it was simply not on screen, and all four table
+    // titles were drawn at the same fixed point on top of each other.
+    const totalAnalogyRows = tables.reduce((n, t) => n + t.rows.length + 1, 0);
+    const analogyStride = Math.min(
+      ANALOGY_CELL_H + 8,
+      Math.max(12, (CANVAS_H - 56) / Math.max(1, totalAnalogyRows))
+    );
+    /** First row index of a table inside the single analogy column. */
+    const analogyRowStart = (index: number): number =>
+      tables.slice(0, index).reduce((n, t) => n + t.rows.length + 1, 0);
 
     tables.forEach((table, ti) => {
       const isNeed = table.id === 'need';
       table.rows.forEach((rowLabel, ri) => {
         for (let c = 0; c < m; c++) {
           const { text, amount, dimmed } = table.cell(ri, c);
-          const mechW = MECH_BASE_W + MECH_PER_UNIT_W * amount;
+          const mechW = baseW + perUnitW * amount;
           const w = lerp(ANALOGY_CELL_W, mechW);
-          const h = lerp(ANALOGY_CELL_H, MECH_CELL_H);
+          const h = lerp(Math.min(ANALOGY_CELL_H, analogyStride - 4), MECH_CELL_H);
           // Analogy: identical slips in a row. Mechanism: Need/Max/Allocation
           // tables side by side, Available beneath. Interpolate both axes.
           const ax = 30 + c * (ANALOGY_CELL_W + 8);
-          const ay = 40 + (ti * (table.rows.length + 1) + ri) * (ANALOGY_CELL_H + 8);
-          const mx = ti * tableW + 62 + c * (MECH_BASE_W + MECH_PER_UNIT_W * 4 + 8);
+          const ay = 40 + (analogyRowStart(ti) + ri) * analogyStride;
+          const mx = 8 + ti * tableW + GUTTER + c * colStride;
           const my = 44 + ri * (MECH_CELL_H + 6);
           const x = lerp(ax, mx);
           const y = lerp(ay, my);
@@ -265,9 +315,15 @@ export class MatrixEngine extends AnimationEngine<MatrixInput, MatrixState> {
       });
 
       // Table title.
+      // Each title travels with its own table. Previously both coordinates
+      // were fixed in the analogy view, so all four titles landed on the same
+      // pixel and rendered as one unreadable smear.
       const title = document.createElementNS(svgNS, 'text');
-      title.setAttribute('x', String(lerp(30, tables.indexOf(table) * tableW + 62)));
-      title.setAttribute('y', String(lerp(30, 30)));
+      title.setAttribute('x', String(lerp(30, 8 + ti * tableW + GUTTER)));
+      title.setAttribute(
+        'y',
+        String(lerp(40 + analogyRowStart(ti) * analogyStride - 6, 30))
+      );
       title.setAttribute('font-size', '11');
       title.setAttribute('font-weight', '700');
       title.setAttribute('fill', 'var(--muted)');

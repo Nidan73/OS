@@ -15,34 +15,33 @@ import {
 // slides 14–16)
 //
 // PROVENANCE (brief §3, deck-checked 2026-09-10): the Lecture 9 deck does NOT
-// state contextSwitchCostUs = 10 or cpuFreqGHz = 3.0 anywhere — slides 14–16
+// state contextSwitchCostUs = 10 or cpuFreqGHz = 3.0 anywhere, slides 14–16
 // carry no timing numbers at all. So both are playground sliders, never
 // invisible defaults: the learner sets the critical-section length, the
 // switch cost and the clock, and the verdict recomputes live.
 //
 // ENGINE VERDICT (a): extend CounterEngine and use its render() unmodified.
-// Why: the lesson IS one holder in the bathroom with a queue at the door —
-// exactly the shape CounterEngine renders (meter + holder + waiting,
+// Why: the lesson IS one holder in the bathroom with a queue at the door, // exactly the shape CounterEngine renders (meter + holder + waiting,
 // [id^="bar-<actor>"] tokens that widen 54→84px across `view`, analogy labels
 // at view<0.5). The spin-vs-block story is told by WHICH queue the waiters
 // stand in and what the scoreboard computes, not by new geometry.
 // Overriding render() would reimplement identical interpolation for no gain.
 //
 // The carrying property of the morph is OCCUPANCY-AS-WIDTH. At home each
-// token is a person — width means a body, and the queue at the bathroom door
+// token is a person, width means a body, and the queue at the bathroom door
 // is shoulder-to-shoulder regardless of how long the person inside stays. In
 // the lock width means the claim on the bathroom (holder wide, waiters compressed); the
 // stay length is priced in the computed captions and scoreboard, not the
-// width — dragging it moves the spin bill past the wakeup price. Same tokens,
-// same queue — width changes what it means, numbers change what they cost.
+// width, dragging it moves the spin bill past the wakeup price. Same tokens,
+// same queue, width changes what it means, numbers change what they cost.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface LockParams {
-  /** How long the holder keeps the bathroom, in µs — the dragged quantity. */
+  /** How long the holder keeps the bathroom, in µs, the dragged quantity. */
   csDurationUs: number;
-  /** What a sit-down-and-wakeup costs, in µs — a slider, not a default. */
+  /** What a sit-down-and-wakeup costs, in µs, a slider, not a default. */
   contextSwitchCostUs: number;
-  /** Clock driving the cycle counts, in GHz — a slider, not a default. */
+  /** Clock driving the cycle counts, in GHz, a slider, not a default. */
   cpuFreqGHz: number;
   /** How the waiters wait: jiggle the handle, or sit down. */
   mode: 'spin' | 'block';
@@ -63,12 +62,12 @@ export const DEFAULT_LOCK: LockParams = {
   mode: 'spin'
 };
 
-/** Live cost model — computed on every call, never cached, never typed. */
+/** Live cost model, computed on every call, never cached, never typed. */
 export function lockCosts(p: LockParams): LockCostModel {
   return evaluateLockCost(p.csDurationUs, p.contextSwitchCostUs, p.cpuFreqGHz);
 }
 
-// DENSITY (Task A audit): 12 steps — the idle frame, the holder's arrival and
+// DENSITY (Task A audit): 12 steps, the idle frame, the holder's arrival and
 // its acquire (asking distinct from taking, the way L8's tick and move
 // differ), one beat per waiter arrival, the settle that fixes the queue order,
 // the priced wait, the stay ending (done distinct from returned), the release,
@@ -83,12 +82,13 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     ? 'jiggling the handle'
     : 'seated, ticket in hand';
   const arriveCaption = waiting === 'spin'
-    ? 'jiggles the handle — each burned cycle prices the wait.'
-    : 'sits down, ticket in hand — the wait prices at one wakeup.';
+    ? 'jiggles the handle, each burned cycle prices the wait.'
+    : 'sits down, ticket in hand, the wait prices at one wakeup.';
   return [
     {
       t: 0,
-      caption: 'One bathroom, one latch. Mother steps in; the corridor queue is empty.',
+      caption: 'The lock is free. One thread acquires it and enters its critical section. No waiters yet.',
+      analogyCaption: 'One bathroom, one latch. Ammu steps in, and the corridor is empty.',
       highlight: [],
       state: {
         stepIndex: 0, value: 1, capacity: 1, activeActorId: null,
@@ -98,7 +98,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 1,
-      caption: `The holder arrives and asks for the key.`,
+      caption: `A thread calls acquire() on a free lock and takes it.`,
+      analogyCaption: `The holder arrives and asks for the key.`,
       highlight: ['T1'],
       state: {
         stepIndex: 1, value: 1, capacity: 1, activeActorId: 'T1',
@@ -108,17 +109,19 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 2,
-      caption: `Mother takes the bathroom for ${m.csDurationUs}µs.`,
+      caption: `The lock is held for a critical section of ${m.csDurationUs}µs.`,
+      analogyCaption: `Ammu takes the bathroom for ${m.csDurationUs}µs.`,
       highlight: ['T1'],
       state: {
         stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T1',
         holders: ['T1'], waiting: [], action: 'acquire',
-        caption: `Mother takes the bathroom for ${m.csDurationUs}µs.`
+        caption: `Ammu takes the bathroom for ${m.csDurationUs}µs.`
       }
     },
     {
       t: 3,
-      caption: `The first waiter arrives and ${arriveCaption}`,
+      caption: `A second thread calls acquire() on a held lock and cannot proceed.`,
+      analogyCaption: `The first waiter arrives and ${arriveCaption}`,
       highlight: ['T2'],
       state: {
         stepIndex: 3, value: 0, capacity: 1, activeActorId: 'T2',
@@ -128,7 +131,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 4,
-      caption: `Father queues ${how} behind the first waiter.`,
+      caption: `A third thread blocks on the same lock, behind the second.`,
+      analogyCaption: `Abbu queues ${how} behind the first waiter.`,
       highlight: ['T3'],
       state: {
         stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T3',
@@ -138,7 +142,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 5,
-      caption: `Father settles ${how} — the queue order is now fixed.`,
+      caption: `The wait queue keeps arrival order, which is what bounded waiting requires.`,
+      analogyCaption: `Abbu settles ${how}, and the queue order is now fixed.`,
       highlight: ['T3'],
       state: {
         stepIndex: 5, value: 0, capacity: 1, activeActorId: 'T3',
@@ -149,8 +154,11 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     {
       t: 6,
       caption: waiting === 'spin'
-        ? `Both waiters jiggle — the wait prices at ${price} burned cycles.`
-        : `Both waiters sit — the wait prices at one ${price}-cycle wakeup.`,
+        ? `Both waiters jiggle, the wait prices at ${price} burned cycles.`
+        : `Both waiters sit, the wait prices at one ${price}-cycle wakeup.`,
+      analogyCaption: waiting === 'spin'
+        ? 'Two people hover by the bathroom door, and the hovering itself burns the visit.'
+        : 'Two people sit out the wait, and the price is one call to wake them.',
       highlight: ['T2', 'T3'],
       state: {
         stepIndex: 6, value: 0, capacity: 1, activeActorId: 'T2',
@@ -160,7 +168,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 7,
-      caption: `The stay ends — mother is done, the bathroom is due back.`,
+      caption: `The holder finishes its critical section and is about to release.`,
+      analogyCaption: `The stay ends, Ammu is done, and the bathroom is due back.`,
       highlight: ['T1'],
       state: {
         stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T1',
@@ -170,19 +179,23 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 8,
-      caption: 'Mother comes out and turns the latch back after her stay.',
+      caption: 'release() is called. The lock is free again.',
+      analogyCaption: 'Ammu comes out and turns the latch back after her stay.',
       highlight: ['T1'],
       state: {
         stepIndex: 8, value: 1, capacity: 1, activeActorId: 'T1',
         holders: [], waiting: ['T2', 'T3'], action: 'release',
-        caption: 'Mother comes out and turns the latch back.'
+        caption: 'Ammu comes out and turns the latch back.'
       }
     },
     {
       t: 9,
       caption: m.preferSpinlock
         ? `Short stay: spinning wastes ${m.spinWastedCycles} cycles, less than a ${m.contextSwitchWastedCycles}-cycle wakeup.`
-        : `Long stay: spinning would waste ${m.spinWastedCycles} cycles — sitting down costs ${m.contextSwitchWastedCycles}.`,
+        : `Long stay: spinning would waste ${m.spinWastedCycles} cycles, sitting down costs ${m.contextSwitchWastedCycles}.`,
+      analogyCaption: m.preferSpinlock
+        ? 'For a short stay, standing at the door beats leaving and coming back.'
+        : 'For a long stay, going to sit down beats standing at the door.',
       highlight: ['T1'],
       state: {
         stepIndex: 9, value: 1, capacity: 1, activeActorId: 'T1',
@@ -192,7 +205,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 10,
-      caption: 'Father is still queued — the handoff order is set.',
+      caption: 'One thread is still blocked, and which one goes next is already decided.',
+      analogyCaption: 'Abbu is still queued, and the handoff order is set.',
       highlight: ['T3'],
       state: {
         stepIndex: 10, value: 1, capacity: 1, activeActorId: 'T3',
@@ -202,7 +216,8 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 11,
-      caption: 'The bathroom goes to the first waiter in line — nobody is skipped.',
+      caption: 'The lock passes to the longest waiting thread, so no thread is starved.',
+      analogyCaption: 'The bathroom goes to the first waiter in line, and nobody is skipped.',
       highlight: ['T2'],
       state: {
         stepIndex: 11, value: 0, capacity: 1, activeActorId: 'T2',
@@ -225,14 +240,14 @@ export function lockLessonInput(p: LockParams): LockLessonInput {
     mode: p.mode,
     resourceLabel: 'THE LATCH (1 = FREE)',
     actors: [
-      { id: 'T1', name: 'T1', analogyName: 'Mother' },
-      { id: 'T2', name: 'T2', analogyName: 'Elder Sister' },
-      { id: 'T3', name: 'T3', analogyName: 'Father' }
+      { id: 'T1', name: 'T1', analogyName: 'Ammu' },
+      { id: 'T2', name: 'T2', analogyName: 'Arijit' },
+      { id: 'T3', name: 'T3', analogyName: 'Abbu' }
     ],
     events: [
-      { actorId: 'T1', action: 'acquire', caption: 'Mother takes the bathroom.' },
+      { actorId: 'T1', action: 'acquire', caption: 'Ammu takes the bathroom.' },
       { actorId: 'T2', action: 'spin', caption: 'Two waiters queue at the door.' },
-      { actorId: 'T1', action: 'release', caption: 'Mother comes out and turns the latch back.' },
+      { actorId: 'T1', action: 'release', caption: 'Ammu comes out and turns the latch back.' },
       { actorId: 'T2', action: 'acquire', caption: 'Handoff to the first waiter.' }
     ],
     analogy: {
@@ -240,7 +255,7 @@ export function lockLessonInput(p: LockParams): LockLessonInput {
       resourceLabel: 'THE LATCH (FREE?)',
       holderLabel: 'THE BATHROOM (OCCUPIED)',
       waitingLabel: 'AT THE DOOR (QUEUING)',
-      actorNames: { T1: 'Mother', T2: 'Elder Sister', T3: 'Father' }
+      actorNames: { T1: 'Ammu', T2: 'Arijit', T3: 'Abbu' }
     }
   };
 }
@@ -252,7 +267,7 @@ const MODE_SWITCH: Array<{ mode: 'spin' | 'block'; label: string }> = [
 
 /**
  * Lesson 14's engine, scoped to this lesson. Uses CounterEngine.render()
- * unchanged — the lesson adds the cost story: steps come from lockSteps()
+ * unchanged, the lesson adds the cost story: steps come from lockSteps()
  * and the playground re-maps them on every slider move.
  */
 export class LockCounterEngine extends CounterEngine implements PlaygroundCapable {
@@ -264,7 +279,7 @@ export class LockCounterEngine extends CounterEngine implements PlaygroundCapabl
     return lockSteps(params);
   }
 
-  /** The live result, computed on every call — never cached, never typed. */
+  /** The live result, computed on every call, never cached, never typed. */
   public getCosts(): LockCostModel {
     return lockCosts(this.input.params);
   }
@@ -286,7 +301,7 @@ export class LockCounterEngine extends CounterEngine implements PlaygroundCapabl
     const p = this.getParams();
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">How long is the stay — drag it past the wakeup price</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">How long is the stay, drag it past the wakeup price</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${MODE_SWITCH.map((m) => `
             <button type="button" class="l14-mode" data-mode="${m.mode}" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 600; border-radius: var(--rounded-pill, 9999px); background: var(--surface-alt); border: 1px solid ${p.mode === m.mode ? 'var(--accent)' : 'var(--hairline)'}; color: ${p.mode === m.mode ? 'var(--accent)' : 'var(--ink)'}; cursor: pointer;">${m.label}</button>
@@ -310,7 +325,7 @@ export class LockCounterEngine extends CounterEngine implements PlaygroundCapabl
           <span id="l14-cpuFreqGHz-val" style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--accent); min-width: 52px; text-align: right;">${p.cpuFreqGHz} GHz</span>
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">The switch cost and the clock are assumptions you set — the deck never states them — and the verdict follows them.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">The switch cost and the clock are assumptions you set, the deck never states them, and the verdict follows them.</div>
     `;
 
     host.querySelectorAll('input[type="range"][data-param]').forEach((el) => {
@@ -356,7 +371,7 @@ export class LockCounterEngine extends CounterEngine implements PlaygroundCapabl
     const spin = m.preferSpinlock;
     const verdictColor = spin ? 'var(--running)' : 'var(--waiting)';
     const verdictBg = spin ? 'rgba(8, 127, 91, 0.12)' : 'rgba(217, 119, 6, 0.12)';
-    const verdictText = spin ? '🟢 Short stay — keep jiggling' : '🔴 Long stay — sit down instead';
+    const verdictText = spin ? '🟢 Short stay, keep jiggling' : '🔴 Long stay, sit down instead';
     this.scoreboardHost.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; flex-wrap: wrap; gap: 4px;">
         <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Wait check</h3>
@@ -404,12 +419,17 @@ export const lesson14: Lesson<LockLessonInput, CounterState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'One bathroom, one latch: mother goes in, comes out, turns the latch back. The waiters either jiggle the handle until it opens or sit on the corridor bench until they are called — and which waste is smaller depends entirely on how long mother stays.'
+    text: 
+      'The bathroom door is latched and Arijit needs to get in.\n\n' +
+      'He has two options and they are genuinely different. He can stand at the door and try the handle every few seconds, which means he is right there the instant it opens, but he is also standing in a corridor doing nothing for however long it takes.\n\n' +
+      'Or he can go and sit down, and ask to be called when it is free. Now he is not wasting the time. But being called costs something: someone has to come and get him, and he has to get up and walk back.\n\n' +
+      'Which one is less wasteful depends entirely on how long Ammu is in there. Thirty seconds, and standing at the door wins easily. Twenty minutes, and standing at the door is absurd. The crossover sits exactly at the cost of being fetched.'
   },
   concept:
-    'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the bathroom, use it, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when mother comes out at once; sitting on the bench pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price — set it, set the clock, and the verdict recomputes.',
+    'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the bathroom, use it, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when Ammu comes out at once; sitting on the bench pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price, set it, set the clock, and the verdict recomputes.'  +
+    '  A lock built by spinning is called a SPINLOCK, and the name is exactly what it does: the waiting thread stays on the processor going round a loop, testing the lock over and over until it opens. It never gives the core up, so it burns processor time for the whole wait, and that is fine precisely when the wait is short, because it never pays for a context switch. The alternative blocks the thread instead: it is taken off the core and put on a wait queue, and pays two context switches, one to sleep and one to wake. Short critical sections favour the spinlock, long ones favour blocking, and the crossover sits at the cost of the switch.',
   morphReveals:
-    'At home every token is the same width — a person at the door — and the queue stays shoulder-to-shoulder however long mother stays. In the lock width stops meaning a body and starts meaning the claim on the bathroom: mother fills it wide while the queued compress behind. The stay itself is priced in numbers, not width — drag it and the spin bill climbs past the wakeup price until sitting down wins.',
+    'At home every token is the same width, a person at the door, and the queue stays shoulder-to-shoulder however long Ammu stays. In the lock width stops meaning a body and starts meaning the claim on the bathroom: Ammu fills it wide while the queued compress behind. The stay itself is priced in numbers, not width, drag it and the spin bill climbs past the wakeup price until sitting down wins.',
   morphMode: 'morph',
   analogyMapping: [
     'One bathroom latch ➔ the mutex (available or held)',
@@ -417,7 +437,7 @@ export const lesson14: Lesson<LockLessonInput, CounterState> = {
     'Turning the latch back ➔ release()',
     'Jiggling the handle ➔ spinning: the processor burns for the whole stay',
     'Sitting on the bench until called ➔ blocking: one wakeup price, then sleep',
-    'How long mother stays ➔ the dragged stay length that flips the verdict'
+    'How long Ammu stays ➔ the dragged stay length that flips the verdict'
   ],
   input: lesson14Input
 };

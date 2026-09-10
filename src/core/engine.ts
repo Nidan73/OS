@@ -3,7 +3,7 @@ import type { Step } from './types.js';
 
 /**
  * SVG attributes interpolated between steps during play() (§4A.3). Geometry
- * first — position and size are what the learner reads as motion — plus
+ * first, position and size are what the learner reads as motion, plus
  * `rx`/`ry` (corner radius, which every engine's morph already treats as
  * geometric), `transform` and `opacity` for moves and fades. Paint (`fill`,
  * `stroke`, `stroke-width`) is deliberately excluded: colour encodes state
@@ -104,7 +104,7 @@ export abstract class AnimationEngine<I, S> {
   }
 
   /**
-   * Fires when the step array is replaced — a playground control changed an
+   * Fires when the step array is replaced, a playground control changed an
    * input and the timeline was recomputed. Transport UI resyncs from here
    * instead of each lesson reaching into the DOM for the scrubber.
    */
@@ -166,8 +166,7 @@ export abstract class AnimationEngine<I, S> {
       const id = el.getAttribute('id');
       if (!id || out.has(id)) return;
       // The tween target is the element that actually CARRIES the geometry:
-      // for a `<g>` whose rect/line/circle child holds x/width, that child —
-      // tweening the `<g>` would set attributes it never had and move nothing.
+      // for a `<g>` whose rect/line/circle child holds x/width, that child, // tweening the `<g>` would set attributes it never had and move nothing.
       const geomEl = el.tagName.toLowerCase() === 'g'
         ? (el.querySelector('rect,line,circle,ellipse') ?? el)
         : el;
@@ -194,7 +193,7 @@ export abstract class AnimationEngine<I, S> {
    * single timeline, so pause()/seek()/destroy() still kill it cleanly. Ids
    * present only in the NEW tree fade in from 0 (opacity attribute or inline
    * style, matching what render() set). Ids present only in the OLD tree are
-   * already gone — render() rebuilt the tree — and are left alone. Pure
+   * already gone, render() rebuilt the tree, and are left alone. Pure
    * numeric text (counters, metrics) counts up or down instead of jumping.
    * Geometry matters more than numbers: a counter that proves fiddly is
    * left to snap with its step.
@@ -375,7 +374,7 @@ export abstract class AnimationEngine<I, S> {
     this.playing = false;
     this.clearAdvanceTimer();
     // progress(1) first so attribute tweens land on exact end values before
-    // the kill — then render() re-applies the target absolute state (§4A.2).
+    // the kill, then render() re-applies the target absolute state (§4A.2).
     if (this.timeline) {
       (this.timeline as unknown as { progress: (v: number) => void }).progress(1);
       this.timeline.kill();
@@ -423,8 +422,8 @@ export abstract class AnimationEngine<I, S> {
     const currentStep = this.steps[this.index];
     const nextStep = this.steps[nextIdx];
     // SPEC §4A.5 pace (0.6–1.2 s per beat, learner-controlled anyway).
-    // Density rises are absorbed by the tween itself — every transition is now
-    // motion, not a hold-then-cut — so no per-step scaling is applied: a dense
+    // Density rises are absorbed by the tween itself, every transition is now
+    // motion, not a hold-then-cut, so no per-step scaling is applied: a dense
     // timeline simply plays longer, which is what its events earn.
     const rawGap = nextStep.t - currentStep.t || 1.0;
     const stepDuration = Math.max(0.6, Math.min(1.2, rawGap));

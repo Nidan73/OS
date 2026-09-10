@@ -4,8 +4,7 @@ import { AnimationEngine } from '../src/core/engine.js';
 
 /**
  * Part 1 proof: play() tweens attributes BETWEEN absolute snapshots (§4A.3).
- * A two-step engine whose bar moves x 0 → 100 must show x ≈ 50 mid-tween —
- * not a hold-then-hard-cut — while seek() stays instant and destroy() kills
+ * A two-step engine whose bar moves x 0 → 100 must show x ≈ 50 mid-tween, * not a hold-then-hard-cut, while seek() stays instant and destroy() kills
  * the tween timeline.
  */
 class SlidingBarEngine extends AnimationEngine<void, { x: number; label: string }> {
@@ -70,7 +69,7 @@ describe('Part 1 · play() tweens attributes between snapshots (§4A.3)', () => 
     gsap.globalTimeline.clear();
   });
 
-  test('geometry is mid-way at mid-tween — bars slide, not snap', () => {
+  test('geometry is mid-way at mid-tween, bars slide, not snap', () => {
     const e = new SlidingBarEngine(el);
     e.init();
     e.seek(0);
@@ -109,7 +108,7 @@ describe('Part 1 · play() tweens attributes between snapshots (§4A.3)', () => 
     e.destroy();
   });
 
-  test('seek() stays instant — no tweening on scrub', () => {
+  test('seek() stays instant, no tweening on scrub', () => {
     const e = new SlidingBarEngine(el);
     e.init();
     e.seek(0);
@@ -119,7 +118,7 @@ describe('Part 1 · play() tweens attributes between snapshots (§4A.3)', () => 
     e.destroy();
   });
 
-  test('prefers-reduced-motion keeps the snap path — no tween timeline', () => {
+  test('prefers-reduced-motion keeps the snap path, no tween timeline', () => {
     matchMediaMock(true);
     vi.useFakeTimers();
     const e = new SlidingBarEngine(el);
@@ -149,7 +148,7 @@ describe('Part 1 · play() tweens attributes between snapshots (§4A.3)', () => 
     void atQuarter;
   });
 
-  test('pause() restores the current step exactly — the DOM never rests between snapshots', () => {
+  test('pause() restores the current step exactly, the DOM never rests between snapshots', () => {
     const e = new SlidingBarEngine(el);
     e.init();
     e.seek(0);

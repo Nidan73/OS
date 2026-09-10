@@ -24,7 +24,7 @@ describe('Lesson 4: Round Robin and the Cost of Fairness (§3C)', () => {
     expect(lesson04.analogy.text).toContain('family car');
     expect(lesson04.concept).toContain('Round Robin');
     expect(lesson04.morphReveals).toBe(
-      'Taking turns with the car, every slot is the same length, so fairness is just holding your place in the key line. On the timeline that same equal width becomes the quantum — and a long drive now needs many separate turns, so shrinking the slot to feel fairer multiplies the handovers until the evening is spent passing the keys.'
+      'Taking turns with the car, every slot is the same length, so fairness is just holding your place in the key line. On the timeline that same equal width becomes the quantum, and a long drive now needs many separate turns, so shrinking the slot to feel fairer multiplies the handovers until the evening is spent passing the keys.'
     );
   });
 
@@ -146,7 +146,7 @@ describe('Lesson 4: Round Robin and the Cost of Fairness (§3C)', () => {
     expect(wP1 / wP2).toBeCloseTo(4 / 3, 1);
   });
 
-  test('geometry interpolates — the morph is real (§3C.2c)', () => {
+  test('geometry interpolates, the morph is real (§3C.2c)', () => {
     const ids = ['P1', 'P2', 'P3'];
     const widthAt = (view: number, id: string) => {
       engine.setView(view);

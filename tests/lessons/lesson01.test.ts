@@ -143,7 +143,7 @@ describe('Lesson 1: Why a scheduler exists at all (§3C)', () => {
     expect(wP1 / wP2).toBeCloseTo(24 / 3, 1);
   });
 
-  test('geometry interpolates — the morph is real', () => {
+  test('geometry interpolates, the morph is real', () => {
     const ids = ['P1', 'P2', 'P3'];
     const widthAt = (view: number, id: string) => {
       engine.setView(view);

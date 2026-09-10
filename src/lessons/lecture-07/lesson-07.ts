@@ -1,7 +1,7 @@
 import type { Lesson, PlaygroundCapable } from "../../core/types.js";
 import { QueueEngine, type QueueInput, type QueueState } from "../../engines/queue.js";
 
-// DENSITY (Task A audit): correct at 11 — four dispatches, four completions,
+// DENSITY (Task A audit): correct at 11, four dispatches, four completions,
 // the stall, the instant hardware switch onto Thread 1, and the resume, plus
 // the initial frame. T3 and T4 run straight through with no contention: each
 // contributes exactly its dispatch and its completion, and a contention-free
@@ -161,51 +161,58 @@ function setupLesson07Playground(
       }
     }
 
+    // Every beat carries both voices: the mechanism caption for the mechanism
+    // lens and the same beat in the kitchen's words for the analogy lens. The
+    // helper keeps the pairing in one place so no configuration can drift
+    // back to a single-voice event.
+    type Beat = { caption: string; analogyCaption: string };
+    const beat = (caption: string, analogy: string): Beat => ({ caption, analogyCaption: analogy });
+
     const events = [];
     if (coresCount === 1 && !smtEnabled) {
       events.push(
-        { caption: "T1 dispatched to Core 0. Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall (cache miss). The pan simmers — nobody can touch it!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "No alternate hardware thread: the core stays empty through the whole stall.", action: "demote" as const, itemId: "T2", toQueue: "ready" },
-        { caption: "Memory returns. T1 resumes on Core 0.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
-        { caption: "T2 dispatched sequentially to Core 0.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
-        { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" }
+        { ...beat("T1 dispatched to Core 0. Runs its compute slice.", "The cook starts the first order and works on it."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T1 hits a memory stall (cache miss). The pan simmers, nobody can touch it!", "The pan goes on to simmer. Nothing about it needs the cook now, but she is standing there anyway."), action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { ...beat("No alternate hardware thread: the core stays empty through the whole stall.", "With only one pan there is nothing else for her to turn to, so she waits out the whole simmer doing nothing."), action: "demote" as const, itemId: "T2", toQueue: "ready" },
+        { ...beat("Memory returns. T1 resumes on Core 0.", "The simmer ends and she picks that order back up."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T1 finishes its slice.", "And finishes it."), action: "complete" as const, itemId: "T1" },
+        { ...beat("T2 dispatched sequentially to Core 0.", "The first order done, she starts the second. One cook, one pan, one order at a time."), action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
+        { ...beat("T2 finishes its slice.", "And finishes it."), action: "complete" as const, itemId: "T2" }
       );
     } else if (coresCount === 1 && smtEnabled) {
       events.push(
-        { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall. Hardware switches instantly to T2 on Thread 1.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
-        { caption: "T2 executes while the T1 stall resolves in the background.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" },
-        { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
-        { caption: "T3 dispatched to Core 0 — the core never sat idle.", action: "dispatch" as const, itemId: "T3", coreId: "core0_t0" },
-        { caption: "T3 finishes its slice.", action: "complete" as const, itemId: "T3" }
+        { ...beat("T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", "The cook starts the first order."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T1 hits a memory stall. Hardware switches instantly to T2 on Thread 1.", "The first pan goes to simmer, and she turns straight to her second pan on the same stove."), action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
+        { ...beat("T2 executes while the T1 stall resolves in the background.", "She works the second order while the first simmers untouched."), action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { ...beat("T2 finishes its slice.", "The second order is done, and by now the first pan is ready again."), action: "complete" as const, itemId: "T2" },
+        { ...beat("T1 resumes on Thread 0 with its line refilled.", "She turns back to the first pan, which is ready for her again."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T1 finishes its slice.", "And finishes it."), action: "complete" as const, itemId: "T1" },
+        { ...beat("T3 dispatched to Core 0, the core never sat idle.", "The next order goes straight on. The stove never sat cold."), action: "dispatch" as const, itemId: "T3", coreId: "core0_t0" },
+        { ...beat("T3 finishes its slice.", "And finishes it."), action: "complete" as const, itemId: "T3" }
       );
     } else if (!smtEnabled) {
       events.push(
-        { caption: "T1 dispatched to Core 0; runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T3 dispatched to Core 1 in parallel.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
-        { caption: "T1 hits a memory stall. Without hardware threads, Core 0 goes idle.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "T1 resumes on Core 0 when memory returns.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
-        { caption: "T3 finishes its slice on Core 1.", action: "complete" as const, itemId: "T3" },
-        { caption: "T2 dispatched to Core 0 — multicore still stalls per thread.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
-        { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" }
+        { ...beat("T1 dispatched to Core 0; runs its compute slice.", "One cook starts the first order at her stove."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T3 dispatched to Core 1 in parallel.", "A second cook starts a different order at her own stove."), action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
+        { ...beat("T1 hits a memory stall. Without hardware threads, Core 0 goes idle.", "Her pan simmers, and with one pan per cook there is nothing to switch to. She stands still until it is done."), action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { ...beat("T1 resumes on Core 0 when memory returns.", "The simmer ends and she picks that order back up."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T1 finishes its slice.", "And finishes it."), action: "complete" as const, itemId: "T1" },
+        { ...beat("T3 finishes its slice on Core 1.", "She finishes it. That is real extra capacity, not clever use of gaps."), action: "complete" as const, itemId: "T3" },
+        { ...beat("T2 dispatched to Core 0, multicore still stalls per thread.", "The first cook takes the next order. Two stoves help, but one pan per cook still means standing still at every simmer."), action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
+        { ...beat("T2 finishes its slice.", "And finishes it."), action: "complete" as const, itemId: "T2" }
       );
     } else {
       events.push(
-        { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall (cache miss) and leaves the pipeline.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "Hardware switches instantly: T2 runs on Thread 1 while T1 waits on RAM.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
-        { caption: "T2 finishes its slice; the stall resolves underneath it.", action: "complete" as const, itemId: "T2" },
-        { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
-        { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
-        { caption: "T3 finishes its slice on Core 1.", action: "complete" as const, itemId: "T3" },
-        { caption: "T4 dispatched to Core 1 (Thread 1) — the stall window stays filled.", action: "dispatch" as const, itemId: "T4", coreId: "core1_t1" },
-        { caption: "T4 finishes. Latency was masked, not removed.", action: "complete" as const, itemId: "T4" }
+        { ...beat("T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", "Each cook starts her first order."), action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { ...beat("T1 hits a memory stall (cache miss) and leaves the pipeline.", "The first pan goes to simmer. With two pans per cook, nobody has to stand still."), action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { ...beat("Hardware switches instantly: T2 runs on Thread 1 while T1 waits on RAM.", "This time she has a second pan. The moment the first goes to simmer she turns to it and starts the next order."), action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
+        { caption: "T2 finishes its slice; the stall resolves underneath it.", analogyCaption: "That second order gets done while the first one is still simmering away beside it.", action: "complete" as const, itemId: "T2" },
+        { caption: "T1 resumes on Thread 0 with its line refilled.", analogyCaption: "She turns back to the first pan, which is ready for her again.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 finishes its slice.", analogyCaption: "And finishes it.", action: "complete" as const, itemId: "T1" },
+        { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", analogyCaption: "Meanwhile the second cook, at her own stove, is working on a different order entirely.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
+        { caption: "T3 finishes its slice on Core 1.", analogyCaption: "She finishes it. That is real extra capacity, not clever use of gaps.", action: "complete" as const, itemId: "T3" },
+        { caption: "T4 dispatched to Core 1 (Thread 1), the stall window stays filled.", analogyCaption: "And she does the same trick with her own second pan, so her simmering time is filled too.", action: "dispatch" as const, itemId: "T4", coreId: "core1_t1" },
+        { caption: "T4 finishes. Latency was masked, not removed.", analogyCaption: "Everything is served. Notice what did not happen: nobody cooked any faster. The simmering still took exactly as long. It was just no longer time spent standing still.", action: "complete" as const, itemId: "T4" }
       );
     }
 
@@ -233,16 +240,20 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
   },
   analogy: {
     domain: "food",
-    text: "One cook versus several, and one cook working several pans. When a pan must simmer untouched, the cook turns to the next pan instead of standing idle — and the second pan covers the waiting time."
+    text: 
+      'One cook can only stand at one stove. On a Friday at Yum Cha, that is the whole problem, and there are two different ways to fix it that people constantly confuse.\n\n' +
+      'The first is obvious: hire a second cook. Two cooks, two stoves, two plates of chicken nanban coming out at once. You have doubled what the kitchen can actually do.\n\n' +
+      'The second is subtler. Keep one cook, but give her two pans. While the first pan is sitting there with the chicken simmering and needing nothing from her, she turns to the second pan and starts the next order. She has not become faster. She has stopped standing still during the parts of the work that do not need her.\n\n' +
+      'Both of these make the kitchen busier. Only one of them is more cooks. Knowing which is which is the difference between a core and a hardware thread.'
   },
   concept: "Multiprocessor architectures scale throughput by adding cores and hardware threads (chip multithreading / SMT). When a running task hits a memory stall waiting for a cache miss, the core hardware instantly switches to an alternate hardware thread, masking latency and keeping execution units saturated across two distinct levels of scheduling.",
-  morphReveals: "In the kitchen a gap at the cook's counter is plain dead time — nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
+  morphReveals: "In the kitchen a gap at the cook's counter is plain dead time, nobody is cooking and the width is simply waste. On the core that same gap is a memory stall, and a second pan slides straight into it. Empty width stops meaning wasted and starts meaning available to somebody else.",
   morphMode: "morph",
   analogyMapping: [
     "Cooks at Counters ➔ Processor Cores",
     "Several Pans per Cook ➔ Hardware Threads (Hyperthreading)",
     "Simmering Untouched ➔ Memory Stall (Cache Miss)",
-    "Mother Assigning Dishes ➔ OS Thread Scheduler (First Level)",
+    "Ammu Assigning Dishes ➔ OS Thread Scheduler (First Level)",
     "Cook Turning Pans ➔ Core Hardware Thread Switch (Second Level)"
   ],
   input: {
@@ -263,22 +274,23 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
       { id: "T4", name: "Task 4", burst: 20, queueId: "ready" }
     ],
     events: [
-      { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
-      { caption: "T1 hits a memory stall (cache miss) and leaves the pipeline.", action: "demote", itemId: "T1", toQueue: "stall" },
-      { caption: "Hardware switches instantly: T2 runs on Thread 1 while T1 waits on RAM.", action: "dispatch", itemId: "T2", coreId: "core0_t1" },
-      { caption: "T2 finishes its slice; the stall resolves underneath it.", action: "complete", itemId: "T2" },
-      { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
-      { caption: "T1 finishes its slice.", action: "complete", itemId: "T1" },
-      { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", action: "dispatch", itemId: "T3", coreId: "core1_t0" },
-      { caption: "T3 finishes its slice on Core 1.", action: "complete", itemId: "T3" },
-      { caption: "T4 dispatched to Core 1 (Thread 1) — the stall window stays filled.", action: "dispatch", itemId: "T4", coreId: "core1_t1" },
-      { caption: "T4 finishes. Latency was masked, not removed.", action: "complete", itemId: "T4" }
+      { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", analogyCaption: "Each cook starts her first order.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
+      { caption: "T1 hits a memory stall (cache miss) and leaves the pipeline.", analogyCaption: "The first pan goes to simmer. With two pans per cook, nobody has to stand still.", action: "demote", itemId: "T1", toQueue: "stall" },
+      { caption: "Hardware switches instantly: T2 runs on Thread 1 while T1 waits on RAM.", analogyCaption: "This time she has a second pan. The moment the first goes to simmer she turns to it and starts the next order.", action: "dispatch", itemId: "T2", coreId: "core0_t1" },
+      { caption: "T2 finishes its slice; the stall resolves underneath it.", analogyCaption: "That second order gets done while the first one is still simmering away beside it.", action: "complete", itemId: "T2" },
+      { caption: "T1 resumes on Thread 0 with its line refilled.", analogyCaption: "She turns back to the first pan, which is ready for her again.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
+      { caption: "T1 finishes its slice.", analogyCaption: "And finishes it.", action: "complete", itemId: "T1" },
+      { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", analogyCaption: "Meanwhile the second cook, at her own stove, is working on a different order entirely.", action: "dispatch", itemId: "T3", coreId: "core1_t0" },
+      { caption: "T3 finishes its slice on Core 1.", analogyCaption: "She finishes it. That is real extra capacity, not clever use of gaps.", action: "complete", itemId: "T3" },
+      { caption: "T4 dispatched to Core 1 (Thread 1), the stall window stays filled.", analogyCaption: "And she does the same trick with her own second pan, so her simmering time is filled too.", action: "dispatch", itemId: "T4", coreId: "core1_t1" },
+      { caption: "T4 finishes. Latency was masked, not removed.", analogyCaption: "Everything is served. Notice what did not happen: nobody cooked any faster. The simmering still took exactly as long. It was just no longer time spent standing still.", action: "complete", itemId: "T4" }
     ],
     analogy: {
       domain: "food",
       serviceLabel: "Cook Counter",
       queueLabels: { ready: "Dishes Waiting", stall: "Simmering Pans" }
-    }
+    },
+    initialAnalogyCaption: "The orders are in and nobody has started cooking yet. Every pan is free."
   }
 };
 

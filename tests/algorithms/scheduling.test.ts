@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { fcfs, sjf, srtf, roundRobin, priorityScheduling, mlfq } from '../../src/algorithms/scheduling.js';
 
-describe('CPU Scheduling Algorithms (§7 — verified against Lecture 6 slides)', () => {
+describe('CPU Scheduling Algorithms (§7, verified against Lecture 6 slides)', () => {
   test('FCFS matches Lecture 6 slide 8', () => {
     const r = fcfs([
       { id: 'P1', arrival: 0, burst: 24 },
@@ -14,7 +14,7 @@ describe('CPU Scheduling Algorithms (§7 — verified against Lecture 6 slides)'
     expect(r.avgTurnaround).toBe(27);
   });
 
-  test('FCFS convoy effect reverses on reorder — slide 9', () => {
+  test('FCFS convoy effect reverses on reorder, slide 9', () => {
     const r = fcfs([
       { id: 'P2', arrival: 0, burst: 3 },
       { id: 'P3', arrival: 0, burst: 3 },

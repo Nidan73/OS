@@ -138,34 +138,59 @@ code, kbd, samp, pre {
   border-color: var(--faint);
 }
 
-/* Responsive grid for unit page */
+/* ── Lesson workspace shell ────────────────────────────────────────────────
+   The animation is the hero. The chapter rail and the reading column serve
+   it: quiet, flat surfaces, hierarchy from type and whitespace rather than
+   nested boxes. One card look for every panel, one focus ring everywhere. */
+
 .unit-layout {
   display: grid;
   flex: 1;
-  padding: calc(var(--step) * 1.25) calc(var(--step) * 2);
-  gap: calc(var(--step) * 1.5);
-  max-width: 1440px;
+  padding: calc(var(--step) * 1.5) calc(var(--step) * 2.5);
+  gap: calc(var(--step) * 2);
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
 
+/* One shared surface for controls and readouts: the grid itself is the card,
+   the two sections inside are separated by a hairline, not boxed twice. */
 .lesson-interactive-grid {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
-  gap: var(--step);
+  gap: 0;
   align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-lg, 18px);
+  overflow: hidden;
+}
+
+.lesson-interactive-grid > section {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: calc(var(--step) * 1) calc(var(--step) * 1.2);
+}
+
+.lesson-interactive-grid > section + section {
+  border-left: 1px solid var(--hairline);
 }
 
 @media (max-width: 960px) {
   .lesson-interactive-grid {
     grid-template-columns: 1fr;
   }
+  .lesson-interactive-grid > section + section {
+    border-left: none;
+    border-top: 1px solid var(--hairline);
+  }
 }
 
-/* >= 1100px: 3 columns */
-@media (min-width: 1100px) {
+/* ≥ 1200px: rail / workspace / reading column. The center column wins. */
+@media (min-width: 1200px) {
   .unit-layout {
-    grid-template-columns: 240px 1fr 310px;
+    grid-template-columns: 224px minmax(0, 1fr) 344px;
     align-items: start;
   }
   .unit-sidebar-select {
@@ -173,24 +198,31 @@ code, kbd, samp, pre {
   }
 }
 
-/* 760px - 1099px: 2 columns */
-@media (min-width: 760px) and (max-width: 1099px) {
+/* 760px – 1199px: the workspace breathes; reading sections flow underneath. */
+@media (min-width: 760px) and (max-width: 1199px) {
   .unit-layout {
-    grid-template-columns: 1fr 320px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 1080px;
   }
   .unit-sidebar-rail {
     display: none;
   }
+  .unit-right-sidebar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--step);
+    align-items: start;
+  }
 }
 
-/* < 760px: single column */
+/* < 760px: single column, thumb-first. Caption and transport sit between
+   the canvas and the controls; the transport docks to the bottom edge. */
 @media (max-width: 759px) {
   .unit-layout {
     grid-template-columns: 1fr;
     padding: var(--step);
-    gap: calc(var(--step) * 2);
-    padding-bottom: 96px; /* space for sticky transport */
+    gap: calc(var(--step) * 1.5);
+    padding-bottom: 108px; /* space for the fixed transport */
   }
   .unit-sidebar-rail {
     display: none;
@@ -202,16 +234,377 @@ code, kbd, samp, pre {
     right: 0;
     background: var(--surface);
     border-top: 1px solid var(--rule);
+    border-radius: 0;
     padding: var(--step) calc(var(--step) * 2);
     z-index: 40;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   }
+  /* Reorder the player: canvas, caption, transport, then the control grid. */
+  .lesson-player {
+    display: grid !important;
+    gap: calc(var(--step) * 0.9);
+  }
+  .lesson-player .lens-controller { order: 1; }
+  .lesson-player .anim-viewport { order: 2; }
+  .lesson-player .caption-banner { order: 3; }
+  .lesson-player .transport-bar { order: 4; }
+  .lesson-player .lesson-interactive-grid { order: 5; }
+  .lesson-player .morph-reveals-banner { order: 6; }
 }
+
+/* Chapter rail: a quiet navigator, not a second layout. */
+.unit-sidebar-rail {
+  position: sticky;
+  top: calc(var(--step) * 1.5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--step);
+  font-size: 0.9rem;
+}
+
+.rail-back {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  border-radius: var(--rounded-md, 11px);
+  padding: 2px 0;
+}
+
+.rail-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.rail-chapter {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rail-current {
+  border-left: 3px solid var(--accent);
+  padding: 10px 12px;
+  background: var(--surface-alt);
+  border-radius: var(--rounded-lg, 18px);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rail-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: calc(var(--step) * 0.5);
+}
+
+.rail-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-lg, 18px);
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.84rem;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.rail-nav a:hover {
+  border-color: var(--accent);
+  background: var(--surface-alt);
+}
+
+.rail-nav a span {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Lesson header: kicker line + one strong title, no boxed wrapper. */
+.lesson-header {
+  margin-bottom: calc(var(--step) * 0.25);
+}
+
+.lesson-header .kicker {
+  font-size: 0.82rem;
+  color: var(--accent);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+.lesson-header h1 {
+  font-size: 1.65rem;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  margin: 2px 0 0 0;
+  color: var(--ink);
+}
+
+/* The player column. */
+.lesson-player {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--step) * 1);
+  width: 100%;
+  min-width: 0;
+}
+
+.lens-controller {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--step);
+  padding: calc(var(--step) * 0.75) calc(var(--step) * 1.1);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-lg, 18px);
+}
+
+.lens-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 0.6);
+}
+
+.pill-btn {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--rounded-pill, 9999px);
+  border: 1px solid var(--hairline);
+  background: var(--surface-alt);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.pill-btn:hover {
+  border-color: var(--muted);
+}
+
+.pill-btn.active {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.view-slider {
+  width: 130px;
+  cursor: pointer;
+}
+
+.view-percent {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  min-width: 45px;
+  color: var(--accent);
+}
+
+.anim-viewport {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-lg, 18px);
+  padding: calc(var(--step) * 1.1) calc(var(--step) * 1.3);
+  overflow: hidden;
+}
+
+@media (min-width: 1200px) {
+  .anim-viewport {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+/* Caption: the beat she is watching, in the lens's own words. */
+.caption-banner {
+  padding: calc(var(--step) * 0.85) calc(var(--step) * 1.2);
+  background: var(--surface-alt);
+  border: 1px solid var(--hairline);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--rounded-lg, 18px);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+}
+
+/* Transport: flat, buttons carry the shape. */
+.transport-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--step);
+  padding: calc(var(--step) * 0.6) calc(var(--step) * 1.1);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-lg, 18px);
+}
+
+.transport-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-alt);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-pill, 9999px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.transport-btn:hover {
+  border-color: var(--muted);
+}
+
+.transport-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.scrubber {
+  flex: 1;
+  min-width: 140px;
+  height: 44px;
+  cursor: pointer;
+}
+
+.step-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.playground-panel,
+.scoreboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.morph-reveals-banner {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.55;
+  padding: calc(var(--step) * 0.8) calc(var(--step) * 1.1);
+  border-left: 3px solid var(--hairline);
+  border-radius: var(--rounded-lg, 18px);
+}
+
+/* Reading column: concept, analogy, morph notes. Quiet, flat, generous. */
+.unit-right-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--step) * 1.25);
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.reading-card {
+  padding: 0 0 0 14px;
+  border-left: 3px solid var(--hairline);
+}
+
+.reading-card h3 {
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reading-card h3 .domain-chip {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid currentColor;
+  padding: 1px 8px;
+  border-radius: var(--rounded-pill, 9999px);
+}
+
+.reading-card p {
+  font-family: var(--font-ui);
+  font-size: 15.5px;
+  line-height: 1.6;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  margin: 0;
+  max-width: 62ch;
+}
+
+.reading-card .analogy-text {
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.reading-card .mapping-list {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.reading-card .mapping-list strong {
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+
+/* One focus ring for the whole shell: visible, offset, consistent. */
+.lesson-player :focus-visible,
+.unit-sidebar-rail :focus-visible,
+.unit-right-sidebar :focus-visible,
+.lesson-header :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--rounded-md, 11px);
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* The transport bar stays reachable however long a caption runs.
+   Story-style captions are several lines, and the play button sitting below
+   the fold is the difference between a lesson she can drive and one she has
+   to scroll to operate. On narrow widths it is already position: fixed. */
+@media (min-width: 760px) {
+  .transport-bar.sticky-transport {
+    position: sticky;
+    bottom: calc(var(--step) * 0.75);
+    z-index: 30;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
   }
 }

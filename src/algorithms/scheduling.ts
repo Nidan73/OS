@@ -375,7 +375,7 @@ export function mlfq(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Algorithm evaluation — L23, ATLAS units 31–33, Lecture 7 slides 24–30.
+// Algorithm evaluation. L23, ATLAS units 31–33, Lecture 7 slides 24–30.
 //
 // Three ways to answer "which scheduler?", in increasing generality and cost:
 // deterministic modelling (exact, one workload), queueing models / Little's
@@ -383,7 +383,7 @@ export function mlfq(
 // Every figure the lesson shows comes from here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** One algorithm's result on one fixed workload — slide 25's deterministic evaluation. */
+/** One algorithm's result on one fixed workload, slide 25's deterministic evaluation. */
 export interface AlgorithmVerdict {
   algorithm: 'fcfs' | 'sjf' | 'rr';
   label: string;
@@ -396,7 +396,7 @@ const round2 = (num: number) => Math.round(num * 100) / 100;
 /**
  * Deterministic modelling (slides 24–25): run every candidate over one
  * predetermined workload and read off the average waiting time. Order is
- * fixed — fcfs, sjf, rr — so the caller compares, never the callee.
+ * fixed, fcfs, sjf, rr, so the caller compares, never the callee.
  */
 export function deterministicComparison(
   processes: Process[],
@@ -421,7 +421,7 @@ export function bestOf(verdicts: AlgorithmVerdict[]): AlgorithmVerdict {
 /**
  * Little's formula (slide 27): n = lambda x W, in steady state, valid for any
  * scheduling algorithm and any arrival distribution. Supply exactly two of the
- * three terms and the third is derived — the lesson never types the third.
+ * three terms and the third is derived, the lesson never types the third.
  */
 export interface LittlesLaw {
   /** average queue length */
@@ -438,7 +438,7 @@ export function littlesLaw(known: { n?: number; lambda?: number; w?: number }): 
   const has = (v: number | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
   const given = [has(known.n), has(known.lambda), has(known.w)].filter(Boolean).length;
   if (given !== 2) {
-    throw new Error(`littlesLaw: supply exactly two of n, lambda, w — got ${given}`);
+    throw new Error(`littlesLaw: supply exactly two of n, lambda, w, got ${given}`);
   }
   if (!has(known.n)) {
     if (known.lambda! < 0 || known.w! < 0) throw new Error('littlesLaw: rates and waits must be >= 0');
@@ -455,8 +455,8 @@ export function littlesLaw(known: { n?: number; lambda?: number; w?: number }): 
 /**
  * Simulation (slides 28–30): instead of one exact answer for one workload,
  * run the same algorithms over every ordering of the same job sizes and
- * report the spread. This is what slide 25's caveat — "applies only to those
- * inputs" — costs you: an algorithm whose spread is wide was never really
+ * report the spread. This is what slide 25's caveat, "applies only to those
+ * inputs", costs you: an algorithm whose spread is wide was never really
  * measured by a single deterministic run.
  */
 export interface OrderingSpread {
@@ -476,7 +476,7 @@ export interface SimulationRun {
   winCounts: Record<'fcfs' | 'sjf' | 'rr', number>;
 }
 
-/** Every distinct ordering of a multiset of burst times. Guarded — 8! is the ceiling. */
+/** Every distinct ordering of a multiset of burst times. Guarded, 8! is the ceiling. */
 export function orderingsOf(bursts: number[]): number[][] {
   if (bursts.length > 8) {
     throw new Error(`orderingsOf: ${bursts.length} bursts is too many to enumerate (max 8)`);

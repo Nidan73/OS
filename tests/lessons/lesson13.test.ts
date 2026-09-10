@@ -15,7 +15,8 @@ import {
   atomicSteps,
   atomicTrace,
   lesson13,
-  lesson13Input
+  lesson13Input,
+  lockInstructionCaption
 } from '../../src/lessons/lecture-09/lesson-13.js';
 
 const COMBOS: Array<{ mechanism: AtomicMechanism; atomic: boolean }> = [
@@ -33,12 +34,12 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
       expect(got).toStrictEqual(expected);
       expect(got.mechanism).toBe(c.mechanism);
       expect(got.atomic).toBe(c.atomic);
-      // deck slides 8/10: the lock is 0 free, 1 held — never anything else
+      // deck slides 8/10: the lock is 0 free, 1 held, never anything else
       for (const s of got.steps) expect([0, 1]).toContain(s.lock);
     }
   });
 
-  it('split modes corrupt, fused modes hold — both primitives', () => {
+  it('split modes corrupt, fused modes hold, both primitives', () => {
     expect(simulateAtomicSteps('tas', false).bothEnteredCS).toBe(true);
     expect(simulateAtomicSteps('tas', true).bothEnteredCS).toBe(false);
     expect(simulateAtomicSteps('cas', false).bothEnteredCS).toBe(true);
@@ -50,7 +51,7 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
     expect(simulateCompareAndSwap(true).bothEnteredCS).toBe(false);
   });
 
-  it('CAS refuses on a stale expectation — the slide-9 rule, executed', () => {
+  it('CAS refuses on a stale expectation, the slide-9 rule, executed', () => {
     const r = simulateCompareAndSwap(true);
     expect(r.thread1Acquired).toBe(true);
     expect(r.thread2Acquired).toBe(false);
@@ -68,7 +69,7 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
     expect(r.retriesCAS).toBe(1);
   });
 
-  it('mapped steps carry the trace 1:1 — lock, holders, waiting, captions', () => {
+  it('mapped steps carry the trace 1:1, lock, holders, waiting, captions', () => {
     for (const c of COMBOS) {
       const trace = simulateAtomicSteps(c.mechanism, c.atomic);
       const steps = atomicSteps(c);
@@ -79,17 +80,38 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
         expect(st.value).toBe(s.lock === 0 ? 1 : 0);
         expect(st.holders).toStrictEqual(s.entered);
         expect(st.waiting).toStrictEqual(s.waiting);
-        expect(steps[i].caption).toBe(s.caption.slice(0, 120));
-        expect(steps[i].caption.length).toBeLessThanOrEqual(120);
+        // The algorithm speaks in the hook scene, so its caption is the
+        // analogy lens; the mechanism lens gets the generated instruction
+        // sentence. Both are asserted 1:1 against their sources.
+        expect(steps[i].analogyCaption).toBe(s.caption.slice(0, 120));
+        expect(steps[i].caption).toBe(lockInstructionCaption(s, c.mechanism));
+        expect(steps[i].caption.length).toBeLessThanOrEqual(320);
+        expect(steps[i].caption.length).toBeGreaterThan(0);
         expect(steps[i].t).toBe(i);
       });
       for (const tail of steps.slice(trace.steps.length)) {
-        expect(tail.caption.length).toBeLessThanOrEqual(120);
+        expect(tail.caption.length).toBeLessThanOrEqual(320);
+        expect(tail.analogyCaption, tail.caption).toBeDefined();
+        expect((tail.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
       }
     }
   });
 
-  it('the tally beats carry simulateAtomicIncrement 1:1 — plain loses, CAS keeps', () => {
+  it('the mechanism voice names the primitive, and the fused run says indivisible', () => {
+    const split = atomicSteps({ mechanism: 'tas', atomic: false });
+    const fused = atomicSteps({ mechanism: 'tas', atomic: true });
+    // The split run never invokes the primitive, that is the defect; the
+    // fused run is exactly that one indivisible instruction.
+    expect(split.some((s) => s.caption.includes('test_and_set'))).toBe(false);
+    expect(split.some((s) => s.caption.includes('two steps'))).toBe(true);
+    expect(fused.some((s) => s.caption.includes('one indivisible instruction'))).toBe(true);
+    const casFused = atomicSteps({ mechanism: 'cas', atomic: true });
+    expect(casFused.some((s) => s.caption.includes('compare_and_swap'))).toBe(true);
+    const casSplit = atomicSteps({ mechanism: 'cas', atomic: false });
+    expect(casSplit.some((s) => s.caption.includes('the gap between check and act'))).toBe(true);
+  });
+
+  it('the tally beats carry simulateAtomicIncrement 1:1, plain loses, CAS keeps', () => {
     const inc = simulateAtomicIncrement();
     for (const c of COMBOS) {
       const trace = simulateAtomicSteps(c.mechanism, c.atomic);
@@ -116,11 +138,11 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
 
 describe('Lesson 13 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('analogy tokens are native: equal footprints, sized like bodies', () => {
-    // CounterEngine renders analogy tokens at a fixed 54px — equal by construction.
+    // CounterEngine renders analogy tokens at a fixed 54px, equal by construction.
     // The assertion that matters here: our lesson uses that path (analogy names
     // set, so view<0.5 shows people, not threads).
     const input = atomicLessonInput(DEFAULT_ATOMIC);
-    expect(input.actors.map((a) => a.analogyName)).toEqual(['Father', 'Mother']);
+    expect(input.actors.map((a) => a.analogyName)).toEqual(['Abbu', 'Ammu']);
     expect(input.analogy?.resourceLabel).toContain('HOOK');
   });
 
@@ -144,7 +166,7 @@ describe('Lesson 13 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     }
   });
 
-  it('the same two threads run in every mode — only fused-vs-split changes', () => {
+  it('the same two threads run in every mode, only fused-vs-split changes', () => {
     for (const c of COMBOS) {
       const input = atomicLessonInput(c);
       expect(input.actors.map((a) => a.id)).toEqual(['T1', 'T2']);
@@ -211,7 +233,7 @@ describe('Lesson 13 · lesson wiring', () => {
     expect(lesson13.slug).toBe('lesson-13');
   });
 
-  it('opens split — the corruption first, then the fix one toggle away', () => {
+  it('opens split, the corruption first, then the fix one toggle away', () => {
     expect(lesson13Input.params).toStrictEqual(DEFAULT_ATOMIC);
     expect(DEFAULT_ATOMIC.atomic).toBe(false);
     expect(atomicTrace(lesson13Input.params).bothEnteredCS).toBe(true);
@@ -238,7 +260,7 @@ describe('Lesson 13 · geometry on actual coordinates (§3C.2c)', () => {
   };
 
   // The mounted engine runs DEFAULT_ATOMIC (tas-split). Find the first step
-  // with a holder AND a waiter in the ENGINE's own steps — the picture's
+  // with a holder AND a waiter in the ENGINE's own steps, the picture's
   // occupancy, not a parallel computation's.
   const mountSteps = (): ReturnType<typeof atomicSteps> => {
     const host = document.createElement('div');
@@ -272,7 +294,7 @@ describe('Lesson 13 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w[holder] / w[waiter]).toBeCloseTo(96 / 60, 5);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const step = occupiedStep();
     for (const id of ['T1', 'T2']) {
       const a = widthsAt(0, step)[id];

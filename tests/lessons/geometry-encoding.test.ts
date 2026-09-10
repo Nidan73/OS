@@ -22,7 +22,7 @@ import { QueueEngine } from '../../src/engines/queue.js';
 
 /**
  * Part 4b gate: no lesson may render every element identically sized at every
- * step. A uniform resize across the morph is a reskin (§3C.2a) — the mechanism
+ * step. A uniform resize across the morph is a reskin (§3C.2a), the mechanism
  * view must encode SOMETHING per entity, so across each lesson's timeline at
  * view 1 at least one step must show two [id^="bar-"] entities with widths
  * differing by more than 1px. Uniform-at-rest steps (all idle, step 0) are
@@ -114,7 +114,7 @@ describe('gate · every lesson encodes something in geometry (§3C.2a)', () => {
         const best = maxWidthSpread({ engine, host });
         expect(
           best.spread,
-          `${slug}: every [id^="bar-"] entity is identically sized at every step (max spread ${best.spread.toFixed(2)}px) — a uniform resize is a reskin, not a morph (§3C.2a)`
+          `${slug}: every [id^="bar-"] entity is identically sized at every step (max spread ${best.spread.toFixed(2)}px), a uniform resize is a reskin, not a morph (§3C.2a)`
         ).toBeGreaterThan(1);
       } finally {
         engine.destroy();

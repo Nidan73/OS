@@ -17,42 +17,41 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L22 · Getting out (ATLAS units 88–89, slides 42–43)
 //
-// ANALOGY: mechanism-fixed — the recovery choices (abort all vs victim selection,
+// ANALOGY: mechanism-fixed, the recovery choices (abort all vs victim selection,
 // rollback, starvation) are strictly dictated by slide 42–43.
 //
-// LESSONS.md: L22 — units 88, 89. Choosing whose trip to cancel, or towing one
+// LESSONS.md: L22, units 88, 89. Choosing whose trip to cancel, or towing one
 // car back to the last junction it was safe at. Playground: pick a victim by
-// different criteria and watch the cost — then pick the same one repeatedly
+// different criteria and watch the cost, then pick the same one repeatedly
 // and watch it starve.
 //
 // ATLAS rows (deck wording, kept for provenance):
 // | 88 | Somebody's trip gets cancelled. Abort everyone, or abort one at a
-// |      time until the ring breaks — and the ordering criteria decide who loses.
+// |      time until the ring breaks, and the ordering criteria decide who loses.
 // | 89 | Tow one car out and send it back to the last junction it was safe at.
-// |      Pick the cheapest victim — but never the same car every time, or it
+// |      Pick the cheapest victim, but never the same car every time, or it
 // |      never arrives.
 //
-// SCENE: the driveway again, third and last time — L17 built the ring, L21
+// SCENE: the driveway again, third and last time. L17 built the ring, L21
 // collapsed it to who-blocks-whom, and here the guard breaks it by moving
 // somebody's car out. Not a new scene; the same one, resolved.
 //
 // ENGINE VERDICT (a): extend DiagramEngine and use its render() unmodified.
-// Why: units 88 and 89 are a decision surface — criteria feeding one choice —
-// which is what DiagramEngine renders. The cars themselves are already drawn
+// Why: units 88 and 89 are a decision surface, criteria feeding one choice, // which is what DiagramEngine renders. The cars themselves are already drawn
 // by L17 and L21; this lesson is about the clipboard, not the driveway.
 //
 // The carrying property of the morph is WHAT A CARD'S WIDTH MEANS. On the
-// guard's clipboard every flat's card is the same width — a name is a name,
+// guard's clipboard every flat's card is the same width, a name is a name,
 // and they sit in an even row. On the cost view width becomes what moving
 // that car would cost, so the cheapest victim is visibly the narrowest card
 // and the row repacks around it. Each tow widens that card. Width stops
-// meaning a name and starts meaning a price — which is exactly why counting
+// meaning a name and starts meaning a price, which is exactly why counting
 // the tows stops one card being cheapest for ever.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DENSITY (Task A rule, applied from the start): `abort-all` is 5 (the ring,
 // the blunt option, the work thrown away, the result, the verdict).
-// `one-at-a-time` is 7 — one beat per criterion the deck lists that actually
+// `one-at-a-time` is 7, one beat per criterion the deck lists that actually
 // separates these three flats, then the pick and the broken ring. `rollback`
 // and `starve` are one beat per selection round plus the opening and the
 // computed verdict: 7 each, because five rounds is what makes starvation
@@ -100,7 +99,7 @@ export const SCENARIO_LABELS: Record<Lesson22Scenario, string> = {
   rollback: '⚖️ Count the tows'
 };
 
-/** Width encodes cost — computed, so a card is as wide as it is expensive. */
+/** Width encodes cost, computed, so a card is as wide as it is expensive. */
 export const CARD_MIN_W = 60;
 export const CARD_SCALE = 1.1;
 /** Every card is the same width on the clipboard: a name is just a name. */
@@ -150,22 +149,23 @@ function abortAllReveals(): DiagramReveal[] {
   const totalWork = CANDIDATES.reduce((sum, c) => sum + c.computedMinutes, 0);
   const held = CANDIDATES.reduce((sum, c) => sum + c.heldUnits, 0);
   return [
-    { caption: 'Three cars block each other in. Nobody can leave.', highlightNodeIds: [] },
+    { caption: 'Detection has confirmed a deadlocked set. Every process in it is blocked on a resource held by another in the same set.', analogyCaption: 'Three cars block each other in. Nobody can leave.', highlightNodeIds: [] },
     {
-      caption: 'The blunt fix: move every blocked car out at once. The ring cannot survive it.',
+      caption: 'Recovery by process termination, first variant: abort every deadlocked process. The cycle cannot survive it.', analogyCaption: 'The blunt fix: move every blocked car out at once. The ring cannot survive it.',
       highlightNodeIds: CANDIDATES.map((c) => c.id.replace(' ', '-'))
     },
     {
       caption: `That throws away ${totalWork} minutes of everyone's evening and frees ${held} spots at once.`,
+      analogyCaption: 'Cancel every trip at once: the evening is gone, and the driveway is clear in one sweep.',
       highlightNodeIds: CANDIDATES.map((c) => c.id.replace(' ', '-')),
       metrics: { 'work lost (min)': totalWork, 'spots freed': held }
     },
     {
-      caption: 'It always works, and it is the most expensive thing the guard can do.',
+      caption: 'It is guaranteed to work and it discards all the partial work every one of those processes had done.', analogyCaption: 'It always works, and it is the most expensive thing the guard can do.',
       highlightNodeIds: []
     },
     {
-      caption: 'So the real question is which single car to move — and by what rule.',
+      caption: 'The second variant aborts one process at a time, which means choosing a victim and re-running detection after each abort.', analogyCaption: 'So the real question is which single car to move, and by what rule.',
       highlightNodeIds: []
     }
   ];
@@ -179,14 +179,14 @@ function oneAtATimeReveals(): DiagramReveal[] {
   );
   const id = (s: string) => s.replace(' ', '-');
   return [
-    { caption: 'Move one car at a time until the ring breaks — but which one?', highlightNodeIds: [] },
+    { caption: 'Victim selection weighs priority, how long the process has run, the resources it holds and how many it still needs.', analogyCaption: 'Move one car at a time until the ring breaks, but which one?', highlightNodeIds: [] },
     {
       caption: `Priority first: ${dearest.id} matters most, so moving it costs the most.`,
       highlightNodeIds: [id(dearest.id)],
       metrics: { priority: dearest.priority }
     },
     {
-      caption: `Work already done counts too — ${dearest.id} has been out ${dearest.computedMinutes} minutes.`,
+      caption: `Work already done counts too, ${dearest.id} has been out ${dearest.computedMinutes} minutes.`,
       highlightNodeIds: [id(dearest.id)],
       metrics: { 'minutes so far': dearest.computedMinutes }
     },
@@ -195,7 +195,7 @@ function oneAtATimeReveals(): DiagramReveal[] {
       highlightNodeIds: CANDIDATES.filter((c) => c.interactive).map((c) => id(c.id))
     },
     {
-      caption: `${cheapest.id} holds ${cheapest.heldUnits} spot and needs ${cheapest.neededUnits} — the cheapest to move.`,
+      caption: `${cheapest.id} holds ${cheapest.heldUnits} spot and needs ${cheapest.neededUnits}, the cheapest to move.`,
       highlightNodeIds: [id(cheapest.id)],
       metrics: { 'held': cheapest.heldUnits, 'still needs': cheapest.neededUnits }
     },
@@ -205,7 +205,7 @@ function oneAtATimeReveals(): DiagramReveal[] {
       badgeText: 'moved',
       metrics: { cost: chosen.total }
     },
-    { caption: 'One car out and the ring is open — everyone else drives away.', highlightNodeIds: [] }
+    { caption: 'One rollback breaks the cycle and the remaining processes proceed.', analogyCaption: 'One car out and the ring is open, everyone else drives away.', highlightNodeIds: [] }
   ];
 }
 
@@ -217,14 +217,14 @@ function roundsReveals(countRollbacks: boolean): DiagramReveal[] {
   const out: DiagramReveal[] = [
     {
       caption: countRollbacks
-        ? 'Same jam, five nights running — but every tow now counts against the next choice.'
+        ? 'Same jam, five nights running, but every tow now counts against the next choice.'
         : 'Same jam, five nights running. The guard picks the cheapest car each time.',
       highlightNodeIds: []
     }
   ];
   run.picks.forEach((pick, i) => {
     out.push({
-      caption: `Night ${i + 1}: ${pick} is cheapest at ${run.costs[i]} — it gets towed back.`,
+      caption: `Night ${i + 1}: ${pick} is cheapest at ${run.costs[i]}, it gets towed back.`,
       highlightNodeIds: [id(pick)],
       badgeText: `night ${i + 1}`,
       metrics: { victim: pick, cost: run.costs[i] }
@@ -232,13 +232,49 @@ function roundsReveals(countRollbacks: boolean): DiagramReveal[] {
   });
   out.push({
     caption: run.starved
-      ? `${run.starvedId} was towed all ${ROUNDS} nights and never got home — that is starvation.`
-      : `The tows spread out — no car was picked every night, so everyone eventually gets home.`,
+      ? `${run.starvedId} was towed all ${ROUNDS} nights and never got home, that is starvation.`
+      : `The tows spread out, no car was picked every night, so everyone eventually gets home.`,
     highlightNodeIds: run.starved && run.starvedId ? [id(run.starvedId)] : [],
     badgeText: run.starved ? 'starved' : 'fair',
     metrics: run.rollbacks
   });
   return out;
+}
+
+/**
+ * Slide 42's first option: abort every deadlocked process. Its cost is the sum
+ * of every victim's cost and its payoff is every held unit released, both
+ * computed from CANDIDATES, never typed. The scoreboard used to carry
+ * "abort cost 183 · 6 spots freed" as a literal string: correct at the time,
+ * and silently wrong the moment a candidate changes.
+ */
+export interface AbortAllTotals {
+  cost: number;
+  unitsFreed: number;
+  flats: number;
+}
+
+/**
+ * Rollbacks charged to each flat by the time beat `stepIndex` has played.
+ * Pure: same index in, same tally out, with no reference to engine state.
+ * The final beat prices in every pick, that beat is the verdict.
+ */
+export function tallyAt(stepIndex: number): Record<string, number> {
+  const run = runFor('rollback');
+  const tally = emptyTally();
+  const priced = stepIndex >= run.picks.length + 2 ? run.picks.length : Math.max(0, stepIndex - 1);
+  for (let i = 0; i < priced && i < run.picks.length; i++) {
+    tally[run.picks[i]] = (tally[run.picks[i]] ?? 0) + 1;
+  }
+  return tally;
+}
+
+export function abortAllTotals(candidates: VictimCandidate[] = CANDIDATES): AbortAllTotals {
+  return {
+    cost: candidates.reduce((sum, c) => sum + victimCost(c, false).total, 0),
+    unitsFreed: candidates.reduce((sum, c) => sum + c.heldUnits, 0),
+    flats: candidates.length
+  };
 }
 
 export function runFor(scenario: Lesson22Scenario): RecoveryRun {
@@ -278,7 +314,7 @@ export class Lesson22DiagramEngine extends DiagramEngine implements PlaygroundCa
     this.scoreboardHost = scoreboardHost ?? null;
     host.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Pick a victim — then pick five nights running</h3>
+        <h3 style="font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">Pick a victim, then pick five nights running</h3>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           ${(Object.keys(SCENARIO_LABELS) as Lesson22Scenario[])
             .map(
@@ -310,18 +346,17 @@ export class Lesson22DiagramEngine extends DiagramEngine implements PlaygroundCa
     this.paintScoreboard();
   }
 
+  /**
+   * Card widths under the rollback policy encode the cost as it stands at THIS
+   * beat, so they must be derived from the step being rendered, not from the
+   * engine's current index. SPEC §4A: render(state, view) is an absolute
+   * function of state, which is what makes scrubbing and teardown safe. An
+   * earlier version read getCurrentIndex() and getSteps() here, so rendering
+   * an arbitrary snapshot drew whatever the engine happened to be pointing at.
+   */
   protected render(state: DiagramState, view: number): void {
     if (this.scenario === 'rollback') {
-      const stepIdx = this.getCurrentIndex();
-      const run = runFor('rollback');
-      const currentTally = emptyTally();
-      const steps = this.getSteps();
-      const isFinalStep = steps.length > 0 && stepIdx >= steps.length - 1;
-      const countPricedIn = isFinalStep ? run.picks.length : Math.max(0, stepIdx - 1);
-      for (let i = 0; i < countPricedIn && i < run.picks.length; i++) {
-        currentTally[run.picks[i]] = (currentTally[run.picks[i]] ?? 0) + 1;
-      }
-      this.input.nodes = nodesFor(true, currentTally);
+      this.input.nodes = nodesFor(true, tallyAt(state.stepIndex));
     }
     super.render(state, view);
   }
@@ -333,15 +368,16 @@ export class Lesson22DiagramEngine extends DiagramEngine implements PlaygroundCa
     const rounds = this.scenario === 'starve' || this.scenario === 'rollback';
     const run = runFor(this.scenario);
     const tone = isAbortAll ? 'var(--accent)' : rounds && run.starved ? 'var(--waiting)' : 'var(--running)';
+    const totals = abortAllTotals();
     const label = isAbortAll
-      ? 'All 3 flats'
+      ? `All ${totals.flats} flats`
       : !rounds
         ? selectVictim(CANDIDATES, false).id
         : run.starved
           ? `${run.starvedId} starved`
           : 'Tows shared out';
     const detail = isAbortAll
-      ? 'abort cost 183 · 6 spots freed'
+      ? `abort cost ${totals.cost} · ${totals.unitsFreed} spots freed`
       : !rounds
         ? `cost ${selectVictim(CANDIDATES, false).total}`
         : run.picks.join(' → ');
@@ -388,12 +424,18 @@ export const lesson22: Lesson<DiagramInput, DiagramState> = {
   },
   analogy: {
     domain: 'travel',
-    text: 'The driveway is jammed and one car has to be moved out to break it. The guard picks whichever is cheapest to disturb — the empty one, parked overnight, with nobody waiting in it. Then the same jam happens again tomorrow.'
+    text: 
+      'Kabir chacha has found the loop. Now somebody\'s car has to move, and he has to decide whose.\n\n' +
+      'He could ask every blocked family to come down and move at once, which definitely works and annoys everybody. Or he could pick one, which is cheaper, and means picking well.\n\n' +
+      'So he thinks about cost. A car with nobody in it, parked overnight, blocking little, is easier to disturb than one with a family already inside it and a flight to catch. He picks the cheap one.\n\n' +
+      'It works. He does the same thing the next night, and it works again. And the night after.\n\n' +
+      'Then he notices something he does not like. It is the same car every time. The cheapest car to move is still the cheapest car to move tomorrow, and nothing about being chosen five nights running makes it any more expensive. That family is now paying for the whole driveway, and by his own rule they always will.'
   },
   concept:
-    'Once a deadlock is found the system has to break it. The blunt option aborts every deadlocked process, which always works and throws away all their work. The cheaper option aborts one at a time until the cycle opens, and the choice is a cost question: priority, how long the process has run, what it holds, what it still needs, and whether someone is waiting on it interactively. Preempting a resource instead of killing the process means rolling that process back to a safe state and restarting it. The trap is that the cheapest victim stays cheapest, so the same process is chosen every time and never finishes — which is why the number of rollbacks has to be part of the cost.',
+    'Once a deadlock is found the system has to break it. The blunt option aborts every deadlocked process, which always works and throws away all their work. The cheaper option aborts one at a time until the cycle opens, and the choice is a cost question: priority, how long the process has run, what it holds, what it still needs, and whether someone is waiting on it interactively. Preempting a resource instead of killing the process means rolling that process back to a safe state and restarting it. The trap is that the cheapest victim stays cheapest, so the same process is chosen every time and never finishes, which is why the number of rollbacks has to be part of the cost.'  +
+    '  Once detection has found a deadlock the system has to do something about it, and that is called RECOVERY. There are two families. Process termination either aborts every deadlocked process at once, which is expensive and always works, or aborts them one at a time until the cycle breaks, which is cheaper and needs the detection algorithm re-run after each one. Resource preemption takes a resource away from a chosen process and gives it to another, which requires deciding on a victim, rolling that victim back to a safe state, and dealing with the consequence. That consequence is STARVATION: if the victim is chosen by cost alone, the same cheap process can be picked every single time and never make progress at all. The usual answer is to include the number of previous rollbacks in the cost, so that being picked repeatedly eventually makes you expensive.',
   morphReveals:
-    'On the clipboard every flat gets a card the same width, because a name is just a name and they sit in an even row. On the cost view width becomes the price of moving that car, so the cheapest victim is visibly the narrowest card and the row repacks around it — and every tow widens that card. Width stops meaning a name and starts meaning a price, which is precisely why counting the tows stops one card being cheapest for ever.',
+    'On the clipboard every flat gets a card the same width, because a name is just a name and they sit in an even row. On the cost view width becomes the price of moving that car, so the cheapest victim is visibly the narrowest card and the row repacks around it, and every tow widens that card. Width stops meaning a name and starts meaning a price, which is precisely why counting the tows stops one card being cheapest for ever.',
   morphMode: 'morph',
   analogyMapping: [
     'Moving every blocked car ➔ abort all deadlocked processes',

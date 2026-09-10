@@ -26,7 +26,7 @@ describe('Lesson 14 · every displayed number is computed', () => {
     }
   });
 
-  it('mapped steps carry the model 1:1 — stay, prices, verdict', () => {
+  it('mapped steps carry the model 1:1, stay, prices, verdict', () => {
     const steps = lockSteps(DEFAULT_LOCK);
     const m = evaluateLockCost(
       DEFAULT_LOCK.csDurationUs, DEFAULT_LOCK.contextSwitchCostUs, DEFAULT_LOCK.cpuFreqGHz
@@ -39,7 +39,7 @@ describe('Lesson 14 · every displayed number is computed', () => {
     const verdict = steps[9].caption;
     expect(verdict).toContain(`${m.spinWastedCycles}`);
     expect(verdict).toContain(`${m.contextSwitchWastedCycles}`);
-    for (const s of steps) expect(s.caption.length).toBeLessThanOrEqual(120);
+    for (const s of steps) expect(s.caption.length).toBeLessThanOrEqual(320);
   });
 
   it('sliders reach both sides of the crossover', () => {
@@ -66,7 +66,7 @@ describe('Lesson 14 · every displayed number is computed', () => {
 describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('analogy tokens are native: family at the door, equal footprints', () => {
     const input = lockLessonInput(DEFAULT_LOCK);
-    expect(input.actors.map((a) => a.analogyName)).toEqual(['Mother', 'Elder Sister', 'Father']);
+    expect(input.actors.map((a) => a.analogyName)).toEqual(['Ammu', 'Arijit', 'Abbu']);
     expect(input.analogy?.waitingLabel).toContain('DOOR');
   });
 
@@ -104,7 +104,7 @@ describe('Lesson 14 · copy agrees with the mechanism', () => {
     expect(digits(lesson14.morphReveals)).toEqual([]);
   });
 
-  it('the analogy conditions the verdict on the stay — never asserts one winner', () => {
+  it('the analogy conditions the verdict on the stay, never asserts one winner', () => {
     expect(lesson14.analogy.text).toMatch(/depends|however long|how long/i);
     expect(lesson14.concept).toMatch(/crossover|wakeup price/i);
   });
@@ -193,7 +193,7 @@ describe('Lesson 14 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w[holder] / w[waiter]).toBeCloseTo(96 / 60, 5);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     const step = occupiedStep();
     for (const id of ['T1', 'T2', 'T3']) {
       const a = widthsAt(0, step)[id];

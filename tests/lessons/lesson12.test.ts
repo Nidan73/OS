@@ -78,7 +78,7 @@ describe('Lesson 12 · the morph is geometric, not cosmetic (§3C.2a)', () => {
       const flipped = petersonGeometry(0, true)[id];
       expect(calm).toStrictEqual(flipped);
     }
-    // the two acts sit at fixed, arbitrary heights — msg high, pack low
+    // the two acts sit at fixed, arbitrary heights, msg high, pack low
     const g = petersonGeometry(0, false);
     expect(g.msg.y).toBeLessThan(g.pack.y);
   });
@@ -93,7 +93,7 @@ describe('Lesson 12 · the morph is geometric, not cosmetic (§3C.2a)', () => {
     expect(actRows(true)).toEqual({ msg: 0, pack: 1, print: 1 });
   });
 
-  it('geometry interpolates — every entity moves monotonically between views', () => {
+  it('geometry interpolates, every entity moves monotonically between views', () => {
     for (const reordered of [false, true]) {
       for (const id of ids) {
         const a = petersonGeometry(0, reordered)[id];
@@ -135,5 +135,36 @@ describe('Lesson 12 · lesson wiring', () => {
     expect(lesson12.engineClass).toBeDefined();
     expect(lesson12.morphMode).toBe('morph');
     expect(lesson12.absorbsUnits).toEqual([44, 45, 46]);
+  });
+});
+
+describe('Lesson 12 · captions follow the lens', () => {
+  it('every step of both modes speaks both lenses, within the rail', () => {
+    for (const reordered of [false, true]) {
+      const steps = publicationSteps({ reordered });
+      for (const s of steps) {
+        expect(s.caption.length, s.caption).toBeLessThanOrEqual(320);
+        expect(s.caption.length).toBeGreaterThan(0);
+        expect(s.analogyCaption, `${reordered}: ${s.caption}`).toBeDefined();
+        expect((s.analogyCaption ?? '').length).toBeLessThanOrEqual(320);
+        expect((s.analogyCaption ?? '').length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('the analogy print step names what Ammu carried out, and the mechanism keeps the numbers', () => {
+    for (const reordered of [false, true]) {
+      const result = simulateReorderingOutput(reordered);
+      const steps = publicationSteps({ reordered });
+      const print = steps.find(s => s.state.action === 'print x')!;
+      expect(print.analogyCaption).toContain(`${result.output}`);
+      const verdict = steps[steps.length - 1];
+      expect(verdict.caption).toContain(`${result.output}`);
+      expect(verdict.caption).toContain(`${result.expectedOutput}`);
+      expect(
+        verdict.analogyCaption,
+        reordered ? 'flipped verdict in scene words' : 'intact verdict in scene words'
+      ).toMatch(reordered ? /before the dish was ready|ran ahead/ : /exactly what was announced/);
+    }
   });
 });

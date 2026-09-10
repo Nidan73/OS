@@ -8,10 +8,10 @@ import type { RagEdge, RagNode } from '../algorithms/deadlock.js';
 // L21). Nodes, directed edges, request vs assignment vs claim types, cycle
 // highlighting, edges appearing and disappearing across steps.
 //
-// Geometry contract (§3C.2a — the Wave 2 lesson): the engine computes
+// Geometry contract (§3C.2a, the Wave 2 lesson): the engine computes
 // mechanism widths from the graph itself, so no lesson can inherit a reskin.
-// Analogy: every token the same width — bodies around a table, cars in a lot.
-// Mechanism: width means holdings — a resource is as wide as its instances,
+// Analogy: every token the same width, bodies around a table, cars in a lot.
+// Mechanism: width means holdings, a resource is as wide as its instances,
 // a process as wide as what it currently holds. Both differ per entity, and
 // process widths move with state as edges appear.
 
@@ -28,6 +28,8 @@ export interface GraphNodeInput {
 
 export interface GraphEvent {
   caption: string;
+  /** the same beat in the scene's words, shown on the analogy lens */
+  analogyCaption?: string;
   addEdge?: RagEdge;
   removeEdge?: { from: string; to: string };
   /** Ordered node ids of the highlighted cycle path. */
@@ -40,6 +42,8 @@ export interface GraphInput {
   nodes: GraphNodeInput[];
   initialEdges?: RagEdge[];
   events: GraphEvent[];
+  /** The opening beat in the scene's words, shown on the analogy lens. */
+  initialAnalogyCaption?: string;
   analogy?: {
     domain: 'travel' | 'food' | 'friends';
     title?: string;
@@ -60,7 +64,7 @@ const CANVAS_H = 260;
 const ANALOGY_W = 64;
 const ANALOGY_H = 40;
 
-// Mechanism widths, computed from the graph — never typed per lesson.
+// Mechanism widths, computed from the graph, never typed per lesson.
 const RES_BASE_W = 40;
 const RES_PER_INSTANCE_W = 18;
 const PROC_BASE_W = 56;
@@ -86,9 +90,14 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
     const steps: Step<GraphState>[] = [];
     let t = 0;
 
-    const snapshot = (caption: string, highlight: string[]): Step<GraphState> => ({
+    const snapshot = (
+      caption: string,
+      highlight: string[],
+      analogyCaption?: string
+    ): Step<GraphState> => ({
       t: t++,
-      caption: caption.slice(0, 120),
+      caption: caption.slice(0, 320),
+      analogyCaption: analogyCaption?.slice(0, 320),
       highlight,
       state: {
         edges: edges.map((e) => ({ ...e })),
@@ -97,7 +106,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
       }
     });
 
-    steps.push(snapshot('The system starts idle — nodes placed, no requests yet.', []));
+    steps.push(snapshot('The system starts idle, nodes placed, no requests yet.', [], input.initialAnalogyCaption));
 
     for (const ev of input.events ?? []) {
       if (ev.addEdge) edges.push({ ...ev.addEdge });
@@ -110,7 +119,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
       if (ev.clearCycle) cycleIds = [];
       if (ev.setCycle) cycleIds = [...ev.setCycle];
       const hl = ev.setCycle ?? ev.activeNodes ?? [];
-      steps.push(snapshot(ev.caption, hl));
+      steps.push(snapshot(ev.caption, hl, ev.analogyCaption));
     }
 
     return steps;
@@ -131,7 +140,7 @@ export class GraphEngine extends AnimationEngine<GraphInput, GraphState> {
     }));
   }
 
-  /** Holdings per process in a state — the quantity process widths encode. */
+  /** Holdings per process in a state, the quantity process widths encode. */
   public holdingsOf(state: GraphState): Map<string, number> {
     const held = new Map<string, number>();
     for (const e of state.edges) {

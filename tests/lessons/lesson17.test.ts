@@ -17,13 +17,19 @@ import { isDeadlock, detectCycle } from '../../src/algorithms/deadlock.js';
 const SCENARIOS: Lesson17Scenario[] = ['spare', 'deadlock', 'chain'];
 
 describe('Lesson 17 · every verdict is computed', () => {
-  it('the ring captions branch on isDeadlock — never typed', () => {
+  it('the ring captions branch on isDeadlock, never typed', () => {
     const spare = spareEvents();
     const dead = deadlockEvents();
+    // Captions follow the lens: the scene verdict lives on the analogy side,
+    // the graph fact on the mechanism side. Guard reads both fields.
+    const both = (ev: { caption: string; analogyCaption?: string }) =>
+      `${ev.caption} ${ev.analogyCaption ?? ''}`;
     // Spare ring: a cycle exists, nobody is stuck.
-    expect(spare[6].caption).toMatch(/nobody is stuck/);
+    expect(both(spare[6])).toMatch(/nobody is stuck/);
+    expect(spare[6].caption).toMatch(/A cycle is present/);
     // Deadlock ring: stuck.
-    expect(dead[6].caption).toMatch(/deadlock/);
+    expect(both(dead[6])).toMatch(/deadlock/);
+    expect(dead[6].analogyCaption).toMatch(/nobody can move/);
   });
 
   it('cycle highlights fall out of detectCycle, not stored answers', () => {
@@ -42,7 +48,7 @@ describe('Lesson 17 · every verdict is computed', () => {
     expect(chain[chain.length - 1].setCycle).toBeUndefined();
   });
 
-  it('mounted steps carry edges 1:1 — takes, asks, returns', () => {
+  it('mounted steps carry edges 1:1, takes, asks, returns', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const engine = new Lesson17GraphEngine(host, scenarioInput('spare'));
@@ -55,7 +61,7 @@ describe('Lesson 17 · every verdict is computed', () => {
     expect(afterTakes.filter((e) => e.kind === 'request').length).toBe(0);
     // Then the two asks close the ring.
     expect(steps[6].state.edges.filter((e) => e.kind === 'request').length).toBe(2);
-    // Satisfied requests withdraw — the ending holds no ring, no deadlock.
+    // Satisfied requests withdraw, the ending holds no ring, no deadlock.
     const last = steps[steps.length - 1].state;
     expect(last.edges.filter((e) => e.kind === 'request').length).toBe(0);
     engine.destroy();
@@ -135,7 +141,7 @@ describe('Lesson 17 · every verdict is computed', () => {
 });
 
 describe('Lesson 17 · the morph is geometric, not cosmetic (§3C.2a)', () => {
-  it('scenario scripts are complete event sets — spare 15, deadlock 7, chain 7', () => {
+  it('scenario scripts are complete event sets, spare 15, deadlock 7, chain 7', () => {
     expect(scenarioEvents('spare').length).toBe(15);
     expect(scenarioEvents('deadlock').length).toBe(7);
     expect(scenarioEvents('chain').length).toBe(7);
@@ -166,7 +172,7 @@ describe('Lesson 17 · lesson wiring', () => {
     expect(lesson17.slug).toBe('lesson-17');
   });
 
-  it('opens on the spare story — the cycle that is not a deadlock', () => {
+  it('opens on the spare story, the cycle that is not a deadlock', () => {
     expect(lesson17Input.nodes).toEqual(SCENARIO_NODES.spare);
     expect(lesson17.input.events.length).toBeGreaterThan(0);
   });
@@ -204,7 +210,7 @@ describe('Lesson 17 · geometry on actual coordinates (§3C.2c)', () => {
     expect(w['bar-R1']).toBeGreaterThan(widthsAt(1, 'deadlock')['bar-R1']);
   });
 
-  it('geometry interpolates — the morph is real', () => {
+  it('geometry interpolates, the morph is real', () => {
     for (const id of Object.keys(widthsAt(0, 'spare'))) {
       const a = widthsAt(0, 'spare')[id];
       const mid = widthsAt(0.5, 'spare')[id];
