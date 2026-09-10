@@ -85,27 +85,27 @@ import {
 export type Lesson17Scenario = 'spare' | 'deadlock' | 'chain';
 
 const SPARE_NODES: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Father' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Mother' },
-  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Elder Sister' },
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Abbu' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Ammu' },
+  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Arijit' },
   { id: 'T4', kind: 'process', label: 'T4', analogyLabel: 'Younger Brother' },
   { id: 'R1', kind: 'resource', instances: 2, label: 'R1 · 2', analogyLabel: 'Driveway R1' },
   { id: 'R2', kind: 'resource', instances: 2, label: 'R2 · 2', analogyLabel: 'Driveway R2' }
 ];
 
 const DEADLOCK_NODES: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Father' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Mother' },
-  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Elder Sister' },
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Abbu' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Ammu' },
+  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Arijit' },
   { id: 'R1', kind: 'resource', instances: 1, label: 'R1 · 1', analogyLabel: 'Car R1' },
   { id: 'R2', kind: 'resource', instances: 1, label: 'R2 · 1', analogyLabel: 'Car R2' },
   { id: 'R3', kind: 'resource', instances: 1, label: 'R3 · 1', analogyLabel: 'Car R3' }
 ];
 
 const CHAIN_NODES: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Father' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Mother' },
-  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Elder Sister' },
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Abbu' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Ammu' },
+  { id: 'T3', kind: 'process', label: 'T3', analogyLabel: 'Arijit' },
   { id: 'R1', kind: 'resource', instances: 1, label: 'R1 · 1', analogyLabel: 'Car R1' },
   { id: 'R2', kind: 'resource', instances: 2, label: 'R2 · 2', analogyLabel: 'Driveway R2' },
   { id: 'R3', kind: 'resource', instances: 1, label: 'R3 · 1', analogyLabel: 'Car R3' }
@@ -156,24 +156,24 @@ export function spareEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    take('Mother parks in driveway R1 — one of two slots.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Ammu parks in driveway R1 — one of two slots.', { from: 'R1', to: 'T2', kind: 'assignment' }),
     take('Elder sister takes the second R1 slot — the lane is full.', { from: 'R1', to: 'T3', kind: 'assignment' }),
-    take('Father parks in driveway R2 — one of two slots.', { from: 'R2', to: 'T1', kind: 'assignment' }),
+    take('Abbu parks in driveway R2 — one of two slots.', { from: 'R2', to: 'T1', kind: 'assignment' }),
     take('Younger brother takes the second R2 slot — both lanes full.', { from: 'R2', to: 'T4', kind: 'assignment' }),
-    take('Father needs R1 out — both slots are blocked.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Abbu needs R1 out — both slots are blocked.', { from: 'T1', to: 'R1', kind: 'request' }),
     take('Elder sister needs R2 out — both blocked. The ring closes.', { from: 'T3', to: 'R2', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   const rel1 = { from: 'R1', to: 'T2' };
   edges.splice(edges.findIndex((e) => e.from === rel1.from && e.to === rel1.to), 1);
   out.push({
-    caption: 'Mother drives out and frees her R1 slot.'.slice(0, 120),
+    caption: 'Ammu drives out and frees her R1 slot.'.slice(0, 120),
     removeEdge: { ...rel1 }
   });
-  out.push({ caption: 'The ring breaks — R1 has a free slot, father can move.'.slice(0, 120), clearCycle: true });
+  out.push({ caption: 'The ring breaks — R1 has a free slot, Abbu can move.'.slice(0, 120), clearCycle: true });
   const grant1 = { from: 'R1', to: 'T1', kind: 'assignment' as const };
   edges.push({ ...grant1 });
-  out.push({ caption: 'Father pulls into the freed R1 slot.'.slice(0, 120), addEdge: { ...grant1 } });
+  out.push({ caption: 'Abbu pulls into the freed R1 slot.'.slice(0, 120), addEdge: { ...grant1 } });
   const rel2 = { from: 'R2', to: 'T4' };
   edges.splice(edges.findIndex((e) => e.from === rel2.from && e.to === rel2.to), 1);
   out.push({
@@ -192,7 +192,7 @@ export function spareEvents(): GraphEvent[] {
   const req1 = { from: 'T1', to: 'R1', kind: 'request' as const };
   edges.splice(edges.findIndex((e) => e.from === req1.from && e.to === req1.to), 1);
   out.push({
-    caption: 'Father stops asking too — the freed slot answered it.'.slice(0, 120),
+    caption: 'Abbu stops asking too — the freed slot answered it.'.slice(0, 120),
     removeEdge: { from: req1.from, to: req1.to }
   });
   out.push({
@@ -211,12 +211,12 @@ export function deadlockEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    take('Mother blocks the only R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Ammu blocks the only R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
     take('Elder sister blocks the only R2 exit.', { from: 'R2', to: 'T3', kind: 'assignment' }),
-    take('Father blocks the only R3 exit.', { from: 'R3', to: 'T1', kind: 'assignment' }),
-    take('Father needs R1 — mother blocks it.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('Mother needs R2 — sister blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
-    take('Sister needs R3 — father blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
+    take('Abbu blocks the only R3 exit.', { from: 'R3', to: 'T1', kind: 'assignment' }),
+    take('Abbu needs R1 — Ammu blocks it.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Ammu needs R2 — sister blocks it.', { from: 'T2', to: 'R2', kind: 'request' }),
+    take('Sister needs R3 — Abbu blocks it. The ring closes.', { from: 'T3', to: 'R3', kind: 'request' })
   ];
   out.push({ caption: ringCaption(nodes, edges), setCycle: ringCycle(nodes, edges) });
   return out;
@@ -229,11 +229,11 @@ export function chainEvents(): GraphEvent[] {
     addEdge: { ...edge }
   });
   return [
-    take('Father parks in an R2 slot.', { from: 'R2', to: 'T1', kind: 'assignment' }),
-    take('Father needs R1 out.', { from: 'T1', to: 'R1', kind: 'request' }),
-    take('Mother holds the R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
-    take('Mother takes the second R2 slot.', { from: 'R2', to: 'T2', kind: 'assignment' }),
-    take('Mother needs R3 out.', { from: 'T2', to: 'R3', kind: 'request' }),
+    take('Abbu parks in an R2 slot.', { from: 'R2', to: 'T1', kind: 'assignment' }),
+    take('Abbu needs R1 out.', { from: 'T1', to: 'R1', kind: 'request' }),
+    take('Ammu holds the R1 exit.', { from: 'R1', to: 'T2', kind: 'assignment' }),
+    take('Ammu takes the second R2 slot.', { from: 'R2', to: 'T2', kind: 'assignment' }),
+    take('Ammu needs R3 out.', { from: 'T2', to: 'R3', kind: 'request' }),
     take('Sister holds the R3 exit.', { from: 'R3', to: 'T3', kind: 'assignment' }),
     { caption: 'No ring on the map — a chain waits, but nobody waits in a circle.'.slice(0, 120) }
   ];

@@ -78,7 +78,7 @@ describe('Lecture 6 Reference Page — Scheduling Criteria', () => {
     expect(text).toMatch(/complete dinner courses or family plates are completed and delivered from the kitchen per hour/i);
 
     // Order to clean plate (Turnaround time)
-    expect(text).toMatch(/father or elder sister asks for a meal until the plate is completely finished and cleared/i);
+    expect(text).toMatch(/Abbu or Arijit asks for a meal until the plate is completely finished and cleared/i);
 
     // Fork-in-hand wait (Waiting time)
     expect(text).toMatch(/sitting at the dining table with an empty fork, waiting for the dish to be prepared/i);

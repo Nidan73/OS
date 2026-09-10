@@ -163,8 +163,8 @@ describe('Lesson 10 · words agree with the mechanism', () => {
     expect(r.expectedCounter).toBe(lesson10Input.initial.counter);
   });
 
-  it('no copy claims mother and father make the same-direction edit', () => {
-    expect(lesson10.analogy.text.toLowerCase()).not.toMatch(/both (mother and father )?(take|write|put)/);
+  it('no copy claims Ammu and Abbu make the same-direction edit', () => {
+    expect(lesson10.analogy.text.toLowerCase()).not.toMatch(/both (Ammu and Abbu )?(take|write|put)/);
     expect(lesson10.concept.toLowerCase()).not.toMatch(/both (parents )?(take one|write back "2")/);
     expect(ACT_TEXT.T1[1].toLowerCase()).not.toBe(ACT_TEXT.T2[1].toLowerCase());
   });

@@ -215,3 +215,16 @@ code, kbd, samp, pre {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The transport bar stays reachable however long a caption runs.
+   Story-style captions are several lines, and the play button sitting below
+   the fold is the difference between a lesson she can drive and one she has
+   to scroll to operate. On narrow widths it is already position: fixed. */
+@media (min-width: 760px) {
+  .transport-bar.sticky-transport {
+    position: sticky;
+    bottom: calc(var(--step) * 0.75);
+    z-index: 30;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
+  }
+}

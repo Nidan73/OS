@@ -187,8 +187,8 @@ export function atomicLessonInput(p: AtomicParams): AtomicLessonInput {
     mode: 'spin',
     resourceLabel: p.mechanism === 'tas' ? 'LOCK (0 = FREE)' : 'TAG (EXPECTS 0)',
     actors: [
-      { id: 'T1', name: 'T1', analogyName: 'Father' },
-      { id: 'T2', name: 'T2', analogyName: 'Mother' }
+      { id: 'T1', name: 'T1', analogyName: 'Abbu' },
+      { id: 'T2', name: 'T2', analogyName: 'Ammu' }
     ],
     events,
     analogy: {
@@ -196,7 +196,7 @@ export function atomicLessonInput(p: AtomicParams): AtomicLessonInput {
       resourceLabel: 'THE HOOK (KEY THERE?)',
       holderLabel: 'THE CAR (KEY HOLDER)',
       waitingLabel: 'AT THE HOOK (CHECKING)',
-      actorNames: { T1: 'Father', T2: 'Mother' }
+      actorNames: { T1: 'Abbu', T2: 'Ammu' }
     }
   };
 }
@@ -341,12 +341,12 @@ export const lesson13: Lesson<AtomicLessonInput, CounterState> = {
   lensLabels: {
     analogy: '🔑 The car key',
     mechanism: '⚙️ test_and_set · compare_and_swap',
-    analogyTitle: 'View as father and mother and one key on a hook',
+    analogyTitle: 'View as Abbu and Ammu and one key on a hook',
     mechanismTitle: 'View as the lock the hardware guards'
   },
   analogy: {
     domain: 'friends',
-    text: 'The car key hangs on one hook by the door. Looking at the hook and grabbing the key happen as a single motion — nobody can look while another hand is already closing, so father and mother never drive off holding the same key.'
+    text: 'The car key hangs on one hook by the door. Looking at the hook and grabbing the key happen as a single motion — nobody can look while another hand is already closing, so Abbu and Ammu never drive off holding the same key.'
   },
   concept:
     'Hardware offers two indivisible primitives for the doorway in one lesson. test_and_set reads the lock and claims it before any other thread can slip between the read and the claim; compare_and_swap goes further and only swaps when the lock still reads what was expected, so a price change mid-transaction cannot slip through. Either one builds a lock by spinning until it reads free — correct, and wasteful — and the bounded-waiting variant hands the key to the next waiter in line instead of hanging it back, so nobody is skipped forever. Wrapped once more, the same primitive becomes the tally counter application code actually uses.',

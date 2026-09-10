@@ -16,7 +16,7 @@ import {
 // DENSITY (Task A audit): 12 reveals — the leaving frame, the doorbell call
 // and the state save (one discrete phase each), the corridor blocked and the
 // corridor clearing (slide 21's phase split into its two states), the staged
-// father and the handover (arrival distinct from handover), the dispatch
+// Abbu and the handover (arrival distinct from handover), the dispatch
 // subtotal the deck names, the held school run and its run (staging distinct
 // from running), the stacked-total accumulation, and the computed verdict.
 // "Arrival" and "ringing" differ the way L8's balancer tick and move differ:
@@ -105,7 +105,7 @@ export interface Box {
 
 /**
  * Analogy layout, authored independently FIRST (§3C.2a rule 1): the family
- * scene as it looks — doorbell high left, father high right, corridor
+ * scene as it looks — doorbell high left, Abbu high right, corridor
  * crowd mid-floor, school run low, car door tall at the right, spare-minutes
  * bench off to the side. Position here is PLACE; size is how big the thing
  * looks. Neither encodes any latency.
@@ -122,7 +122,7 @@ const ANALOGY_LAYOUT: Record<NodeId, Box> = {
 const ANALOGY_LABELS: Record<NodeId, { label: string; sub: string }> = {
   alarm: { label: 'Doorbell', sub: 'hear it' },
   aisle: { label: 'Crowded corridor', sub: 'clear it' },
-  switch: { label: 'Father', sub: 'takes over' },
+  switch: { label: 'Abbu', sub: 'takes over' },
   run: { label: 'School run', sub: 'green road' },
   slack: { label: 'Spare minutes', sub: 'buffer' },
   gate: { label: 'Car door', sub: 'leaves on time' }
@@ -280,14 +280,14 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       metrics
     },
     {
-      caption: `Father is ready but waiting — the corridor has not cleared yet.`,
+      caption: `Abbu is ready but waiting — the corridor has not cleared yet.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle'],
-      badgeText: `Father waits`,
+      badgeText: `Abbu waits`,
       metrics
     },
     {
-      caption: `Father takes over in ${b.dispatchPhase}ms — the context switch itself.`,
+      caption: `Abbu takes over in ${b.dispatchPhase}ms — the context switch itself.`,
       highlightNodeIds: ['switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Handover ${b.dispatchPhase}ms`,
@@ -340,14 +340,14 @@ export function realtimeLessonInput(p: LatencyParams): RealtimeInput {
     params: { ...p },
     nodes: realtimeNodes(p),
     reveals: realtimeReveals(p),
-    analogy: { domain: 'friends', title: 'School run', subtitle: 'A doorbell, a corridor, father and a leaving car' }
+    analogy: { domain: 'friends', title: 'School run', subtitle: 'A doorbell, a corridor, Abbu and a leaving car' }
   };
 }
 
 const SLIDERS: Array<{ key: ParamKey; label: string }> = [
   { key: 'interruptLatency', label: 'Doorbell delay (notice + save)' },
   { key: 'conflictPhase', label: 'Corridor clearing (preemption)' },
-  { key: 'dispatchPhase', label: 'Father handover (context switch)' },
+  { key: 'dispatchPhase', label: 'Abbu handover (context switch)' },
   { key: 'executionTime', label: 'School run (task time)' },
   { key: 'deadline', label: 'Car leaving time (deadline)' }
 ];
@@ -512,12 +512,12 @@ export const lesson09: Lesson<RealtimeInput, DiagramState> = {
   lensLabels: {
     analogy: '🚗 School run scramble',
     mechanism: '⏱️ Latency budget bar',
-    analogyTitle: 'View as a doorbell, a corridor, father and a leaving car',
+    analogyTitle: 'View as a doorbell, a corridor, Abbu and a leaving car',
     mechanismTitle: 'View as latency lengths against the leaving time'
   },
   analogy: {
     domain: 'friends',
-    text: 'The doorbell rings, the corridor fills, father pushes through — and the car still leaves on time.'
+    text: 'The doorbell rings, the corridor fills, Abbu pushes through — and the car still leaves on time.'
   },
   concept:
     'A real-time system must answer before its deadline, not just eventually. The answer waits on interrupt latency (noticing the request and saving state), dispatch latency (clearing preemption and switching context), and the task’s own run time. A soft miss only degrades the trip, while a hard miss fails it outright — so the budget is a length, and the deadline is a line it must not cross.',
@@ -527,7 +527,7 @@ export const lesson09: Lesson<RealtimeInput, DiagramState> = {
   analogyMapping: [
     'Doorbell ➔ interrupt latency (notice the request, save state)',
     'Crowded corridor ➔ conflict phase (preemption and resource release)',
-    'Father taking over ➔ dispatch phase (context switch)',
+    'Abbu taking over ➔ dispatch phase (context switch)',
     'School run ➔ real-time task execution',
     'Car leaving ➔ deadline position',
     'Spare minutes ➔ slack time before the car leaves'

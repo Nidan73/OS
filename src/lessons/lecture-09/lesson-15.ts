@@ -50,8 +50,8 @@ export const DEFAULT_SEM: SemaphoreParams = { initial: 5, mode: 'block', mistake
 const ACTORS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 const ANALOGY_NAMES: Record<string, string> = {
-  T1: 'Father', T2: 'Mother', T3: 'Elder Sister', T4: 'Younger Brother',
-  T5: 'Little Cousin', T6: 'Uncle', T7: 'Aunt'
+  T1: 'Abbu', T2: 'Ammu', T3: 'Arijit', T4: 'Younger Brother',
+  T5: 'Afra', T6: 'Uncle', T7: 'Aunt'
 };
 
 // DENSITY (Task A audit): correct at 10 — seven takes (each spot claimed once,

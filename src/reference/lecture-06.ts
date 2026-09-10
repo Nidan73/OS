@@ -386,7 +386,7 @@ export function renderLecture06Reference(): HTMLElement {
               <span class="ref-badge ref-badge-food">Turnaround Time</span>
             </div>
             <p class="ref-body">
-              Total elapsed time from when father or elder sister asks for a meal until the plate is completely finished and cleared.
+              Total elapsed time from when Abbu or Arijit asks for a meal until the plate is completely finished and cleared.
             </p>
           </div>
 
@@ -470,7 +470,7 @@ export function renderLecture06Reference(): HTMLElement {
               <strong>Components:</strong> Sum of ready queue waiting time + CPU execution burst + I/O execution time.
             </p>
             <div class="ref-analogy-quote">
-              <strong>Dinner Analogy:</strong> Total elapsed time from when father or elder sister asks for a meal until the plate is completely finished and cleared.
+              <strong>Dinner Analogy:</strong> Total elapsed time from when Abbu or Arijit asks for a meal until the plate is completely finished and cleared.
             </div>
           </div>
 
@@ -763,7 +763,7 @@ export function renderLecture06Reference(): HTMLElement {
                 <td><span class="ref-badge ref-badge-min">Minimize ↓</span></td>
                 <td>Elapsed time from submission of a process to its completion.</td>
                 <td class="tabular">Wait + Execution + I/O</td>
-                <td>Total elapsed time from when father or elder sister asks for a meal until the plate is completely finished and cleared.</td>
+                <td>Total elapsed time from when Abbu or Arijit asks for a meal until the plate is completely finished and cleared.</td>
               </tr>
               <tr>
                 <td><strong>Waiting Time</strong></td>

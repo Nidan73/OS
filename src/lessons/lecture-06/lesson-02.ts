@@ -49,13 +49,13 @@ export const lesson02: Lesson<GanttInput> = {
           avatarColor: '#E65100'
         },
         P2: {
-          customerName: 'Father',
+          customerName: 'Abbu',
           orderText: 'Two Coffees (3 min)',
           orderIcon: 'coffee',
           avatarColor: '#1565C0'
         },
         P3: {
-          customerName: 'Mother',
+          customerName: 'Ammu',
           orderText: 'Two Coffees (3 min)',
           orderIcon: 'coffee',
           avatarColor: '#2E7D32'

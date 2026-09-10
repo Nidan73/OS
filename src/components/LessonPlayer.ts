@@ -10,6 +10,7 @@ export class LessonPlayer {
   private playgroundSection: HTMLElement;
   private scoreboardSection: HTMLElement;
   private captionBanner: HTMLElement;
+  private morphBanner: HTMLElement | null = null;
 
   private playBtn: HTMLButtonElement;
   private prevBtn: HTMLButtonElement;
@@ -133,16 +134,21 @@ export class LessonPlayer {
     topControlsRow.append(lensButtons, sliderWrap);
     this.lensController.appendChild(topControlsRow);
 
+    // morphReveals used to live here, inside the lens controller, where it
+    // took roughly 100px above the animation and pushed the caption and the
+    // play button below the fold at 1440x900. It is a reflection on what the
+    // morph changed, not a control, so it now sits after the transport bar.
+    // Built here, appended at the end.
     if (this.morphReveals) {
-      const morphBanner = document.createElement('div');
-      morphBanner.className = 'morph-reveals-banner';
-      morphBanner.style.fontSize = '0.85rem';
-      morphBanner.style.color = 'var(--muted)';
-      morphBanner.style.lineHeight = '1.45';
-      morphBanner.style.paddingTop = '6px';
-      morphBanner.style.borderTop = '1px solid var(--hairline)';
-      morphBanner.textContent = this.morphReveals;
-      this.lensController.appendChild(morphBanner);
+      this.morphBanner = document.createElement('div');
+      this.morphBanner.className = 'morph-reveals-banner';
+      this.morphBanner.style.fontSize = '0.85rem';
+      this.morphBanner.style.color = 'var(--muted)';
+      this.morphBanner.style.lineHeight = '1.5';
+      this.morphBanner.style.padding = 'calc(var(--step) * 0.8) calc(var(--step) * 1.2)';
+      this.morphBanner.style.border = '1px solid var(--hairline)';
+      this.morphBanner.style.borderRadius = 'var(--rounded-lg, 18px)';
+      this.morphBanner.textContent = this.morphReveals;
     }
 
     // 2. Animation Viewport
@@ -293,6 +299,7 @@ export class LessonPlayer {
       this.captionBanner,
       this.transportBar
     );
+    if (this.morphBanner) this.container.appendChild(this.morphBanner);
     parent.appendChild(this.container);
 
     this.setupEventListeners();

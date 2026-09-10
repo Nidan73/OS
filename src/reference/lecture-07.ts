@@ -492,8 +492,8 @@ export function renderLecture07Reference(): HTMLElement {
               <span class="pill-bullet" style="background: var(--food);"></span>
               <div>
                 <strong>Process-Contention Scope (PCS) — Internal Family Turn-Taking:</strong>
-                Inside your family's private booth, father, mother, and children decide among themselves whose story
-                is shared first over dinner. Father might graciously yield his turn to elder sister so she can share
+                Inside your family's private booth, Abbu, Ammu, and children decide among themselves whose story
+                is shared first over dinner. Abbu might graciously yield his turn to Arijit so she can share
                 her university exam results. This entire conversational negotiation is contained entirely within your booth.
                 Diners at neighboring tables neither participate in your family's conversation nor care who speaks first.
               </div>

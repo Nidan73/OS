@@ -94,7 +94,7 @@ describe('Lesson 15 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('analogy tokens are native: family at the lot, equal footprints', () => {
     const input = semaphoreLessonInput(DEFAULT_SEM);
     expect(input.actors.length).toBe(7);
-    expect(input.actors[0].analogyName).toBe('Father');
+    expect(input.actors[0].analogyName).toBe('Abbu');
     expect(input.analogy?.resourceLabel).toContain('BOARD');
   });
 

@@ -23,7 +23,9 @@ directly. The family in these lessons is hers.
 
 ## The cast
 
-**Ammu.** The mother. She runs the household and she runs the restaurant's books. In most
+**Ammu.** The mother. Ammu and mother are interchangeable, and so are Abbu and father. Use
+whichever reads better in the sentence. She runs the household and she runs the restaurant's
+books. In most
 lessons she is the one deciding: who gets served, who gets lent to, who waits. When a lesson
 needs a scheduler, an allocator, or someone holding a resource that everyone wants, it is
 usually her. She is careful with money and she counts things twice.
@@ -33,13 +35,16 @@ checking with her first. When a lesson needs two people acting concurrently and 
 is Ammu and Abbu. He is not careless. He simply does not know what she is doing at that moment,
 which is the entire point of every race condition in this course.
 
-**Arijit.** The older brother, twenty two, at university. He wants the car and he wants money
-and he always says he will pay it back. When a lesson needs someone who asks for more than they
-have, it is Arijit.
+**Arijit.** The brother. When a lesson needs someone who asks for more than he has, it is
+Arijit.
 
-**Afra.** The younger sister, fourteen, still at school. She is the one who gets skipped. When a
-lesson needs a small request that keeps losing to bigger ones, it is Afra. Starvation and aging
-are her lessons.
+**Afra.** The sister. When a lesson needs a small request that keeps losing to bigger ones, it
+is Afra. Starvation and aging are her lessons.
+
+**Do not invent biography for these two.** No ages, no university, no school, no personality
+beyond the role the mechanism needs. The owner gave two names, and everything else about them
+is a detail this project does not need and should not make up. Say what they do in the scene,
+not who they are.
 
 **Kabir chacha.** The building's night guard. He sits at a desk by the driveway with a register
 and a torch. He does not own anything in the story. He observes, he writes down who is blocking

@@ -107,14 +107,18 @@ describe('prose rule: every lesson teaches the mechanism, not only the story', (
     const slug = path.basename(file, '.ts');
     const src = fs.readFileSync(file, 'utf8');
 
-    // The concept string, whichever quote style the lesson used. An earlier
-    // version of this test only handled single quotes and reported lesson-03
-    // and lesson-07 as having no concept at all, which was the test being
-    // wrong, not the lessons.
-    const conceptMatch =
-      src.match(/\n\s{2}concept:\s*\n?\s*'((?:[^'\\]|\\.)*)'/) ??
-      src.match(/\n\s{2}concept:\s*\n?\s*"((?:[^"\\]|\\.)*)"/);
-    const concept = conceptMatch ? conceptMatch[1] : '';
+    // The concept text, however it is written: single or double quoted, and
+    // concatenated across lines with + once it became long enough to need
+    // paragraphs. Two earlier versions of this extraction were wrong (single
+    // quotes only, then first-segment only) and both reported lessons as
+    // having no concept when they had one. Grab the whole expression, then
+    // pull every string literal out of it.
+    const conceptExpr = src.match(/\n\s{2}concept:\s*([\s\S]*?),\n\s{2}[a-zA-Z]+:/);
+    const concept = conceptExpr
+      ? (conceptExpr[1].match(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"/g) ?? [])
+          .map((q) => q.slice(1, -1))
+          .join(' ')
+      : '';
 
     describe(slug, () => {
       it('has a concept long enough to actually explain the mechanism', () => {

@@ -88,7 +88,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
   return [
     {
       t: 0,
-      caption: 'One bathroom, one latch. Mother steps in; the corridor queue is empty.',
+      caption: 'One bathroom, one latch. Ammu steps in; the corridor queue is empty.',
       highlight: [],
       state: {
         stepIndex: 0, value: 1, capacity: 1, activeActorId: null,
@@ -108,12 +108,12 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 2,
-      caption: `Mother takes the bathroom for ${m.csDurationUs}µs.`,
+      caption: `Ammu takes the bathroom for ${m.csDurationUs}µs.`,
       highlight: ['T1'],
       state: {
         stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T1',
         holders: ['T1'], waiting: [], action: 'acquire',
-        caption: `Mother takes the bathroom for ${m.csDurationUs}µs.`
+        caption: `Ammu takes the bathroom for ${m.csDurationUs}µs.`
       }
     },
     {
@@ -128,7 +128,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 4,
-      caption: `Father queues ${how} behind the first waiter.`,
+      caption: `Abbu queues ${how} behind the first waiter.`,
       highlight: ['T3'],
       state: {
         stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T3',
@@ -138,7 +138,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 5,
-      caption: `Father settles ${how} — the queue order is now fixed.`,
+      caption: `Abbu settles ${how} — the queue order is now fixed.`,
       highlight: ['T3'],
       state: {
         stepIndex: 5, value: 0, capacity: 1, activeActorId: 'T3',
@@ -160,7 +160,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 7,
-      caption: `The stay ends — mother is done, the bathroom is due back.`,
+      caption: `The stay ends — Ammu is done, the bathroom is due back.`,
       highlight: ['T1'],
       state: {
         stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T1',
@@ -170,12 +170,12 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 8,
-      caption: 'Mother comes out and turns the latch back after her stay.',
+      caption: 'Ammu comes out and turns the latch back after her stay.',
       highlight: ['T1'],
       state: {
         stepIndex: 8, value: 1, capacity: 1, activeActorId: 'T1',
         holders: [], waiting: ['T2', 'T3'], action: 'release',
-        caption: 'Mother comes out and turns the latch back.'
+        caption: 'Ammu comes out and turns the latch back.'
       }
     },
     {
@@ -192,7 +192,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 10,
-      caption: 'Father is still queued — the handoff order is set.',
+      caption: 'Abbu is still queued — the handoff order is set.',
       highlight: ['T3'],
       state: {
         stepIndex: 10, value: 1, capacity: 1, activeActorId: 'T3',
@@ -225,14 +225,14 @@ export function lockLessonInput(p: LockParams): LockLessonInput {
     mode: p.mode,
     resourceLabel: 'THE LATCH (1 = FREE)',
     actors: [
-      { id: 'T1', name: 'T1', analogyName: 'Mother' },
-      { id: 'T2', name: 'T2', analogyName: 'Elder Sister' },
-      { id: 'T3', name: 'T3', analogyName: 'Father' }
+      { id: 'T1', name: 'T1', analogyName: 'Ammu' },
+      { id: 'T2', name: 'T2', analogyName: 'Arijit' },
+      { id: 'T3', name: 'T3', analogyName: 'Abbu' }
     ],
     events: [
-      { actorId: 'T1', action: 'acquire', caption: 'Mother takes the bathroom.' },
+      { actorId: 'T1', action: 'acquire', caption: 'Ammu takes the bathroom.' },
       { actorId: 'T2', action: 'spin', caption: 'Two waiters queue at the door.' },
-      { actorId: 'T1', action: 'release', caption: 'Mother comes out and turns the latch back.' },
+      { actorId: 'T1', action: 'release', caption: 'Ammu comes out and turns the latch back.' },
       { actorId: 'T2', action: 'acquire', caption: 'Handoff to the first waiter.' }
     ],
     analogy: {
@@ -240,7 +240,7 @@ export function lockLessonInput(p: LockParams): LockLessonInput {
       resourceLabel: 'THE LATCH (FREE?)',
       holderLabel: 'THE BATHROOM (OCCUPIED)',
       waitingLabel: 'AT THE DOOR (QUEUING)',
-      actorNames: { T1: 'Mother', T2: 'Elder Sister', T3: 'Father' }
+      actorNames: { T1: 'Ammu', T2: 'Arijit', T3: 'Abbu' }
     }
   };
 }
@@ -404,12 +404,12 @@ export const lesson14: Lesson<LockLessonInput, CounterState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'One bathroom, one latch: mother goes in, comes out, turns the latch back. The waiters either jiggle the handle until it opens or sit on the corridor bench until they are called — and which waste is smaller depends entirely on how long mother stays.'
+    text: 'One bathroom, one latch: Ammu goes in, comes out, turns the latch back. The waiters either jiggle the handle until it opens or sit on the corridor bench until they are called — and which waste is smaller depends entirely on how long Ammu stays.'
   },
   concept:
-    'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the bathroom, use it, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when mother comes out at once; sitting on the bench pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price — set it, set the clock, and the verdict recomputes.',
+    'A mutex lock wraps the doorway so application code stops thinking about hardware: acquire the bathroom, use it, release it. Waiting has two prices. Spinning burns the processor for the whole stay and is genuinely cheapest when Ammu comes out at once; sitting on the bench pays a wakeup instead and wins every long stay. The crossover sits exactly at the wakeup price — set it, set the clock, and the verdict recomputes.',
   morphReveals:
-    'At home every token is the same width — a person at the door — and the queue stays shoulder-to-shoulder however long mother stays. In the lock width stops meaning a body and starts meaning the claim on the bathroom: mother fills it wide while the queued compress behind. The stay itself is priced in numbers, not width — drag it and the spin bill climbs past the wakeup price until sitting down wins.',
+    'At home every token is the same width — a person at the door — and the queue stays shoulder-to-shoulder however long Ammu stays. In the lock width stops meaning a body and starts meaning the claim on the bathroom: Ammu fills it wide while the queued compress behind. The stay itself is priced in numbers, not width — drag it and the spin bill climbs past the wakeup price until sitting down wins.',
   morphMode: 'morph',
   analogyMapping: [
     'One bathroom latch ➔ the mutex (available or held)',
@@ -417,7 +417,7 @@ export const lesson14: Lesson<LockLessonInput, CounterState> = {
     'Turning the latch back ➔ release()',
     'Jiggling the handle ➔ spinning: the processor burns for the whole stay',
     'Sitting on the bench until called ➔ blocking: one wakeup price, then sleep',
-    'How long mother stays ➔ the dragged stay length that flips the verdict'
+    'How long Ammu stays ➔ the dragged stay length that flips the verdict'
   ],
   input: lesson14Input
 };

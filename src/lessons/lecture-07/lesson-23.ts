@@ -39,7 +39,7 @@ import {
 // All three reproduce exactly from src/algorithms/scheduling.ts. Nothing here
 // is typed; every figure on screen comes back through a pure function.
 //
-// SCENE: Mother is choosing the serving rule for the family's kacchi
+// SCENE: Ammu is choosing the serving rule for the family's kacchi
 // restaurant. Five parties are seated at eight o'clock — the kitchen times are
 // known, because she has last Friday's tickets in front of her.
 //
@@ -56,7 +56,7 @@ import {
 // On the timeline that same width becomes kitchen minutes, and the engagement
 // party alone is wider than the other four together. That is deterministic
 // modelling in one gesture — the line looks fair until you redraw it against
-// time, and the 28 minutes Mother computes is a fact about this Friday's
+// time, and the 28 minutes Ammu computes is a fact about this Friday's
 // ordering, not a fact about the rule.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -509,7 +509,7 @@ export const lesson23: Lesson<GanttInput, GanttState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'Mother has last Friday\'s tickets in front of her and five tables seated at eight — a tea and a shingara, two kacchi, an engagement party for twenty. She can settle the argument exactly for that one night, or she can work in averages that hold for every night, or she can just try the new rule on real customers and find out.'
+    text: 'Ammu has last Friday\'s tickets in front of her and five tables seated at eight — a tea and a shingara, two kacchi, an engagement party for twenty. She can settle the argument exactly for that one night, or she can work in averages that hold for every night, or she can just try the new rule on real customers and find out.'
   },
   concept:
     'Choosing a scheduling algorithm means fixing your criteria first and then evaluating candidates against them. Deterministic modelling takes one predetermined workload and computes each algorithm\'s performance exactly — on the deck\'s five processes it gives FCFS 28 ms, non-preemptive SJF 13 ms and round robin 23 ms. It is simple and fast, and its weakness is in the definition: it needs exact numbers as input and its answer applies only to those inputs. Queueing models go the other way, describing arrivals and bursts probabilistically and computing averages; Little\'s formula, n = λ × W, says that in steady state the average queue length is the arrival rate times the average wait, and it holds for any scheduling algorithm and any arrival distribution. Simulation buys back accuracy by programming a model of the system with the clock as a variable, driven by random numbers or by trace tapes of real events, at much higher cost. Implementation is more accurate still and costs the most of all, and even then environments vary — which is why the most flexible schedulers can be tuned per site.',

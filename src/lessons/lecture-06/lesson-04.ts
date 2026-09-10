@@ -341,19 +341,19 @@ export const lesson04: Lesson<GanttInput, GanttState> = {
       queueLabel: 'Key Line Turns',
       items: {
         P1: {
-          customerName: 'Father',
+          customerName: 'Abbu',
           orderText: 'Drive to the Market (24 min)',
           orderIcon: 'meal',
           avatarColor: '#E65100'
         },
         P2: {
-          customerName: 'Mother',
+          customerName: 'Ammu',
           orderText: 'Drive Nearby (3 min)',
           orderIcon: 'coffee',
           avatarColor: '#1565C0'
         },
         P3: {
-          customerName: 'Elder Sister',
+          customerName: 'Arijit',
           orderText: 'Drive Nearby (3 min)',
           orderIcon: 'coffee',
           avatarColor: '#2E7D32'

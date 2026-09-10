@@ -10,7 +10,7 @@ import {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layout (pure) — the carrying property of the morph is VERTICAL POSITION.
-// In the kitchen, where father's two acts sit — the call high, the dish low —
+// In the kitchen, where Abbu's two acts sit — the call high, the dish low —
 // is furniture; nothing about order can be read off it, and
 // the furniture does not move when the hardware reorders. In the machine,
 // vertical position is execution order: toggling the reorder physically
@@ -98,7 +98,7 @@ export function publicationSteps(input: PetersonInput): Step<PublicationState>[]
   const pub = simulateReorderingOutput(input.reordered);
   const open: Step<PublicationState> = {
     t: 0,
-    caption: 'Mother and father share one kitchen doorway: father calls while cooking, mother waits to serve.',
+    caption: 'Ammu and Abbu share one kitchen doorway: Abbu calls while cooking, Ammu waits to serve.',
     highlight: ['T1', 'T2'],
     state: { ...pub.steps[0], step: 0, printed: null, caption: 'The room before the test.' , bothInside }
   };
@@ -210,7 +210,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       const active = state.actorId === tid;
       g.appendChild(this.rectAt(box, 10, active ? 'rgba(0, 102, 204, 0.12)' : 'var(--surface-alt)', active ? 'var(--accent)' : 'var(--hairline)', active ? 2 : 1));
       const label = v < 0.5
-        ? (tIdx === 0 ? 'Mother · at the door' : 'Father · cooking')
+        ? (tIdx === 0 ? 'Ammu · at the door' : 'Abbu · cooking')
         : tid === 'T1'
           ? 'T1 · spins, then prints'
           : 'T2 · stores, then raises flag';
@@ -218,7 +218,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       scene.appendChild(g);
     });
 
-    // Father's two acts → T2's two instruction rows. The toggle swaps them.
+    // Abbu's two acts → T2's two instruction rows. The toggle swaps them.
     const rows = actRows(this.input.reordered);
     const acts: Array<{ key: 'msg' | 'pack'; row: number; analogy: string; mech: string }> = [
       { key: 'msg', row: rows.msg, analogy: 'the call: "Food is ready!"', mech: 'flag = true' },
@@ -234,7 +234,7 @@ export class PetersonEngine extends AnimationEngine<PetersonInput, PublicationSt
       scene.appendChild(g);
     }
 
-    // Mother's side (paint): the spin, the print, the exit.
+    // Ammu's side (paint): the spin, the print, the exit.
     const t1RowY = 44 + rows.print * 34;
     if (v < 0.5) {
       scene.appendChild(this.text(geometry.T1.x + geometry.T1.w / 2, geometry.T1.y + geometry.T1.h + 14, 'waiting for the call', 9, 'var(--muted)'));
@@ -346,21 +346,21 @@ export const lesson12: Lesson<PetersonInput, PublicationState> = {
   engine: 'standalone',
   engineClass: PetersonEngine,
   lensLabels: {
-    analogy: '🚪 Mother and father at the door',
+    analogy: '🚪 Ammu and Abbu at the door',
     mechanism: '⚙️ Flags, turn and the print test',
-    analogyTitle: 'View as mother and father waving each other through',
+    analogyTitle: 'View as Ammu and Abbu waving each other through',
     mechanismTitle: 'View as the flag and turn protocol over time'
   },
   analogy: {
     domain: 'friends',
-    text: 'Mother and father meet at the narrow kitchen doorway, each waving the other through: a raised hand meaning "I want in," then "you first." Before dinner, father calls out "Food is ready!" while the dish is still on the flame — and mother acts on the announcement, not the fact.'
+    text: 'Ammu and Abbu meet at the narrow kitchen doorway, each waving the other through: a raised hand meaning "I want in," then "you first." Before dinner, Abbu calls out "Food is ready!" while the dish is still on the flame — and Ammu acts on the announcement, not the fact.'
   },
   concept: 'Peterson\u2019s solution lets two processes share a doorway with one shared flag each and a single turn variable: announce "I want in" (flag[i] = true), then defer (turn = j), then wait while the other wants in and it is their turn. Walking every interleaving proves all three promises hold — mutual exclusion, progress and bounded waiting. The proof assumes stores land in the order written. Processors and compilers reorder independent operations: in a single thread the result is always the same, but across threads the announcement can overtake the act, and the door stands open for both. The print test shows it: the flag rises before the store lands, and what gets printed flips.',
   morphReveals: 'In the kitchen, where the two acts sit — the call high, the dish low — is furniture; no order can be read off it, and it does not move when the hardware reorders. In the machine, vertical position is execution order: flip to reordered and the two rows physically swap, the call now precedes the cooking, and the printed number flips with them.',
   morphMode: 'morph',
   analogyMapping: [
-    'Mother waiting at the door ➔ thread 1 spinning on flag[1] and turn',
-    'Father, and the two acts of cooking ➔ thread 2\u2019s two stores: x = 100, then flag = true',
+    'Ammu waiting at the door ➔ thread 1 spinning on flag[1] and turn',
+    'Abbu, and the two acts of cooking ➔ thread 2\u2019s two stores: x = 100, then flag = true',
     'The call "Food is ready!" ➔ flag = true (the announcement)',
     'The dish still on the flame ➔ x = 100 (the fact, still in flight when reordered)',
     'Waving the other through ➔ turn = j',

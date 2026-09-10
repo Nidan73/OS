@@ -117,7 +117,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
         <div>
           <h3 style="font-size: 0.88rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: var(--ink);">
-            Dinner Table · Serving Order & Mother's Rule
+            Dinner Table · Serving Order & Ammu's Rule
           </h3>
           <span style="font-size: 0.7rem; color: var(--muted);">
             Served first = Priority 1 · Served last = Priority 9 (Still Waiting)
@@ -125,7 +125,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
         </div>
         <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
           <button id="aging-toggle" type="button" data-primary-control="true" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.74rem; font-weight: 700; border-radius: var(--rounded-pill, 9999px); border: 1.5px solid ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; background: ${isP4Aged ? 'rgba(8, 127, 91, 0.12)' : 'rgba(217, 119, 6, 0.12)'}; color: ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; cursor: pointer; transition: all var(--dur-fast) var(--ease);">
-            <span>${isP4Aged ? '🤱 Mother steps in: ON' : '⚠️ Mother steps in: OFF'}</span>
+            <span>${isP4Aged ? '🤱 Ammu steps in: ON' : '⚠️ Ammu steps in: OFF'}</span>
             <span style="font-size: 0.65rem; padding: 1px 5px; border-radius: var(--rounded-pill, 9999px); background: ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; color: #FFFFFF;">
               ${isP4Aged ? 'Toggle Off' : 'Toggle On'}
             </span>
@@ -142,7 +142,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
           const isAged = p.id === 'P4' && isP4Aged;
           const cardBorder = isStarving ? 'var(--waiting)' : isAged ? 'var(--running)' : 'var(--hairline)';
           const cardBg = isStarving ? 'rgba(217, 119, 6, 0.08)' : isAged ? 'rgba(8, 127, 91, 0.08)' : 'var(--canvas-parchment, #f5f5f7)';
-          const roleLabel = p.id === 'P2' ? 'Father' : p.id === 'P5' ? 'Mother' : p.id === 'P1' ? 'Elder Sister' : p.id === 'P3' ? 'Younger Brother' : 'Little Cousin';
+          const roleLabel = p.id === 'P2' ? 'Abbu' : p.id === 'P5' ? 'Ammu' : p.id === 'P1' ? 'Arijit' : p.id === 'P3' ? 'Younger Brother' : 'Afra';
 
           return `
             <div class="process-order-card" data-proc="${p.id}" style="flex: 1; min-width: 76px; padding: 3px 5px; background: ${cardBg}; border: 1.5px solid ${cardBorder}; border-radius: 12px; display: flex; flex-direction: column; gap: 1px;">
@@ -180,7 +180,7 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
           Live Scoreboard
         </h3>
         <div style="padding: 1px 7px; border-radius: var(--rounded-pill, 9999px); font-weight: 600; font-size: 0.7rem; ${isP4Aged ? 'background: rgba(8, 127, 91, 0.12); color: var(--running); border: 1px solid var(--running);' : 'background: rgba(217, 119, 6, 0.12); color: var(--waiting); border: 1px solid var(--waiting);'}">
-          ${isP4Aged ? '✅ Little Cousin Served by Mother (Wait: 1 ms)' : '⚠️ Little Cousin Skipped: Waits 18 ms'}
+          ${isP4Aged ? '✅ Afra Served by Ammu (Wait: 1 ms)' : '⚠️ Afra Skipped: Waits 18 ms'}
         </div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 4px;">
@@ -192,11 +192,11 @@ export class AgingGanttEngine extends GanttEngine implements PlaygroundCapable {
           <div style="font-size: 0.65rem; color: var(--muted); font-family: var(--font-mono);">${isP4Aged ? '5.4 ms with aging' : '8.2 ms baseline'}</div>
         </div>
         <div style="padding: 4px 6px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: 12px;">
-          <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Little Cousin (P4) Wait</div>
+          <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Afra (P4) Wait</div>
           <div style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: ${isP4Aged ? 'var(--running)' : 'var(--waiting)'}; margin: 1px 0;">
             ${p4Wait} ms
           </div>
-          <div style="font-size: 0.65rem; color: var(--muted); font-family: var(--font-mono);">${isP4Aged ? 'Mother moved them up' : 'Skipped at the table'}</div>
+          <div style="font-size: 0.65rem; color: var(--muted); font-family: var(--font-mono);">${isP4Aged ? 'Ammu moved them up' : 'Skipped at the table'}</div>
         </div>
         <div style="padding: 4px 6px; background: var(--canvas-parchment, #f5f5f7); border: 1px solid var(--hairline); border-radius: 12px;">
           <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Dispatch Sequence</div>
@@ -269,17 +269,17 @@ export const lesson05: Lesson<GanttInput, GanttState> = {
   },
   analogy: {
     domain: 'friends',
-    text: 'Who gets served first at dinner. The little cousin keeps getting skipped while bigger plates go ahead — starving — until mother steps in and moves them up the serving order.'
+    text: 'Who gets served first at dinner. The Afra keeps getting skipped while bigger plates go ahead — starving — until Ammu steps in and moves them up the serving order.'
   },
   concept: 'Priority scheduling assigns each process an integer priority rank where the CPU is allocated to the highest-priority job (lowest integer). However, low-priority processes can suffer from starvation (indefinite blocking) if higher-priority tasks continuously arrive. Aging solves starvation by gradually incrementing the priority of processes waiting in the ready queue, ensuring every job eventually executes.',
-  morphReveals: 'At dinner your serving order decides where you sit in the line, and waiting costs you nothing. On the timeline that same position becomes when you start — so every newly served guest slides the little cousin further right, and starvation is simply a bar that never gets reached. Mother moves them up the line as they wait.',
+  morphReveals: 'At dinner your serving order decides where you sit in the line, and waiting costs you nothing. On the timeline that same position becomes when you start — so every newly served guest slides the Afra further right, and starvation is simply a bar that never gets reached. Ammu moves them up the line as they wait.',
   morphMode: 'morph',
   analogyMapping: [
     'Dinner Table ➔ CPU Core',
-    'Mother Serving ➔ Scheduler Dispatcher',
+    'Ammu Serving ➔ Scheduler Dispatcher',
     'Serving Order (1–9) ➔ Priority Rank (1 = Highest Priority)',
-    'Skipped Little Cousin ➔ Low-Priority Process (Starvation)',
-    'Mother Moving Them Up ➔ Aging Mechanism'
+    'Skipped Afra ➔ Low-Priority Process (Starvation)',
+    'Ammu Moving Them Up ➔ Aging Mechanism'
   ] as any,
   input: {
     processes: [
@@ -294,16 +294,16 @@ export const lesson05: Lesson<GanttInput, GanttState> = {
       domain: 'friends',
       type: 'table',
       serviceLabel: 'Dinner Table',
-      serviceSublabel: 'Mother Serving (Dispatcher)',
+      serviceSublabel: 'Ammu Serving (Dispatcher)',
       queueLabel: 'Serving Line',
       items: {
         P1: {
-          customerName: 'Elder Sister',
+          customerName: 'Arijit',
           orderText: 'No. 3 · Priority 3 (10m)',
           avatarColor: '#D97706'
         },
         P2: {
-          customerName: 'Father',
+          customerName: 'Abbu',
           orderText: 'No. 1 · Priority 1 (1m)',
           avatarColor: '#0284C7'
         },
@@ -313,12 +313,12 @@ export const lesson05: Lesson<GanttInput, GanttState> = {
           avatarColor: '#7C3AED'
         },
         P4: {
-          customerName: 'Little Cousin',
+          customerName: 'Afra',
           orderText: 'No. 9 · Priority 9 (1m)',
           avatarColor: '#DC2626'
         },
         P5: {
-          customerName: 'Mother',
+          customerName: 'Ammu',
           orderText: 'No. 2 · Priority 2 (5m)',
           avatarColor: '#059669'
         }

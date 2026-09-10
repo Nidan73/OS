@@ -66,7 +66,7 @@ describe('Lesson 14 · every displayed number is computed', () => {
 describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('analogy tokens are native: family at the door, equal footprints', () => {
     const input = lockLessonInput(DEFAULT_LOCK);
-    expect(input.actors.map((a) => a.analogyName)).toEqual(['Mother', 'Elder Sister', 'Father']);
+    expect(input.actors.map((a) => a.analogyName)).toEqual(['Ammu', 'Arijit', 'Abbu']);
     expect(input.analogy?.waitingLabel).toContain('DOOR');
   });
 

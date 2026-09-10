@@ -73,8 +73,8 @@ import {
 export type Lesson16Mode = 'story' | 'share' | 'atomic' | 'preempt' | 'ordered';
 
 const FRIENDS: GraphNodeInput[] = [
-  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Mother' },
-  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Father' }
+  { id: 'T1', kind: 'process', label: 'T1', analogyLabel: 'Ammu' },
+  { id: 'T2', kind: 'process', label: 'T2', analogyLabel: 'Abbu' }
 ];
 
 function chopsticks(instances: number): GraphNodeInput[] {
@@ -156,13 +156,13 @@ export function storyEvents(): GraphEvent[] {
     return { caption: caption.slice(0, 120), addEdge: { ...edge } };
   };
   const out: GraphEvent[] = [
-    ask('Mother asks for spoon M1 — every use starts as a request.', {
+    ask('Ammu asks for spoon M1 — every use starts as a request.', {
       from: 'T1',
       to: 'M1',
       kind: 'request'
     })
   ];
-  const use = takeEdge("M1 lands in mother's hand — the ask becomes a hold.", { from: 'T1', to: 'M1' });
+  const use = takeEdge("M1 lands in Ammu's hand — the ask becomes a hold.", { from: 'T1', to: 'M1' });
   edges.splice(edges.findIndex((e) => e.from === 'T1' && e.to === 'M1'), 1);
   edges.push({ from: 'M1', to: 'T1', kind: 'assignment' });
   out.push(use);
@@ -173,10 +173,10 @@ export function storyEvents(): GraphEvent[] {
     removeEdge: { ...rel }
   });
   out.push(
-    ask('Mother grips spoon M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
-    ask('Father grips spoon M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
-    ask('Mother asks for M2 — father is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
-    ask('Father asks for M1 — mother is holding it. The ring closes.', {
+    ask('Ammu grips spoon M1.', { from: 'M1', to: 'T1', kind: 'assignment' }),
+    ask('Abbu grips spoon M2.', { from: 'M2', to: 'T2', kind: 'assignment' }),
+    ask('Ammu asks for M2 — Abbu is holding it.', { from: 'T1', to: 'M2', kind: 'request' }),
+    ask('Abbu asks for M1 — Ammu is holding it. The ring closes.', {
       from: 'T2',
       to: 'M1',
       kind: 'request'
@@ -195,11 +195,11 @@ export function storyEvents(): GraphEvent[] {
       activeNodes: ['T1', 'T2']
     },
     {
-      caption: "No preemption — mother's grip breaks only when she lets go.".slice(0, 120),
+      caption: "No preemption — Ammu's grip breaks only when she lets go.".slice(0, 120),
       activeNodes: ['T1', 'M1']
     },
     {
-      caption: 'Circular wait — mother waits on father waits on mother; the ring closes.'.slice(0, 120),
+      caption: 'Circular wait — Ammu waits on Abbu waits on Ammu; the ring closes.'.slice(0, 120),
       setCycle: ringCycle('story', edges)
     }
   );
@@ -540,12 +540,12 @@ export const lesson16: Lesson<GraphInput, GraphState> = {
   lensLabels: {
     analogy: '🥄 Dinner table',
     mechanism: '🕸️ Grip-and-ask map',
-    analogyTitle: 'View as mother and father sharing serving spoons',
+    analogyTitle: 'View as Ammu and Abbu sharing serving spoons',
     mechanismTitle: 'View as the hold-and-wait graph'
   },
   analogy: {
     domain: 'food',
-    text: 'Mother and father share two serving spoons at family dinner. Each grips one and waits on the other — both are polite, both are patient, and neither will ever eat.'
+    text: 'Ammu and Abbu share two serving spoons at family dinner. Each grips one and waits on the other — both are polite, both are patient, and neither will ever eat.'
   },
   concept:
     'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each spoon serves one person, each parent grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one — bring extra spoons, take both or wait empty-handed, allow snatching, number the order — and the same scene ends fed. Each removal below is computed, not staged.',

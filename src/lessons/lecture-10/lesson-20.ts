@@ -14,7 +14,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // L20 · The banker's algorithm (ATLAS units 80–83, slides 26–32)
 //
-// LESSONS.md: L20 — units 80–83. Mother's monthly household ledger — cash
+// LESSONS.md: L20 — units 80–83. Ammu's monthly household ledger — cash
 // on hand, each person's declared ceiling, what they have drawn, what they
 // could still ask for. Morphs into
 // Available / Max / Allocation / Need. Playground: make P1's request (1,0,2),
@@ -57,7 +57,7 @@ import {
 // Overriding render() would reimplement identical interpolation for no gain.
 //
 // The carrying property of the morph is WIDTH (and with it, x-position). On
-// mother's slips every ceiling is written on the same-size slip —
+// Ammu's slips every ceiling is written on the same-size slip —
 // position is just whose slip it is. On the ledger width stops meaning a slip
 // and starts meaning units: a Need cell is as wide as what the process still
 // claims, so funded rows visibly narrow to nothing as the sweep reclaims.
@@ -431,7 +431,7 @@ export class Lesson20MatrixEngine extends MatrixEngine implements PlaygroundCapa
           `).join('')}
         </div>
       </div>
-      <div style="font-size: 0.72rem; color: var(--muted);">The sweep replays cell by cell — each probe is one examination the algorithm performs. The refusal is mother doing her job.</div>
+      <div style="font-size: 0.72rem; color: var(--muted);">The sweep replays cell by cell — each probe is one examination the algorithm performs. The refusal is Ammu doing her job.</div>
     `;
     host.querySelectorAll('.l20-mode').forEach((el) => {
       el.addEventListener('click', () => {
@@ -513,19 +513,19 @@ export const lesson20: Lesson<MatrixInput, MatrixState> = {
   engine: 'matrix',
   engineClass: Lesson20MatrixEngine,
   lensLabels: {
-    analogy: '🧾 Mother\u2019s ledger slips',
+    analogy: '🧾 Ammu\u2019s ledger slips',
     mechanism: '📒 Available · Max · Allocation · Need',
-    analogyTitle: 'View as declared ceilings on mother\u2019s identical slips',
+    analogyTitle: 'View as declared ceilings on Ammu\u2019s identical slips',
     mechanismTitle: 'View as the four ledger tables'
   },
   analogy: {
     domain: 'friends',
-    text: 'Mother\u2019s monthly household ledger: cash on hand, what each person declared as their ceiling, what each has drawn, and what each could still ask for — all on identical slips before the counting starts.'
+    text: 'Ammu\u2019s monthly household ledger: cash on hand, what each person declared as their ceiling, what each has drawn, and what each could still ask for — all on identical slips before the counting starts.'
   },
   concept:
     'The Banker decides each loan by pretending to grant it and running the safety sweep on the imaginary ledger. The sweep looks for someone whose remaining need fits the cash on hand, funds them, collects everything back, and repeats — resuming the scan after each winner rather than restarting at the top. If every process finishes, the state is safe and the loan commits; if the sweep stalls, the money stays and the asker waits. A refusal is the algorithm working, not failing.',
   morphReveals:
-    'On mother\u2019s slips every ceiling is written the same size — position is just whose slip it is. On the ledger width stops meaning a slip and starts meaning units: a Need cell is as wide as what the process still claims, so each funded row visibly narrows to nothing and the cash row grows as holdings return.',
+    'On Ammu\u2019s slips every ceiling is written the same size — position is just whose slip it is. On the ledger width stops meaning a slip and starts meaning units: a Need cell is as wide as what the process still claims, so each funded row visibly narrows to nothing and the cash row grows as holdings return.',
   morphMode: 'morph',
   analogyMapping: [
     'Cash on hand ➔ Available / Work',

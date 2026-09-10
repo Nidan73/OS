@@ -258,7 +258,7 @@ export const lesson18: Lesson<DiagramInput, DiagramState> = {
   },
   analogy: {
     domain: 'food',
-    text: 'At family dinner, mother can prevent the serving utensils from freezing in a ring four ways: share a dish, require everyone to take all utensils together, put one down when the next is busy, or always take the lower-numbered utensil first.'
+    text: 'At family dinner, Ammu can prevent the serving utensils from freezing in a ring four ways: share a dish, require everyone to take all utensils together, put one down when the next is busy, or always take the lower-numbered utensil first.'
   },
   concept: 'Operating systems can handle deadlocks four ways: prevention, avoidance, detection and recovery, or ignoring the problem. Prevention makes deadlock impossible by denying at least one necessary condition. Make resources shareable where possible; require a process to request everything before it starts; preempt held resources when another request fails; or impose a total ordering and require requests in increasing order. Each rule prevents the ring, but each has a cost in applicability, utilisation, repeated work, or programmer discipline.',
   morphReveals: 'At dinner, the four cards are concrete rules placed around one table. In the OS view they line up as the four necessary conditions feeding one outcome. The selected rule stays the same card as it moves: its everyday action becomes the exact condition it removes, and the deadlock result changes only when one condition stops holding.',

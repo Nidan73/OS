@@ -242,7 +242,7 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
     "Cooks at Counters ➔ Processor Cores",
     "Several Pans per Cook ➔ Hardware Threads (Hyperthreading)",
     "Simmering Untouched ➔ Memory Stall (Cache Miss)",
-    "Mother Assigning Dishes ➔ OS Thread Scheduler (First Level)",
+    "Ammu Assigning Dishes ➔ OS Thread Scheduler (First Level)",
     "Cook Turning Pans ➔ Core Hardware Thread Switch (Second Level)"
   ],
   input: {
