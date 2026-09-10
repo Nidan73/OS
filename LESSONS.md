@@ -101,8 +101,9 @@ ring, and which car moves out. Playground: draw edges and watch cycle detection 
 including the cycle that is *not* a deadlock because a spare slot exists.
 
 **L18 · Making it impossible** — units 72–75
-Analogy: numbering the chopsticks so one person reaches right instead of left.
-Playground: apply each prevention strategy and watch the ring fail to close.
+Analogy: four rules at family dinner — share the dish, take all utensils together, put one
+down when the next is busy, or always take the lower-numbered utensil first. Playground:
+apply each prevention strategy and watch the ring fail to close.
 
 **L19 · Safe, unsafe, and stuck** — units 76–79
 Analogy: a group treasurer checking whether there is still *some* order in which everyone can
