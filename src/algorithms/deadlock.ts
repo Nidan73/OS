@@ -441,3 +441,103 @@ export function evaluateDetectionCadence(
     sweepDominates: detectionOpsPerHour * costPerOp > blockedProcessMinutes
   };
 }
+
+// ── 8. Recovery — victim selection, rollback and starvation (L22, units 88–89) ──
+
+export interface VictimCandidate {
+  id: string;
+  /** Higher priority costs more to abort (deck slide 42, first criterion). */
+  priority: number;
+  /** Minutes already computed — work thrown away by aborting. */
+  computedMinutes: number;
+  /** Units of resource currently held. */
+  heldUnits: number;
+  /** Units still needed to complete. */
+  neededUnits: number;
+  /** Interactive work costs more to kill than batch (slide 42, last criterion). */
+  interactive: boolean;
+  /** Times this process has already been rolled back. */
+  rollbacks: number;
+}
+
+export interface VictimCost {
+  id: string;
+  total: number;
+  /** Per-criterion contributions, in deck order, so the pick is explainable. */
+  parts: Record<string, number>;
+}
+
+/**
+ * Deck slide 42 lists the abort-ordering criteria and slide 43 adds the one
+ * that matters most: "Starvation — same process may always be picked as
+ * victim, include number of rollback in the cost factor."
+ *
+ * countRollbacks is that final term. With it off the cost of a candidate never
+ * changes, so the cheapest process is cheapest forever and is chosen every
+ * round. With it on, each rollback raises the price of choosing the same
+ * victim again, and the pick rotates. That difference is the lesson, and it is
+ * computed rather than asserted.
+ */
+export function victimCost(c: VictimCandidate, countRollbacks: boolean): VictimCost {
+  const parts: Record<string, number> = {
+    priority: c.priority * 10,
+    computed: c.computedMinutes,
+    held: c.heldUnits * 3,
+    needed: c.neededUnits * 2,
+    interactive: c.interactive ? 25 : 0,
+    rollbacks: countRollbacks ? c.rollbacks * 40 : 0
+  };
+  const total = Object.values(parts).reduce((sum, v) => sum + v, 0);
+  return { id: c.id, total, parts };
+}
+
+/** Cheapest candidate wins; ties break on id so the pick is deterministic. */
+export function selectVictim(
+  candidates: VictimCandidate[],
+  countRollbacks: boolean
+): VictimCost {
+  if (candidates.length === 0) throw new Error('selectVictim: no candidates');
+  return candidates
+    .map((c) => victimCost(c, countRollbacks))
+    .sort((a, b) => a.total - b.total || a.id.localeCompare(b.id))[0];
+}
+
+export interface RecoveryRun {
+  /** Victim chosen in each round, in order. */
+  picks: string[];
+  /** Per-round cost of the chosen victim. */
+  costs: number[];
+  /** Rollback tally per candidate id at the end of the run. */
+  rollbacks: Record<string, number>;
+  /** True when one process absorbed every rollback — slide 43's starvation. */
+  starved: boolean;
+  /** The starved id, when there is one. */
+  starvedId: string | null;
+}
+
+/**
+ * Run victim selection repeatedly, feeding each rollback back into the
+ * candidate it hit. One selection shows the cost; repeating it is the only
+ * way starvation becomes visible, which is why this returns a sequence.
+ */
+export function recoveryRounds(
+  candidates: VictimCandidate[],
+  rounds: number,
+  countRollbacks: boolean
+): RecoveryRun {
+  const live = candidates.map((c) => ({ ...c }));
+  const picks: string[] = [];
+  const costs: number[] = [];
+  for (let r = 0; r < Math.max(1, rounds); r++) {
+    const chosen = selectVictim(live, countRollbacks);
+    picks.push(chosen.id);
+    costs.push(chosen.total);
+    const hit = live.find((c) => c.id === chosen.id);
+    if (hit) hit.rollbacks += 1;
+  }
+  const rollbacks: Record<string, number> = {};
+  for (const c of live) rollbacks[c.id] = c.rollbacks;
+  const distinct = new Set(picks);
+  const starvedId = distinct.size === 1 ? picks[0] : null;
+  return { picks, costs, rollbacks, starved: starvedId !== null && picks.length > 1, starvedId };
+}

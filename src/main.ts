@@ -50,6 +50,7 @@ const LESSONS_META: LessonMeta[] = [
   { id: 19, slug: 'lesson-19', chapterSlug: 'lecture-10', title: 'Safe, unsafe, and stuck', blurb: 'Mother keeps the twelve-note trip fund — grant one note too many and the safe region shrinks to unsafe, yet everyone can still finish.' },
   { id: 20, slug: 'lesson-20', chapterSlug: 'lecture-10', title: "The banker's algorithm", blurb: 'Mother lends to P1, then refuses P4 — the safety sweep runs cell by cell.' },
   { id: 21, slug: 'lesson-21', chapterSlug: 'lecture-10', title: 'Spotting a deadlock', blurb: 'The guard rubs out the spots and keeps who blocks whom — then one more crate tips it.' },
+  { id: 22, slug: 'lesson-22', chapterSlug: 'lecture-10', title: 'Getting out', blurb: 'Move the cheapest car — then watch the same one get moved five nights running.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;
