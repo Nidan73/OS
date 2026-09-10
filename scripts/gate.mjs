@@ -37,6 +37,7 @@ const LESSONS = [
   { slug: 'lesson-16', chapter: 'lecture-10', name: 'Two friends, two chopsticks' },
   { slug: 'lesson-17', chapter: 'lecture-10', name: 'Seeing it as a graph' },
   { slug: 'lesson-18', chapter: 'lecture-10', name: 'Making it impossible' },
+  { slug: 'lesson-19', chapter: 'lecture-10', name: 'Safe, unsafe, and stuck' },
   { slug: 'lesson-20', chapter: 'lecture-10', name: "The banker's algorithm" },
 ];
 
