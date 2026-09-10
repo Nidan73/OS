@@ -158,31 +158,48 @@ function setupLesson07Playground(
     const events = [];
     if (coresCount === 1 && !smtEnabled) {
       events.push(
-        { caption: "T1 dispatched to Core 0. Runs computation cycle.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall (cache miss). Pipeline sits idle waiting on storeroom!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "No alternate hardware thread available. CPU pipeline remains completely idle during stall.", action: "demote" as const, itemId: "T2", toQueue: "ready" },
-        { caption: "Memory returns. T2 dispatched sequentially to Core 0.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" }
+        { caption: "T1 dispatched to Core 0. Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 hits a memory stall (cache miss). Pipeline sits idle on the storeroom!", action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { caption: "No alternate hardware thread: the core stays empty through the whole stall.", action: "demote" as const, itemId: "T2", toQueue: "ready" },
+        { caption: "Memory returns. T1 resumes on Core 0.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
+        { caption: "T2 dispatched sequentially to Core 0.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
+        { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" }
       );
     } else if (coresCount === 1 && smtEnabled) {
       events.push(
-        { caption: "T1 dispatched to Core 0 (Thread 0). Runs computation cycle.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall. Hardware thread switches instantly to T2 on Thread 1.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
-        { caption: "T2 executes while T1 memory stall resolves in background.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "Latency masked: hardware multithreading keeps the core computation units busy.", action: "dispatch" as const, itemId: "T3", coreId: "core0_t0" }
+        { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 hits a memory stall. Hardware switches instantly to T2 on Thread 1.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
+        { caption: "T2 executes while the T1 stall resolves in the background.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" },
+        { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
+        { caption: "T3 dispatched to Core 0 — the core never sat idle.", action: "dispatch" as const, itemId: "T3", coreId: "core0_t0" },
+        { caption: "T3 finishes its slice.", action: "complete" as const, itemId: "T3" }
       );
     } else if (!smtEnabled) {
       events.push(
-        { caption: "T1 dispatched to Core 0; T3 dispatched to Core 1 in parallel.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T3 dispatched to Core 1.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
-        { caption: "T1 hits memory stall. Without hardware threads, Core 0 goes idle.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
-        { caption: "Multicore without SMT still experiences memory stalls when threads wait on RAM.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" }
+        { caption: "T1 dispatched to Core 0; runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T3 dispatched to Core 1 in parallel.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
+        { caption: "T1 hits a memory stall. Without hardware threads, Core 0 goes idle.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { caption: "T1 resumes on Core 0 when memory returns.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
+        { caption: "T3 finishes its slice on Core 1.", action: "complete" as const, itemId: "T3" },
+        { caption: "T2 dispatched to Core 0 — multicore still stalls per thread.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t0" },
+        { caption: "T2 finishes its slice.", action: "complete" as const, itemId: "T2" }
       );
     } else {
       events.push(
-        { caption: "T1 dispatched to Core 0 (Thread 0). Runs computation cycle.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
-        { caption: "T1 hits a memory stall (cache miss). Hardware thread switches instantly to T2.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
+        { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 hits a memory stall (cache miss) and leaves the pipeline.", action: "demote" as const, itemId: "T1", toQueue: "stall" },
+        { caption: "Hardware switches instantly: T2 runs on Thread 1 while T1 waits on RAM.", action: "dispatch" as const, itemId: "T2", coreId: "core0_t1" },
+        { caption: "T2 finishes its slice; the stall resolves underneath it.", action: "complete" as const, itemId: "T2" },
+        { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch" as const, itemId: "T1", coreId: "core0_t0" },
+        { caption: "T1 finishes its slice.", action: "complete" as const, itemId: "T1" },
         { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", action: "dispatch" as const, itemId: "T3", coreId: "core1_t0" },
-        { caption: "Hardware multithreading overlaps memory stall with computation, masking latency.", action: "dispatch" as const, itemId: "T4", coreId: "core1_t1" }
+        { caption: "T3 finishes its slice on Core 1.", action: "complete" as const, itemId: "T3" },
+        { caption: "T4 dispatched to Core 1 (Thread 1) — the stall window stays filled.", action: "dispatch" as const, itemId: "T4", coreId: "core1_t1" },
+        { caption: "T4 finishes. Latency was masked, not removed.", action: "complete" as const, itemId: "T4" }
       );
     }
 
@@ -240,10 +257,16 @@ export const lesson07: Lesson<QueueInput, QueueState> = {
       { id: "T4", name: "Task 4", burst: 12, queueId: "ready" }
     ],
     events: [
-      { caption: "T1 dispatched to Core 0 (Thread 0). Runs computation cycle.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
-      { caption: "T1 hits a memory stall (cache miss). Hardware thread switches instantly to T2.", action: "dispatch", itemId: "T2", coreId: "core0_t1" },
+      { caption: "T1 dispatched to Core 0 (Thread 0). Runs its compute slice.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
+      { caption: "T1 hits a memory stall (cache miss) and leaves the pipeline.", action: "demote", itemId: "T1", toQueue: "stall" },
+      { caption: "Hardware switches instantly: T2 runs on Thread 1 while T1 waits on RAM.", action: "dispatch", itemId: "T2", coreId: "core0_t1" },
+      { caption: "T2 finishes its slice; the stall resolves underneath it.", action: "complete", itemId: "T2" },
+      { caption: "T1 resumes on Thread 0 with its line refilled.", action: "dispatch", itemId: "T1", coreId: "core0_t0" },
+      { caption: "T1 finishes its slice.", action: "complete", itemId: "T1" },
       { caption: "T3 dispatched to Core 1 (Thread 0) in parallel.", action: "dispatch", itemId: "T3", coreId: "core1_t0" },
-      { caption: "Hardware multithreading overlaps memory stall with computation, masking latency.", action: "dispatch", itemId: "T4", coreId: "core1_t1" }
+      { caption: "T3 finishes its slice on Core 1.", action: "complete", itemId: "T3" },
+      { caption: "T4 dispatched to Core 1 (Thread 1) — the stall window stays filled.", action: "dispatch", itemId: "T4", coreId: "core1_t1" },
+      { caption: "T4 finishes. Latency was masked, not removed.", action: "complete", itemId: "T4" }
     ],
     analogy: {
       domain: "food",

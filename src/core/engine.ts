@@ -422,7 +422,12 @@ export abstract class AnimationEngine<I, S> {
     const nextIdx = this.index + 1;
     const currentStep = this.steps[this.index];
     const nextStep = this.steps[nextIdx];
-    const stepDuration = Math.max(0.6, Math.min(1.5, nextStep.t - currentStep.t || 1.0));
+    // SPEC §4A.5 pace (0.6–1.2 s per beat, learner-controlled anyway).
+    // Density rises are absorbed by the tween itself — every transition is now
+    // motion, not a hold-then-cut — so no per-step scaling is applied: a dense
+    // timeline simply plays longer, which is what its events earn.
+    const rawGap = nextStep.t - currentStep.t || 1.0;
+    const stepDuration = Math.max(0.6, Math.min(1.2, rawGap));
 
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {

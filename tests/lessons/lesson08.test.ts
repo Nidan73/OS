@@ -86,31 +86,35 @@ describe('Lesson 8: Multiprocessor Load Balancing & Processor Affinity (§3C)', 
 
   test('push migration scenario correctly balances workload to core 1', () => {
     const steps = engine.getSteps();
-    expect(steps.length).toBe(5); // Initial step + 4 events
+    expect(steps.length).toBe(8); // Initial step + 7 dispatch/migrate/complete beats
 
     // Initial state: all on Core 0 queue
     expect(steps[0].state.queues.q_core0).toEqual(['P1', 'P2', 'P3']);
     expect(steps[0].state.cores.core0).toBeNull();
     expect(steps[0].state.cores.core1).toBeNull();
 
-    // Step 2: Push migration moves P3 to Core 1 queue
-    const stepPush = steps[2];
+    // P1 runs and completes on Core 0 before the balancer acts
+    expect(steps[1].state.cores.core0).toBe('P1');
+    expect(steps[2].state.completed).toContain('P1');
+
+    // Push migration moves P3 to Core 1 queue
+    const stepPush = steps[3];
     expect(stepPush.state.queues.q_core1).toContain('P3');
 
-    // Step 3: Core 1 dispatches P3
-    const stepDispatchCore1 = steps[3];
+    // Core 1 dispatches P3
+    const stepDispatchCore1 = steps[4];
     expect(stepDispatchCore1.state.cores.core1).toBe('P3');
   });
 
   test('playground scenarios reconfigure steps properly', () => {
     // Pull scenario
     engine.reconfigure(SCENARIO_EVENTS.pull);
-    expect(engine.getSteps().length).toBe(5);
-    expect(engine.getSteps()[2].caption).toContain('Pull migration');
+    expect(engine.getSteps().length).toBe(8);
+    expect(engine.getSteps()[3].caption).toContain('steals');
 
     // Affinity scenario
     engine.reconfigure(SCENARIO_EVENTS.affinity);
-    expect(engine.getSteps().length).toBe(5);
-    expect(engine.getSteps()[2].caption).toContain('Hard affinity');
+    expect(engine.getSteps().length).toBe(7);
+    expect(engine.getSteps()[3].caption).toContain('forbidden');
   });
 });

@@ -43,7 +43,8 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
   it('mapped steps carry the simulation 1:1 — count, holders, seated queue', () => {
     const run = semaphoreRun(DEFAULT_SEM);
     const steps = semaphoreSteps(DEFAULT_SEM);
-    expect(steps.length).toBe(run.steps.length + 1);
+    // one step per op plus the computed room verdict at the end
+    expect(steps.length).toBe(run.steps.length + 2);
     run.steps.forEach((s, i) => {
       const st = steps[i + 1].state;
       expect(st.value).toBe(s.value);
@@ -51,6 +52,12 @@ describe('Lesson 15 · every displayed outcome is computed', () => {
       expect(st.waiting).toStrictEqual(s.waitingQueue);
       expect(steps[i + 1].caption.length).toBeLessThanOrEqual(120);
     });
+    const verdict = steps[steps.length - 1];
+    const last = run.steps[run.steps.length - 1];
+    expect(verdict.state.value).toBe(run.finalValue);
+    expect(verdict.state.holders).toStrictEqual(last.holders);
+    expect(verdict.state.waiting).toStrictEqual(last.waitingQueue);
+    expect(verdict.caption.length).toBeLessThanOrEqual(120);
   });
 
   it('the intact run wakes in order; the dock slider reaches the binary lock', () => {

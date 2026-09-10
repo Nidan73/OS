@@ -44,7 +44,7 @@ describe('Lesson 09 · every displayed number is computed', () => {
         p.interruptLatency, p.conflictPhase, p.dispatchPhase, p.executionTime, p.deadline
       );
       const reveals = realtimeReveals(p);
-      expect(reveals.length).toBe(5);
+      expect(reveals.length).toBe(9);
       for (const r of reveals) {
         expect(r.metrics?.totalResponseTime).toBe(b.totalResponseTime);
         expect(r.metrics?.slackTime).toBe(b.slackTime);
@@ -214,7 +214,7 @@ describe('Lesson 09 · lesson wiring', () => {
     expect(lesson09Input.params).toStrictEqual(DEFAULT_PARAMS);
     expect(realtimeBreakdown(lesson09Input.params).met).toBe(true);
     expect(lesson09.input.nodes.length).toBe(6);
-    expect(lesson09.input.reveals.length).toBe(5);
+    expect(lesson09.input.reveals.length).toBe(9);
     expect(new Set(lesson09.input.nodes.map((n) => n.id)).size).toBe(6);
     expect(realtimeLessonInput(DEFAULT_PARAMS).analogy?.domain).toBe('travel');
   });

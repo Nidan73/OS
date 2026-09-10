@@ -30,9 +30,12 @@ describe('Lesson 14 · every displayed number is computed', () => {
     const m = evaluateLockCost(
       DEFAULT_LOCK.csDurationUs, DEFAULT_LOCK.contextSwitchCostUs, DEFAULT_LOCK.cpuFreqGHz
     );
-    expect(steps.length).toBe(5);
+    expect(steps.length).toBe(8);
     expect(steps[1].caption).toContain(`${m.csDurationUs}µs`);
-    const verdict = steps[3].caption;
+    // one step per arrival: T2 queues alone before T3 joins
+    expect(steps[2].state.waiting).toStrictEqual(['T2']);
+    expect(steps[3].state.waiting).toStrictEqual(['T2', 'T3']);
+    const verdict = steps[6].caption;
     expect(verdict).toContain(`${m.spinWastedCycles}`);
     expect(verdict).toContain(`${m.contextSwitchWastedCycles}`);
     for (const s of steps) expect(s.caption.length).toBeLessThanOrEqual(120);
@@ -69,10 +72,10 @@ describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('mechanism encodes the price: the stay moves the verdict, the queue does not', () => {
     const short = lockSteps({ ...DEFAULT_LOCK, csDurationUs: 2 });
     const long = lockSteps({ ...DEFAULT_LOCK, csDurationUs: 30 });
-    expect(short[3].state.holders).toStrictEqual(long[3].state.holders);
-    expect(short[3].caption).not.toBe(long[3].caption);
-    expect(short[3].caption).toMatch(/Short stay/);
-    expect(long[3].caption).toMatch(/Long stay/);
+    expect(short[6].state.holders).toStrictEqual(long[6].state.holders);
+    expect(short[6].caption).not.toBe(long[6].caption);
+    expect(short[6].caption).toMatch(/Short stay/);
+    expect(long[6].caption).toMatch(/Long stay/);
   });
 
   it('handoff, not hang-back: the key goes to the first waiter', () => {
@@ -85,9 +88,9 @@ describe('Lesson 14 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   it('spin and block price the same stay differently', () => {
     const spin = lockSteps({ ...DEFAULT_LOCK, mode: 'spin' });
     const block = lockSteps({ ...DEFAULT_LOCK, mode: 'block' });
-    expect(spin[2].caption).not.toBe(block[2].caption);
-    expect(spin[2].caption).toMatch(/jiggle/i);
-    expect(block[2].caption).toMatch(/sit down/i);
+    expect(spin[4].caption).not.toBe(block[4].caption);
+    expect(spin[4].caption).toMatch(/jiggle/i);
+    expect(block[4].caption).toMatch(/sit/i);
   });
 });
 

@@ -71,7 +71,8 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
     for (const c of COMBOS) {
       const trace = simulateAtomicSteps(c.mechanism, c.atomic);
       const steps = atomicSteps(c);
-      expect(steps.length).toBe(trace.steps.length);
+      // one step per trace act, then the five computed tally beats (unit 55)
+      expect(steps.length).toBe(trace.steps.length + 5);
       trace.steps.forEach((s, i) => {
         const st = steps[i].state;
         expect(st.value).toBe(s.lock === 0 ? 1 : 0);
@@ -81,14 +82,33 @@ describe('Lesson 13 · every displayed outcome is computed', () => {
         expect(steps[i].caption.length).toBeLessThanOrEqual(120);
         expect(steps[i].t).toBe(i);
       });
+      for (const tail of steps.slice(trace.steps.length)) {
+        expect(tail.caption.length).toBeLessThanOrEqual(120);
+      }
+    }
+  });
+
+  it('the tally beats carry simulateAtomicIncrement 1:1 — plain loses, CAS keeps', () => {
+    const inc = simulateAtomicIncrement();
+    for (const c of COMBOS) {
+      const trace = simulateAtomicSteps(c.mechanism, c.atomic);
+      const steps = atomicSteps(c);
+      const tally = steps.slice(trace.steps.length);
+      expect(tally.length).toBe(5);
+      expect(tally[0].caption).toContain(`${inc.expected}`);
+      expect(tally[2].caption).toContain(`${inc.finalPlain}`);
+      expect(tally[4].caption).toContain(`${inc.finalCAS}`);
+      expect(tally[4].state.holders.length).toBe(2);
     }
   });
 
   it('mapped holders disagree with the meter exactly when corruption does', () => {
     for (const c of COMBOS) {
       const steps = atomicSteps(c);
-      const corrupt = steps.some((s) => s.state.holders.length > 1);
-      expect(corrupt).toBe(simulateAtomicSteps(c.mechanism, c.atomic).bothEnteredCS);
+      const trace = simulateAtomicSteps(c.mechanism, c.atomic);
+      const raceBeats = steps.slice(0, trace.steps.length);
+      const corrupt = raceBeats.some((s) => s.state.holders.length > 1);
+      expect(corrupt).toBe(trace.bothEnteredCS);
     }
   });
 });
@@ -104,8 +124,10 @@ describe('Lesson 13 · the morph is geometric, not cosmetic (§3C.2a)', () => {
   });
 
   it('mechanism encodes the quantity: holders change, width carries the window', () => {
-    const broken = atomicSteps({ mechanism: 'tas', atomic: false });
-    const fused = atomicSteps({ mechanism: 'tas', atomic: true });
+    const brokenTrace = simulateAtomicSteps('tas', false);
+    const fusedTrace = simulateAtomicSteps('tas', true);
+    const broken = atomicSteps({ mechanism: 'tas', atomic: false }).slice(0, brokenTrace.steps.length);
+    const fused = atomicSteps({ mechanism: 'tas', atomic: true }).slice(0, fusedTrace.steps.length);
     const brokenHolders = broken.map((s) => s.state.holders.length);
     const fusedHolders = fused.map((s) => s.state.holders.length);
     expect(Math.max(...brokenHolders)).toBe(2);

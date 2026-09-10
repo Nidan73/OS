@@ -5,22 +5,30 @@ export type MigrationScenario = 'push' | 'pull' | 'affinity';
 
 export const SCENARIO_EVENTS: Record<MigrationScenario, QueueEvent[]> = {
   push: [
-    { caption: 'Core 0 has 3 processes in its local runqueue; Core 1 is idle.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'Push migration: OS load balancer detects overload and pushes P3 to Core 1.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
-    { caption: 'Core 1 immediately pulls P3 to execute. Trade-off: Core 1 is busy, but P3 suffers cold cache penalty.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-    { caption: 'Processor affinity preserved for P2 on Core 0 with warm cache.', action: 'dispatch', itemId: 'P2', coreId: 'core0' }
+    { caption: 'Core 0 holds P1, P2, P3 in its runqueue; Core 1 is idle.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
+    { caption: 'Balancer detects the overload and pushes P3 to Core 1.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
+    { caption: 'Core 1 dispatches P3 — busy at last, but its cache is cold.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
+    { caption: 'P3 finishes on Core 1 after paying the reload cost.', action: 'complete', itemId: 'P3' },
+    { caption: 'Core 0 dispatches P2, affinity intact, cache still warm.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'P2 finishes on Core 0. Balanced — one cold reload was the price.', action: 'complete', itemId: 'P2' }
   ],
   pull: [
-    { caption: 'Core 0 has 3 processes in its local runqueue; Core 1 has finished all work and is idle.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'Pull migration: Idle Core 1 executes work-stealing and pulls P3 from Core 0 runqueue.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
-    { caption: 'Core 1 immediately executes stolen process P3, paying cold-cache reload cost.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-    { caption: 'Core 0 dispatches P2 with warm cache hits; both processor cores now fully utilized.', action: 'dispatch', itemId: 'P2', coreId: 'core0' }
+    { caption: 'Core 0 holds P1, P2, P3; Core 1 drained its queue and idles.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'P1 runs its slice on Core 0 with a warm cache.', action: 'complete', itemId: 'P1' },
+    { caption: 'Idle Core 1 steals: it pulls P3 from Core 0 runqueue.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
+    { caption: 'Core 1 dispatches the stolen P3, paying cold-cache reload.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
+    { caption: 'P3 finishes on Core 1.', action: 'complete', itemId: 'P3' },
+    { caption: 'Core 0 dispatches P2 with warm cache hits; both cores were used.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'P2 finishes on Core 0. Stealing beat idling — one reload was the price.', action: 'complete', itemId: 'P2' }
   ],
   affinity: [
-    { caption: 'Core 0 has 3 processes pinned by hard affinity; Core 1 remains completely idle.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'Hard affinity enforced: OS load balancer is forbidden from migrating P3 despite core imbalance.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-    { caption: 'P1 completes on Core 0; Core 0 dispatches P2 with 100% warm cache hits while Core 1 sits idle.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
-    { caption: 'Core 0 dispatches P3 with warm cache. Trade-off: Zero cold-cache misses, but severe core starvation.', action: 'dispatch', itemId: 'P3', coreId: 'core0' }
+    { caption: 'P1, P2, P3 pinned to Core 0 by hard affinity; Core 1 idles.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
+    { caption: 'P1 finishes on Core 0 — cache warm throughout.', action: 'complete', itemId: 'P1' },
+    { caption: 'Balancer is forbidden from migrating P3 despite the imbalance.', action: 'dispatch', itemId: 'P2', coreId: 'core0' },
+    { caption: 'P2 finishes on Core 0 with full warm-cache hits.', action: 'complete', itemId: 'P2' },
+    { caption: 'Core 0 dispatches P3 — still pinned, still warm.', action: 'dispatch', itemId: 'P3', coreId: 'core0' },
+    { caption: 'P3 finishes on Core 0. Zero reloads — and Core 1 never ran.', action: 'complete', itemId: 'P3' }
   ]
 };
 
@@ -175,12 +183,7 @@ export const lesson08: Lesson<QueueInput, QueueState> = {
       { id: 'P2', name: 'Regular Diner', burst: 15, queueId: 'q_core0', affinity: 'core0' },
       { id: 'P3', name: 'Regular Diner', burst: 15, queueId: 'q_core0', affinity: 'core0' }
     ],
-    events: [
-      { caption: 'Core 0 has 3 processes in its local runqueue; Core 1 is idle.', action: 'dispatch', itemId: 'P1', coreId: 'core0' },
-      { caption: 'Push migration: OS load balancer detects overload and pushes P3 to Core 1.', action: 'migrate', itemId: 'P3', toQueue: 'q_core1' },
-      { caption: 'Core 1 immediately pulls P3 to execute. Trade-off: Core 1 is busy, but P3 suffers cold cache penalty.', action: 'dispatch', itemId: 'P3', coreId: 'core1' },
-      { caption: 'Processor affinity preserved for P2 on Core 0 with warm cache.', action: 'dispatch', itemId: 'P2', coreId: 'core0' }
-    ],
+    events: SCENARIO_EVENTS.push,
     analogy: {
       domain: 'travel',
       serviceLabel: 'Agent Desk',

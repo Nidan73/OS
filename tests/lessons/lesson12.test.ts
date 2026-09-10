@@ -48,14 +48,19 @@ describe('Lesson 12 · steps are a pure mapping of the simulation', () => {
     for (const reordered of [false, true]) {
       const result = simulateReorderingOutput(reordered);
       const steps = publicationSteps({ reordered });
-      expect(steps.length).toBe(result.steps.length);
+      // open framing + one step per print-test op + computed verdict
+      expect(steps.length).toBe(result.steps.length + 2);
+      expect(steps[0].t).toBe(0);
       result.steps.forEach((s, i) => {
-        expect(steps[i].state.action).toBe(s.action);
-        expect(steps[i].state.x).toBe(s.x);
-        expect(steps[i].state.printed).toBe(s.printed);
-        expect(steps[i].caption).toBe(s.caption);
-        expect(steps[i].t).toBe(i + 1);
+        expect(steps[i + 1].state.action).toBe(s.action);
+        expect(steps[i + 1].state.x).toBe(s.x);
+        expect(steps[i + 1].state.printed).toBe(s.printed);
+        expect(steps[i + 1].caption).toBe(s.caption);
+        expect(steps[i + 1].t).toBe(i + 1);
       });
+      const verdict = steps[steps.length - 1];
+      expect(verdict.caption).toContain(`${result.output}`);
+      expect(verdict.state.printed).toBe(result.output);
     }
   });
 

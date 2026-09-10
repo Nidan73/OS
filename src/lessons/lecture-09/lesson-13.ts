@@ -78,7 +78,8 @@ function casVerdict(): ReturnType<typeof simulateCompareAndSwap> {
  */
 export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
   const trace = atomicTrace(p);
-  return trace.steps.map((s) => {
+  const inc = simulateAtomicIncrement();
+  const mapped = trace.steps.map((s) => {
     const action = s.action === 'free' ? 'acquire'
       : s.action === 'release' ? 'release'
       : s.action === 'verdict' ? 'fail'
@@ -101,6 +102,64 @@ export function atomicSteps(p: AtomicParams): Step<CounterState>[] {
       }
     };
   });
+  // Unit 55, same lesson: the tally counter application code actually uses.
+  // Each beat is computed by simulateAtomicIncrement — the plain snapshot, the
+  // lost update, the refused swap, the retry that lands — not a summary.
+  const base = mapped.length;
+  const tallyHolders = trace.bothEnteredCS ? ['T1', 'T2'] : ['T1'];
+  mapped.push(
+    {
+      t: base,
+      caption: `The tally starts at ${inc.start}: two threads each add one, expecting ${inc.expected}.`,
+      highlight: ['T1', 'T2'],
+      state: {
+        stepIndex: base, value: 1, capacity: 1, activeActorId: 'T1',
+        holders: [], waiting: [], action: 'acquire',
+        caption: `The tally starts at ${inc.start}.`
+      }
+    },
+    {
+      t: base + 1,
+      caption: `Without atomics both threads snapshot ${inc.start} — one update is already doomed.`,
+      highlight: ['T1', 'T2'],
+      state: {
+        stepIndex: base + 1, value: 0, capacity: 1, activeActorId: 'T2',
+        holders: [], waiting: ['T1', 'T2'], action: 'spin',
+        caption: 'Both threads snapshot the same stale value.'
+      }
+    },
+    {
+      t: base + 2,
+      caption: `The plain tally lands at ${inc.finalPlain}, not ${inc.expected} — ${inc.lostPlain} update lost.`,
+      highlight: ['T1'],
+      state: {
+        stepIndex: base + 2, value: 0, capacity: 1, activeActorId: 'T1',
+        holders: [...tallyHolders], waiting: [], action: 'fail',
+        caption: `The plain tally lands at ${inc.finalPlain} — one update lost.`
+      }
+    },
+    {
+      t: base + 3,
+      caption: `Through compare_and_swap the second swap refuses and retries ${inc.retriesCAS}x — nothing is lost.`,
+      highlight: ['T2'],
+      state: {
+        stepIndex: base + 3, value: 0, capacity: 1, activeActorId: 'T2',
+        holders: ['T1'], waiting: ['T2'], action: 'spin',
+        caption: 'The CAS swap refuses on the stale expectation.'
+      }
+    },
+    {
+      t: base + 4,
+      caption: `The retry lands: the CAS tally ends at ${inc.finalCAS}, every update kept.`,
+      highlight: ['T2'],
+      state: {
+        stepIndex: base + 4, value: 0, capacity: 1, activeActorId: 'T2',
+        holders: ['T1', 'T2'], waiting: [], action: 'acquire',
+        caption: `The CAS tally ends at ${inc.finalCAS}.`
+      }
+    }
+  );
+  return mapped;
 }
 
 export interface AtomicLessonInput extends CounterInput {

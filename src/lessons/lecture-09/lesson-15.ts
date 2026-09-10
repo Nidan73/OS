@@ -183,6 +183,31 @@ export function semaphoreSteps(p: SemaphoreParams): Step<CounterState>[] {
       }
     });
   });
+  // The room is read once at the end: the computed verdict — balanced, seated
+  // waiters still queued, miscounted, or deadlocked — is its own discrete event.
+  const last = run.steps[run.steps.length - 1];
+  const verdict = run.deadlocked
+    ? 'Nobody wakes — the forgotten signal deadlocks the room.'
+    : last.waitingQueue.length > 0
+      ? `${last.waitingQueue.length} still seated — below zero counts waiters, not ports.`
+      : p.mistake !== 'none'
+        ? 'The board disagrees with the room — the calls were misused.'
+        : `Dock balanced — count ${run.finalValue}, every traveller served.`;
+  steps.push({
+    t: run.steps.length + 1,
+    caption: verdict.slice(0, 120),
+    highlight: last ? [...last.holders, ...last.waitingQueue] : [],
+    state: {
+      stepIndex: run.steps.length + 1,
+      value: run.finalValue,
+      capacity: p.initial,
+      activeActorId: null,
+      holders: last ? [...last.holders] : [],
+      waiting: last ? [...last.waitingQueue] : [],
+      action: run.deadlocked ? 'fail' : 'release',
+      caption: verdict
+    }
+  });
   return steps;
 }
 

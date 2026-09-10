@@ -71,12 +71,7 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
     this.input.items.forEach(it => {
       it.queueId = 'Q0';
     });
-    this.input.events = [
-      { caption: 'P1 enters Q0 (q=8). It runs for 8ms but does not finish, so it demotes to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
-      { caption: 'P2 enters Q0 (q=8). It finishes in 8ms and exits.', action: 'complete', itemId: 'P2' },
-      { caption: 'P3 enters Q0 (q=8). It uses 8ms, still needs 7ms, demoting to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
-      { caption: 'P1 runs in Q1 (q=16), uses 16ms, still needs 6ms, demoting to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' }
-    ];
+    this.input.events = [...lesson06Events];
     this.steps = this.buildSteps(this.input);
     this.seek(0);
     this.updateTransportUI();
@@ -88,11 +83,21 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
     const q1 = 16;
     const events: QueueEvent[] = [];
 
-    // Simulate MLFQ progression based on current initial queues and thresholds
+    // Simulate MLFQ progression based on current initial queues and thresholds.
+    // Every quantum run is two beats — the dispatch onto the core, then what
+    // the run decided (complete or demote) — so the timeline stays one step
+    // per discrete event at every threshold.
+    const dispatch = (it: { id: string }, from: string, q: number): QueueEvent => ({
+      caption: `${it.id} dispatched on CPU 0 from ${from} (q=${q}ms).`,
+      action: 'dispatch',
+      itemId: it.id,
+      coreId: 'cpu0'
+    });
     const items = this.input.items;
     for (const it of items) {
       const b = it.burst ?? 10;
       if (it.queueId === 'Q0') {
+        events.push(dispatch(it, 'Q0', q0));
         if (b <= q0) {
           events.push({
             caption: `${it.id} finishes in Q0 within ${q0}ms quantum and exits.`,
@@ -101,43 +106,58 @@ export class MLFQQueueEngine extends QueueEngine implements PlaygroundCapable {
           });
         } else {
           events.push({
-            caption: `${it.id} enters Q0 (q=${q0}). It runs for ${q0}ms, needing ${b - q0}ms more, demoting to Q1.`,
+            caption: `${it.id} runs ${q0}ms, needing ${b - q0}ms more — demoted to Q1.`,
             action: 'demote',
             itemId: it.id,
             toQueue: 'Q1'
           });
           const rem1 = b - q0;
+          events.push(dispatch(it, 'Q1', q1));
           if (rem1 <= q1) {
             events.push({
-              caption: `${it.id} runs in Q1 (q=${q1}ms) for ${rem1}ms and completes.`,
+              caption: `${it.id} runs in Q1 for ${rem1}ms and completes.`,
               action: 'complete',
               itemId: it.id
             });
           } else {
             events.push({
-              caption: `${it.id} runs in Q1 (q=${q1}), uses ${q1}ms, still needing ${rem1 - q1}ms, demoting to Q2.`,
+              caption: `${it.id} runs ${q1}ms in Q1, still needing ${rem1 - q1}ms — demoted to Q2.`,
               action: 'demote',
               itemId: it.id,
               toQueue: 'Q2'
             });
+            events.push(dispatch(it, 'Q2', q1));
+            events.push({
+              caption: `${it.id} runs in Q2 (FCFS) to completion.`,
+              action: 'complete',
+              itemId: it.id
+            });
           }
         }
       } else if (it.queueId === 'Q1') {
+        events.push(dispatch(it, 'Q1', q1));
         if (b <= q1) {
           events.push({
-            caption: `${it.id} runs in Q1 (q=${q1}ms) for ${b}ms and completes.`,
+            caption: `${it.id} runs in Q1 for ${b}ms and completes.`,
             action: 'complete',
             itemId: it.id
           });
         } else {
           events.push({
-            caption: `${it.id} runs in Q1 (q=${q1}ms), exceeds quantum, demoting to Q2.`,
+            caption: `${it.id} exceeds the Q1 quantum — demoted to Q2.`,
             action: 'demote',
             itemId: it.id,
             toQueue: 'Q2'
           });
+          events.push(dispatch(it, 'Q2', q1));
+          events.push({
+            caption: `${it.id} runs in Q2 (FCFS) to completion.`,
+            action: 'complete',
+            itemId: it.id
+          });
         }
       } else {
+        events.push(dispatch(it, 'Q2', q1));
         events.push({
           caption: `${it.id} runs in Q2 (FCFS) to completion.`,
           action: 'complete',
@@ -392,6 +412,21 @@ function buttonsHas(list: NodeListOf<Element>, index: number): boolean {
 
 // Register MLFQQueueEngine for engine id 'queue'
 
+export const lesson06Events: QueueEvent[] = [
+  { caption: 'P1 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
+  { caption: 'P1 outlives the 8ms slice with 22ms left — demoted to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
+  { caption: 'P2 dispatched on CPU 0 from Q0 (q=8). Short order, runs to the end of its burst.', action: 'dispatch', itemId: 'P2', coreId: 'cpu0' },
+  { caption: 'P2 finishes inside Q0 in 8ms and exits — no demotion.', action: 'complete', itemId: 'P2' },
+  { caption: 'P3 dispatched on CPU 0 from Q0 (q=8). It runs its first quantum.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
+  { caption: 'P3 still needs 7ms after 8ms — demoted to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
+  { caption: 'P1 dispatched again, now from Q1 (q=16). It runs its second quantum.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
+  { caption: 'P1 still needs 6ms after 16ms — demoted to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' },
+  { caption: 'P3 dispatched from Q1 (q=16). Its 7ms remainder fits — runs to completion.', action: 'dispatch', itemId: 'P3', coreId: 'cpu0' },
+  { caption: 'P3 finishes in Q1 and exits.', action: 'complete', itemId: 'P3' },
+  { caption: 'P1 dispatched from Q2 (FCFS). The long batch runs to completion.', action: 'dispatch', itemId: 'P1', coreId: 'cpu0' },
+  { caption: 'P1 finishes in Q2 and exits. Every job landed where its burst earned.', action: 'complete', itemId: 'P1' }
+];
+
 export const lesson06Input: QueueInput = {
   queues: [
     { id: 'Q0', label: 'Q0 (RR q=8ms)', quantum: 8 },
@@ -404,12 +439,7 @@ export const lesson06Input: QueueInput = {
     { id: 'P2', name: 'Order 2', burst: 8, queueId: 'Q0' },
     { id: 'P3', name: 'Order 3', burst: 15, queueId: 'Q0' }
   ],
-  events: [
-    { caption: 'P1 enters Q0 (q=8). It runs for 8ms but does not finish, so it demotes to Q1.', action: 'demote', itemId: 'P1', toQueue: 'Q1' },
-    { caption: 'P2 enters Q0 (q=8). It finishes in 8ms and exits.', action: 'complete', itemId: 'P2' },
-    { caption: 'P3 enters Q0 (q=8). It uses 8ms, still needs 7ms, demoting to Q1.', action: 'demote', itemId: 'P3', toQueue: 'Q1' },
-    { caption: 'P1 runs in Q1 (q=16), uses 16ms, still needs 6ms, demoting to Q2.', action: 'demote', itemId: 'P1', toQueue: 'Q2' }
-  ],
+  events: lesson06Events,
   analogy: {
     domain: 'travel',
     serviceLabel: 'Check-in Desk',

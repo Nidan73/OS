@@ -83,10 +83,13 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
   const how = waiting === 'spin'
     ? 'jiggling the handle'
     : 'seated, ticket in hand';
+  const arriveCaption = waiting === 'spin'
+    ? 'jiggles the handle — each burned cycle prices the wait.'
+    : 'sits down, ticket in hand — the wait prices at one wakeup.';
   return [
     {
       t: 0,
-      caption: 'One key, one room. The holder steps in; two waiters gather at the door.',
+      caption: 'One key, one room. The holder steps in; the door queue is empty.',
       highlight: [],
       state: {
         stepIndex: 0, value: 1, capacity: 1, activeActorId: null,
@@ -96,7 +99,7 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 1,
-      caption: `The holder takes the key for ${m.csDurationUs}µs. The waiters queue ${how}.`,
+      caption: `The holder takes the key for ${m.csDurationUs}µs.`,
       highlight: ['T1'],
       state: {
         stepIndex: 1, value: 0, capacity: 1, activeActorId: 'T1',
@@ -106,34 +109,64 @@ export function lockSteps(p: LockParams): Step<CounterState>[] {
     },
     {
       t: 2,
-      caption: waiting === 'spin'
-        ? `Two waiters jiggle the handle — each burned cycle prices the wait at ${price}.`
-        : `Two waiters sit down instead — the wait prices at one wakeup, ${price} cycles.`,
-      highlight: ['T2', 'T3'],
+      caption: `The first waiter arrives and ${arriveCaption}`,
+      highlight: ['T2'],
       state: {
         stepIndex: 2, value: 0, capacity: 1, activeActorId: 'T2',
+        holders: ['T1'], waiting: ['T2'], action: 'spin',
+        caption: 'The first waiter queues at the door.'
+      }
+    },
+    {
+      t: 3,
+      caption: `The second waiter queues ${how} behind the first.`,
+      highlight: ['T3'],
+      state: {
+        stepIndex: 3, value: 0, capacity: 1, activeActorId: 'T3',
         holders: ['T1'], waiting: ['T2', 'T3'], action: 'spin',
         caption: 'Two waiters queue at the door.'
       }
     },
     {
-      t: 3,
-      caption: m.preferSpinlock
-        ? `Short stay: spinning wastes ${m.spinWastedCycles} cycles, less than a ${m.contextSwitchWastedCycles}-cycle wakeup.`
-        : `Long stay: spinning would waste ${m.spinWastedCycles} cycles — sitting down costs ${m.contextSwitchWastedCycles}.`,
+      t: 4,
+      caption: waiting === 'spin'
+        ? `Both waiters jiggle — the wait prices at ${price} burned cycles.`
+        : `Both waiters sit — the wait prices at one ${price}-cycle wakeup.`,
+      highlight: ['T2', 'T3'],
+      state: {
+        stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T2',
+        holders: ['T1'], waiting: ['T2', 'T3'], action: 'spin',
+        caption: 'The queue waits out the stay.'
+      }
+    },
+    {
+      t: 5,
+      caption: 'The holder returns the key after its stay.',
       highlight: ['T1'],
       state: {
-        stepIndex: 3, value: 1, capacity: 1, activeActorId: 'T1',
+        stepIndex: 5, value: 1, capacity: 1, activeActorId: 'T1',
         holders: [], waiting: ['T2', 'T3'], action: 'release',
         caption: 'The holder returns the key.'
       }
     },
     {
-      t: 4,
+      t: 6,
+      caption: m.preferSpinlock
+        ? `Short stay: spinning wastes ${m.spinWastedCycles} cycles, less than a ${m.contextSwitchWastedCycles}-cycle wakeup.`
+        : `Long stay: spinning would waste ${m.spinWastedCycles} cycles — sitting down costs ${m.contextSwitchWastedCycles}.`,
+      highlight: ['T1'],
+      state: {
+        stepIndex: 6, value: 1, capacity: 1, activeActorId: 'T1',
+        holders: [], waiting: ['T2', 'T3'], action: 'release',
+        caption: 'The stay is priced both ways.'
+      }
+    },
+    {
+      t: 7,
       caption: 'The key goes to the first waiter in line — nobody is skipped.',
       highlight: ['T2'],
       state: {
-        stepIndex: 4, value: 0, capacity: 1, activeActorId: 'T2',
+        stepIndex: 7, value: 0, capacity: 1, activeActorId: 'T2',
         holders: ['T2'], waiting: ['T3'], action: 'acquire',
         caption: 'Handoff to the first waiter.'
       }

@@ -242,14 +242,35 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       metrics
     },
     {
-      caption: `The siren sounds. Noticing it and saving state already eats ${b.interruptLatency}ms of the budget.`,
+      caption: `The siren sounds — the interrupt arrives and the clock starts.`,
       highlightNodeIds: ['alarm'],
       activeNodeIds: ['alarm'],
       badgeText: `Alarm ${b.interruptLatency}ms`,
       metrics
     },
     {
-      caption: `The aisle clears in ${b.conflictPhase}ms, then the crew swaps in ${b.dispatchPhase}ms — reaching the task costs ${b.totalDispatchLatency}ms.`,
+      caption: `Noticing it and saving state already eats ${b.interruptLatency}ms of the budget.`,
+      highlightNodeIds: ['alarm'],
+      activeNodeIds: ['alarm'],
+      badgeText: `Alarm ${b.interruptLatency}ms`,
+      metrics
+    },
+    {
+      caption: `The aisle crowds the crew: clearing preemption takes ${b.conflictPhase}ms.`,
+      highlightNodeIds: ['aisle'],
+      activeNodeIds: ['alarm', 'aisle'],
+      badgeText: `Aisle ${b.conflictPhase}ms`,
+      metrics
+    },
+    {
+      caption: `The relief crew swaps in over ${b.dispatchPhase}ms — the context switch itself.`,
+      highlightNodeIds: ['switch'],
+      activeNodeIds: ['alarm', 'aisle', 'switch'],
+      badgeText: `Swap ${b.dispatchPhase}ms`,
+      metrics
+    },
+    {
+      caption: `Reaching the task costs ${b.totalDispatchLatency}ms before it even starts.`,
       highlightNodeIds: ['aisle', 'switch'],
       activeNodeIds: ['alarm', 'aisle', 'switch'],
       badgeText: `Dispatch ${b.totalDispatchLatency}ms`,
@@ -260,6 +281,13 @@ export function realtimeReveals(p: LatencyParams): DiagramReveal[] {
       highlightNodeIds: ['run'],
       activeNodeIds: ['alarm', 'aisle', 'switch', 'run'],
       badgeText: `Run ${b.executionTime}ms`,
+      metrics
+    },
+    {
+      caption: `Stacked end to end, the response already spans ${b.totalResponseTime}ms.`,
+      highlightNodeIds: ['alarm', 'aisle', 'switch', 'run'],
+      activeNodeIds: ['alarm', 'aisle', 'switch', 'run', 'slack', 'gate'],
+      badgeText: `Total ${b.totalResponseTime}ms`,
       metrics
     },
     {

@@ -88,12 +88,32 @@ export interface PublicationState extends PublicationStep {
  */
 export function publicationSteps(input: PetersonInput): Step<PublicationState>[] {
   const bothInside = simulatePeterson(input.reordered).mutualExclusionViolated;
-  return simulateReorderingOutput(input.reordered).steps.map(s => ({
-    t: s.step,
-    caption: s.caption,
-    highlight: [s.actorId],
-    state: { ...s, bothInside }
-  }));
+  const pub = simulateReorderingOutput(input.reordered);
+  const open: Step<PublicationState> = {
+    t: 0,
+    caption: 'Two friends share one doorway: one packs while announcing, the other waits to print.',
+    highlight: ['T1', 'T2'],
+    state: { ...pub.steps[0], step: 0, printed: null, caption: 'The room before the test.' , bothInside }
+  };
+  const verdictText = pub.flipped
+    ? `Printed ${pub.output}, expected ${pub.expectedOutput} — the announcement overtook the act.`
+    : `Printed ${pub.output} as announced — the fact landed before the flag.`;
+  const verdict: Step<PublicationState> = {
+    t: pub.steps.length + 1,
+    caption: verdictText,
+    highlight: ['T1', 'T2'],
+    state: { ...pub.steps[pub.steps.length - 1], step: pub.steps.length + 1, caption: verdictText, bothInside }
+  };
+  return [
+    open,
+    ...pub.steps.map(s => ({
+      t: s.step,
+      caption: s.caption,
+      highlight: [s.actorId],
+      state: { ...s, bothInside }
+    })),
+    verdict
+  ];
 }
 
 const t1WaitText = (reordered: boolean): string =>
