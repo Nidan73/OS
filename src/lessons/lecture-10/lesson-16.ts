@@ -548,7 +548,8 @@ export const lesson16: Lesson<GraphInput, GraphState> = {
     text: 'Ammu and Abbu share two serving spoons at family dinner. Each grips one and waits on the other — both are polite, both are patient, and neither will ever eat.'
   },
   concept:
-    'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each spoon serves one person, each parent grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one — bring extra spoons, take both or wait empty-handed, allow snatching, number the order — and the same scene ends fed. Each removal below is computed, not staged.',
+    'Every resource interaction is ask, use, give back. Deadlock needs four conditions at once: each spoon serves one person, each parent grips one while asking for another, nothing is ever snatched back, and the waiting forms a ring. Break any one — bring extra spoons, take both or wait empty-handed, allow snatching, number the order — and the same scene ends fed. Each removal below is computed, not staged.'  +
+    '  This is the DINING-PHILOSOPHERS PROBLEM, the standard illustration of deadlock in the literature: several diners sit around a table with one chopstick between each pair, each needs two to eat, and each picks up the one on their left first. Every one of them is following a perfectly reasonable rule and the result is that nobody eats. The point of the problem is not the philosophers. It is that a deadlock can be produced by rules that are individually correct.',
   morphReveals:
     'Around the table every parent and every spoon takes the same space — position is just where they sat. On the map width stops meaning a body and starts meaning holdings: a mutex is as wide as its instances, a parent as wide as what they grip — so the stuck ring reads wide all round while a freed parent narrows.',
   morphMode: 'morph',

@@ -116,7 +116,7 @@ describe('prose rule: every lesson teaches the mechanism, not only the story', (
     const conceptExpr = src.match(/\n\s{2}concept:\s*([\s\S]*?),\n\s{2}[a-zA-Z]+:/);
     const concept = conceptExpr
       ? (conceptExpr[1].match(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"/g) ?? [])
-          .map((q) => q.slice(1, -1))
+          .map((q) => q.slice(1, -1).replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\n/g, ' '))
           .join(' ')
       : '';
 
@@ -156,7 +156,11 @@ describe('prose rule: every lesson teaches the mechanism, not only the story', (
       it('carries a complete analogy mapping, which is what she revises from', () => {
         const mapping = src.match(/analogyMapping:\s*\[([\s\S]*?)\n\s{2}\]/);
         expect(mapping, `${slug} has no analogyMapping`).not.toBeNull();
-        const rows = (mapping![1].match(/'((?:[^'\\]|\\.)*)'/g) ?? []).map((r) => r.slice(1, -1));
+        // both quote styles: lesson-07 uses double quotes and an earlier
+        // version of this test reported it as having no mapping rows at all
+        const rows = (
+          mapping![1].match(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"/g) ?? []
+        ).map((r) => r.slice(1, -1));
         expect(rows.length, `${slug} mapping rows`).toBeGreaterThanOrEqual(4);
         for (const row of rows) {
           expect(row, `${slug}: "${row}" is not a scene ➔ mechanism pair`).toContain('➔');
