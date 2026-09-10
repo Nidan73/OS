@@ -49,6 +49,10 @@ const LESSONS_META: LessonMeta[] = [
   { id: 18, slug: 'lesson-18', chapterSlug: 'lecture-10', title: 'Making It Impossible', blurb: 'Four rules at family dinner — remove one necessary condition and the deadlock ring cannot close.' },
   { id: 19, slug: 'lesson-19', chapterSlug: 'lecture-10', title: 'Safe, unsafe, and stuck', blurb: 'Mother keeps the twelve-note trip fund — grant one note too many and the safe region shrinks to unsafe, yet everyone can still finish.' },
   { id: 20, slug: 'lesson-20', chapterSlug: 'lecture-10', title: "The banker's algorithm", blurb: 'Mother lends to P1, then refuses P4 — the safety sweep runs cell by cell.' },
+  { id: 21, slug: 'lesson-21', chapterSlug: 'lecture-10', title: 'Spotting a deadlock', blurb: 'The guard rubs out the spots and keeps who blocks whom — then one more crate tips it.' },
+  { id: 22, slug: 'lesson-22', chapterSlug: 'lecture-10', title: 'Getting out', blurb: 'Move the cheapest car — then watch the same one get moved five nights running.' },
+  { id: 23, slug: 'lesson-23', chapterSlug: 'lecture-07', title: 'Guessing before you build', blurb: "Three serving rules on one Friday's tickets — then the same five tables on a different Friday, and the winner changes." },
+  { id: 24, slug: 'lesson-24', chapterSlug: 'lecture-09', title: 'The barrier', blurb: 'The kitchen calls "ready!" before the dish reaches the counter — put the barrier in and she never serves an empty plate again.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;

@@ -25,6 +25,10 @@ import { lesson17 } from '../src/lessons/lecture-10/lesson-17.js';
 import { lesson18 } from '../src/lessons/lecture-10/lesson-18.js';
 import { lesson19 } from '../src/lessons/lecture-10/lesson-19.js';
 import { lesson20 } from '../src/lessons/lecture-10/lesson-20.js';
+import { lesson21 } from '../src/lessons/lecture-10/lesson-21.js';
+import { lesson22 } from '../src/lessons/lecture-10/lesson-22.js';
+import { lesson23 } from '../src/lessons/lecture-07/lesson-23.js';
+import { lesson24 } from '../src/lessons/lecture-09/lesson-24.js';
 import { GraphEngine } from '../src/engines/graph.js';
 import { MatrixEngine } from '../src/engines/matrix.js';
 
@@ -48,7 +52,7 @@ describe('engine taxonomy: declared engine id matches the real inheritance', () 
     lesson01, lesson02, lesson03, lesson04, lesson05,
     lesson06, lesson07, lesson08, lesson09,
     lesson10, lesson11, lesson12, lesson13, lesson14, lesson15,
-    lesson16, lesson17, lesson18, lesson19, lesson20
+    lesson16, lesson17, lesson18, lesson19, lesson20, lesson21, lesson22, lesson23, lesson24
   ];
 
   it('covers every shipped lesson', () => {
@@ -56,7 +60,7 @@ describe('engine taxonomy: declared engine id matches the real inheritance', () 
       'lesson-01', 'lesson-02', 'lesson-03', 'lesson-04', 'lesson-05',
       'lesson-06', 'lesson-07', 'lesson-08', 'lesson-09',
       'lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14', 'lesson-15',
-      'lesson-16', 'lesson-17', 'lesson-18', 'lesson-19', 'lesson-20'
+      'lesson-16', 'lesson-17', 'lesson-18', 'lesson-19', 'lesson-20', 'lesson-21', 'lesson-22', 'lesson-23', 'lesson-24'
     ]);
   });
 

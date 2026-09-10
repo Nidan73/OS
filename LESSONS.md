@@ -131,13 +131,17 @@ repeatedly and watch it starve.
 
 ## New lessons (promoted from the reference layer)
 
+Both are built. What shipped differs from the sketch below in one place, noted inline.
+
 **L23 · Guessing before you build** — units 31–33 (Lecture 7 slides 24–30)
 Deterministic modelling → queueing models → simulation. Playground: n = lambda x W
 computed in all three directions, drag any two and the third settles; then change
 the snapshot and watch the deterministic winner change with it. The point is that a
 fast exact answer only holds for one snapshot.
 
-**L24 · The barrier** — units 47–49 (Lecture 9 slides 3–5)
+**L24 · The barrier** — units 47–49 (Lecture 9 slides 3–5) — engine is `trace`, not `diagram`:
+the whole lesson is slide 5's two-thread program, and units 47/48 are carried by the playground
+and the concept rather than forced into the timeline.
 Strongly vs weakly ordered memory, then the barrier. Playground: toggle ordering,
 watch two stores land shuffled, insert a barrier, watch it stop. PAIRS WITH L12 —
 L12 already owns the broken case, reference it, do not duplicate its trace. Unit 49

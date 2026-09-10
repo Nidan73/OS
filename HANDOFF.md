@@ -113,25 +113,32 @@ number was wrong by 47% and no test or gate check could see it. That is why §2.
 
 ## Where things stand
 
-**`main` is at `081019e`.** Verified by running it:
+**`main` is at `081019e`; `phase1/lesson-21-detection` carries L21–L24.** Verified by running it:
 
 ```
-npm test          →  32 files / 329 tests passing
+npm test          →  41 files / 503 tests passing
 npx tsc --noEmit  →  clean
 npm run build     →  clean
-npm run verify    →  GATE PASSED — 594 checks across 18 lesson(s)   (~104s)
+npm run verify    →  GATE PASSED — 815 checks across 24 lesson(s) and 2 reference page(s)
 grep -rn "prototype as any" src   →  0
 ```
 
-**18 of 24 lessons built:** L1–L17 and L20.
+**24 of 24 lessons built.**
 
 | Wave | Lessons | Engines | Status |
 |---|---|---|---|
 | 1 | L1–L8 | `gantt`, `queue` | **done, merged** |
 | 2 | L9 · L10–L12 · L13–L15 | `diagram`, `trace`, `counter` | **done, merged** |
 | 3 | L16, L17, L20 | `graph`, `matrix` | **done, merged** |
-| 3 | **L18, L19, L21, L22** | `diagram`, `graph`, `matrix` | **next** |
-| 4 | **L23, L24** | `diagram`/`gantt`, `trace` | not started |
+| 3 | L18, L19 | `diagram`, `graph` | **done, merged** |
+| 3 | L21, L22 | `graph`, `diagram` | **done, on branch** |
+| 4 | L23, L24 | `gantt`, `trace` | **done, on branch** |
+
+**L21–L24 were written by the reviewing seat, not by an implementer, so they have had no
+independent review.** The gate passed on all four, but the gate cannot see the two failure
+classes this project keeps hitting (prose contradicting the mechanism; a noun-swap posing as a
+re-cast). If you are picking this up, review those four first — particularly whether L24 pairs
+with L12 or restates it. See CONTEXT.md, "The check that is currently missing".
 
 **All seven engines are proven by a shipped lesson** — `gantt`, `queue`, `trace`, `counter`,
 `diagram`, `graph`, `matrix`. **Do not rewrite them.** Three deck-verified algorithm modules:
@@ -180,18 +187,23 @@ Read `src/lessons/lecture-06/lesson-01.ts` and `src/lessons/lecture-09/lesson-14
 
 ## Your next task
 
-Work **sequentially**, one branch per lesson, `phase1/lesson-NN-<slug>`.
+All 24 lessons are built and gated. What is left is the finishing layer, in this order:
 
-- **L18** Making it impossible — units 72–75 (`diagram`)
-- **L19** Safe, unsafe, and stuck — units 76–79 (`diagram` + `graph`)
-- **L21** Spotting a deadlock — units 84–87 (`graph` + `matrix`)
-- **L22** Getting out — units 88, 89 (`diagram`)
-- **L23** Guessing before you build — units 31–33, Little's formula `n = λ·W`
-- **L24** The barrier — units 47–49. **Pairs with L12**: L12 owns the broken case, L24 owns the
-  fix. Reference it; do not duplicate its trace.
-
-**L17, L21 and L22 share one picture:** cars blocking each other in the building driveway — who
-blocks whom, the closed ring, which car has to move out. Build on it rather than inventing.
+1. **Review L21–L24.** They have had no second pair of eyes (above). Check the analogies against
+   the isomorphism rule and the register below, and check the four `morphReveals` name a
+   geometric property whose *meaning* changes rather than summarising the topic.
+2. **Widen the gate's geometry read.** `geometryAt()` in `scripts/gate.mjs` and
+   `GanttEngine.validateMorph()` both record only `{ x, width }`, while `SPEC.md:461` permits
+   `x`, `y`, `width`, `height` or transform. Any lesson whose carrying property is vertical is
+   currently reported as a reskin — a false negative that has already cost one design change.
+   Widen the check, then re-run the full gate; nothing should newly fail.
+   **This was deliberately left for you:** the seat that found it also wrote the lessons the
+   gate judges, and should not be the one loosening it.
+3. **Lecture 8, 9 and 10 reference pages.** Only 06 and 07 exist. Lecture 10 slide 33 was
+   blocked on L21/L22 and no longer is.
+4. **DESIGN.md pass (L2 finding 5)** — pill buttons, `{rounded.lg}` cards on `{colors.hairline}`,
+   tile rhythm.
+5. **a11y sweep**, then a verified `dist/` and `DEPLOY.md`.
 
 Every lesson needs: a row in the `LESSONS` array in `scripts/gate.mjs` **and** a row in
 `LESSONS_META` in `src/main.ts`; a row in `tests/engine-taxonomy.test.ts`; `[data-view-lens]`
@@ -200,7 +212,12 @@ coordinates**; one step per discrete mechanism event; a `morphReveals` naming a 
 property whose **meaning** changes; and an honest `engine` declaration (`standalone` if the
 `engineClass` extends `AnimationEngine` directly — the taxonomy test enforces this).
 
-**Crossfade is still available and still unused.** 18 lessons, zero `morphMode: 'crossfade'`,
+**The playground is a 412px-wide column and its section must end above y=900 at 1440x900.**
+`LessonPlayer` marks the whole section `[data-primary-control]`, so the gate measures the
+section, not your button. Budget ~412x198. Two lessons strip that attribute to dodge the check;
+that hides content off screen and should not be copied.
+
+**Crossfade is still available and still unused.** 24 lessons, zero `morphMode: 'crossfade'`,
 against a spec expecting roughly a quarter. If a morph does not carry, an honest crossfade with
 a one-line `morphReason` is the right answer and will not be marked down.
 
