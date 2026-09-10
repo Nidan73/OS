@@ -33,12 +33,12 @@ checking with her first. When a lesson needs two people acting concurrently and 
 is Ammu and Abbu. He is not careless. He simply does not know what she is doing at that moment,
 which is the entire point of every race condition in this course.
 
-**Rafi.** The older brother, twenty two, at university. He wants the car and he wants money and
-he always says he will pay it back. When a lesson needs someone who asks for more than they
-have, it is Rafi.
+**Arijit.** The older brother, twenty two, at university. He wants the car and he wants money
+and he always says he will pay it back. When a lesson needs someone who asks for more than they
+have, it is Arijit.
 
-**Tuli.** The younger sister, fourteen, still at school. She is the one who gets skipped. When a
-lesson needs a small request that keeps losing to bigger ones, it is Tuli. Starvation and aging
+**Afra.** The younger sister, fourteen, still at school. She is the one who gets skipped. When a
+lesson needs a small request that keeps losing to bigger ones, it is Afra. Starvation and aging
 are her lessons.
 
 **Kabir chacha.** The building's night guard. He sits at a desk by the driveway with a register
@@ -46,7 +46,7 @@ and a torch. He does not own anything in the story. He observes, he writes down 
 whom, and when it goes wrong he is the one who has to sort it out. Detection and recovery are
 his.
 
-**Mishti.** The cat. She is not a mechanism. She is there because a house has a cat in it, and
+**Pechu.** The cat. She is not a mechanism. She is there because a house has a cat in it, and
 because one warm detail in a paragraph about matrices is worth a great deal.
 
 ---
@@ -65,10 +65,16 @@ where the car key hangs.
 These objects are fixed. The bathroom has one latch, not two. There is one stove and one car
 key. If a lesson needs a second bathroom, the lesson is wrong, not the flat.
 
-### 2. Rannaghor
+### 2. Yum Cha
 
-The family's kacchi restaurant, twenty minutes away. One kitchen, one stove, one cook at the
+The family's Chinese restaurant, twenty minutes away. One kitchen, one stove, one cook at the
 pass. Tables out front, a takeaway counter downstairs on the street.
+
+The food here is what a Dhaka Chinese place actually serves: fried rice, chilli chicken, chow
+mein, hot and sour soup, beef sizzling, prawn crackers. **Home is Bengali and the restaurant is
+Chinese**, which is ordinary for a family like this one and is also useful: the moment a lesson
+mentions chow mein you know you are at Yum Cha, and the moment it mentions biryani you know you
+are in the flat.
 
 Ammu decides the serving rule. Friday night is the busy night, and there is a spike of tickets
 from last Friday that she keeps in a drawer, which is how the course gets a fixed workload to
@@ -89,28 +95,32 @@ life where holding what you have and waiting for what you need traps everybody a
 | Lesson | Where | Who | The situation |
 |---|---|---|---|
 | L1 | flat | Ammu, everyone | Dinner arrives dish by dish. You eat, then you wait. |
-| L2 | Rannaghor | the kitchen | A party of forty ordered ahead of two coffees. |
-| L3 | Rannaghor | the cook | Quick plates go out before the big order is ready. |
-| L4 | flat, car | Abbu, Rafi, Tuli | Turns with the car, a fixed slot each. |
-| L5 | flat | Tuli | She keeps getting skipped at dinner until Ammu notices. |
-| L6 | Rannaghor | the host | Linger over your plate and you get moved to a back tier. |
-| L7 | Rannaghor | the cooks | One cook, then two, then one cook with two pans. |
-| L8 | Rannaghor | the waiters | Move a waiter to the busy side and he forgets your table. |
+| L2 | Yum Cha | the kitchen | A party of forty ordered ahead of two coffees. |
+| L3 | Yum Cha | the cook | Quick plates go out before the big order is ready. |
+| L4 | flat, car | Abbu, Arijit, Afra | Turns with the car, a fixed slot each. |
+| L5 | flat | Afra | She keeps getting skipped at dinner until Ammu notices. |
+| L6 | Yum Cha | the host | Linger over your plate and you get moved to a back tier. |
+| L7 | Yum Cha | the cooks | One cook, then two, then one cook with two pans. |
+| L8 | Yum Cha | the waiters | Move a waiter to the busy side and he forgets your table. |
 | L9 | flat, car | Abbu | The doorbell, the corridor, and the car still leaves on time. |
 | L10 | flat, fridge | Ammu, Abbu | Both count the plates. One count is lost. |
 | L11 | flat, bathroom | everyone | One bathroom, one latch, and what a correct rule must promise. |
 | L12 | flat, doorway | Ammu, Abbu | Each waves the other through the narrow doorway. |
 | L13 | flat, key hook | Ammu, Abbu | Looking at the hook and taking the key is one motion. |
-| L14 | flat, bathroom | Rafi waiting | Jiggle the handle, or sit on the bench and be called. |
+| L14 | flat, bathroom | Arijit waiting | Jiggle the handle, or sit on the bench and be called. |
 | L15 | building | the family | Five spots, a live count, and what happens below zero. |
 | L16 | flat, table | Ammu, Abbu | Two serving spoons, both polite, neither eats. |
 | L17 | building | Kabir chacha | Draw who blocks whom, and find the closed ring. |
 | L18 | flat, table | Ammu | Four ways to stop the ring from ever closing. |
-| L19 | flat, almirah | Ammu, Rafi, Tuli | The trip envelope, and lending only while everyone can still finish. |
+| L19 | flat, almirah | Ammu, Arijit, Afra | The trip envelope, and lending only while everyone can still finish. |
 | L20 | flat, almirah | Ammu | She lends to one, refuses another, and counts it out cell by cell. |
 | L21 | building | Kabir chacha | He rubs out the cars and keeps only who waits on whom. |
 | L22 | building | Kabir chacha | Move the cheapest car, then watch it be the same car every night. |
-| L23 | Rannaghor | Ammu | Last Friday's tickets, three serving rules, and one answer that only held for that Friday. |
+| L23 | Yum Cha | Ammu | Last Friday's tickets, three serving rules, and one answer that only held for that Friday. |
+
+**Food placement is a continuity check, not decoration.** Yum Cha serves Chinese. The flat cooks
+Bengali. L24's biryani is in the flat's kitchen and stays. L23's orders are at Yum Cha and are
+Chinese. If a lesson set at Yum Cha mentions kacchi, the lesson has drifted.
 | L24 | flat, kitchen | the kitchen, Ammu | The call of "ready" travels faster than the dish does. |
 
 **Callbacks are allowed and encouraged where they are true.** L20 is the same envelope as L19.
@@ -145,7 +155,7 @@ The story is how she gets in. **It is not what she is examined on.**
 
 Every lesson must leave her able to say two things:
 
-1. What happened in the flat, in the driveway, at Rannaghor. The scene.
+1. What happened in the flat, in the driveway, at Yum Cha. The scene.
 2. **What it is actually called, and how the real mechanism works, in the words her exam will
    use.** Banker's algorithm. Wait-for graph. Store buffer. Time quantum. Little's formula.
    Available, Max, Allocation, Need.
