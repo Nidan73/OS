@@ -260,33 +260,43 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
     addEdges: [...sweepAssignments(), ...sweepRequests(request)]
   } as GraphEvent);
 
-  // Identify the winner of each pass:
+  // WHICH PROBE ACTUALLY RECLAIMS.
+  // detectionAlgorithm scans P0→Pn every pass and takes the FIRST satisfiable
+  // process, but it does not stop scanning — so several probes in one pass can
+  // report satisfied while only one of them is reclaimed. Captioning every
+  // satisfied probe as "it finishes" was the original defect. The pass split
+  // below is derived from the pid sequence: a pass ends where the pid stops
+  // increasing, because each new pass restarts the scan from the lowest
+  // unfinished process.
   const isWinner: boolean[] = new Array(result.steps.length).fill(false);
-  const passWinnerOf: number[] = new Array(result.steps.length).fill(-1);
   let stepIdx = 0;
   while (stepIdx < result.steps.length) {
     let winnerStep = -1;
-    let winnerPid = -1;
     let passEnd = stepIdx;
     while (passEnd < result.steps.length) {
       const p = result.steps[passEnd];
-      if (p.satisfied && winnerStep < 0) {
-        winnerStep = passEnd;
-        winnerPid = p.pid;
-      }
+      if (p.satisfied && winnerStep < 0) winnerStep = passEnd;
       passEnd++;
-      if (passEnd < result.steps.length && result.steps[passEnd].pid <= p.pid) {
-        break;
-      }
+      if (passEnd < result.steps.length && result.steps[passEnd].pid <= p.pid) break;
     }
-    if (winnerStep >= 0) {
-      isWinner[winnerStep] = true;
-      for (let s = stepIdx; s < passEnd; s++) {
-        passWinnerOf[s] = winnerPid;
-      }
-    }
+    if (winnerStep >= 0) isWinner[winnerStep] = true;
     stepIdx = passEnd;
   }
+
+  // The reclaim order, in the order it happens. Every claim about "next" is
+  // read off THIS, never off the pass a probe happened to fall in.
+  const reclaimOrder = result.steps.filter((_, i) => isWinner[i]).map((p) => p.pid);
+
+  /**
+   * When this flat is actually reclaimed, relative to the probe being
+   * captioned. Returns null if it never finishes — which is the deadlock case
+   * and must not be described as finishing at all.
+   */
+  const finishesAfter = (pid: number): string | null => {
+    const at = reclaimOrder.indexOf(pid);
+    if (at <= 0) return null;
+    return FLAT_NAMES[reclaimOrder[at - 1]];
+  };
 
   // One beat per probe — the sweep IS the lesson (units 85, 86).
   let lastGranted = -1;
@@ -299,8 +309,14 @@ export function sweepEvents(request: number[][]): GraphEvent[] {
         activeNodes: [`P${probe.pid}`]
       });
     } else if (probe.satisfied) {
+      // It fits, but it is not the one reclaimed this pass. Say only what is
+      // true: when it is actually reclaimed, read off the reclaim order — or
+      // that it never is.
+      const after = finishesAfter(probe.pid);
       out.push({
-        caption: `${who} fits too — but ${FLAT_NAMES[passWinnerOf[si]]} came first in this pass, so ${who} finishes next.`,
+        caption: after
+          ? `${who} fits too, but the sweep takes the first it finds — ${who} gets its turn after ${after}.`
+          : `${who} fits too, but the sweep takes the first it finds — and it never gets a turn.`,
         activeNodes: [`P${probe.pid}`]
       });
     } else {

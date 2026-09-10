@@ -278,7 +278,7 @@ that caused a 50-minute hang with zero files written. All three widened to famil
 
 ### The defect class that keeps recurring: words, not code
 
-**Six rounds, six catches.** The failure the gate cannot see is student-facing prose
+**Seven rounds, seven catches.** The failure the gate cannot see is student-facing prose
 contradicting the computed mechanism:
 
 1. A morph card read "Friend A takes one" at view 0 and became `register1 = register1 + 1` at
@@ -291,10 +291,27 @@ contradicting the computed mechanism:
 5. L17 shipped a caption saying "the ring dissolved" while `isDeadlock` returned true, because
    granted requests were left pending. Its own tests caught it.
 6. A test *titled* "1:1 replay" asserted 10-for-15. A test title that lies is the same defect.
+7. **Sep 10, 21:50 — introduced by a fix for this very defect class.** The audit correctly found
+   that L21 captioned every satisfiable probe as "it finishes", when `detectionAlgorithm` scans
+   P0→Pn and reclaims only the *first* one per pass. Its replacement said "Flat 4 fits too — but
+   Flat 1 came first in this pass, so Flat 4 finishes next"; the real reclaim order is
+   0 → 2 → 1 → 3 → 4, so **Flat 3** finishes next. Three of four such captions were true by
+   luck. The lesson: a claim about ordering must be read off the order the algorithm produces,
+   not off the pass a probe happened to land in. Now bound by `deadlock-robustness.test.ts`,
+   which parses every caption and checks the named successor — verified by inducing the bug and
+   watching it fail.
 
 **Standing rule:** every number and every outcome in student-facing copy must either be
 computed, or be true in every state the playground can reach. The implementer now writes its
 own guard tests for this, which is the rule moving from review into the suite.
+
+**A fix for this class is not done until a test parses the copy.** Item 7 was introduced by a
+correct diagnosis with an untested repair, and it read plausibly enough to survive an audit,
+a full gate and review. Prose that a human can only check by reading is prose that will drift.
+The tests added on 2026-09-10 do the parsing: caption successors against the reclaim order
+(`deadlock-robustness.test.ts`), every number in `morphReveals` against the algorithms that
+produce it (`lesson23.test.ts`), and the abort-all totals against `CANDIDATES`
+(`lesson22.test.ts`).
 
 ### The check that is currently missing
 
