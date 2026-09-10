@@ -970,3 +970,182 @@ export function simulateReorderingOutput(reordered = false): PublicationResult {
     flipped: (intact?.output ?? printed) !== printed
   };
 }
+
+// ── 9. Memory Models & Memory Barriers (L24, Units 47–49, L9 slides 3–5) ──
+
+export type MemoryModel = 'strong' | 'weak';
+
+/** A store that has been issued but is not yet visible to the other processor. */
+export interface PendingStore {
+  name: 'x' | 'flag';
+  value: number;
+}
+
+export type BarrierEventKind = 'issue' | 'buffer' | 'barrier' | 'drain' | 'spin' | 'pass' | 'print';
+
+export interface BarrierEvent {
+  step: number;
+  actor: 'T1' | 'T2';
+  /** the instruction or micro-event, in the deck's own wording where it has one */
+  action: string;
+  kind: BarrierEventKind;
+  /** globally visible memory — what the OTHER processor can actually read */
+  visible: { x: number; flag: number };
+  /** stores issued by T2 that have not reached T1 yet */
+  pending: PendingStore[];
+  printed: number | null;
+  caption: string;
+}
+
+export interface BarrierRun {
+  model: MemoryModel;
+  barriers: boolean;
+  /** the order T2's buffered stores reach the other processor */
+  drainOrder: ('x' | 'flag')[];
+  events: BarrierEvent[];
+  printed: number | null;
+  /** slide 5's requirement: Thread 1 outputs 100 */
+  correct: boolean;
+}
+
+/**
+ * Slide 5, modelled rather than narrated.
+ *
+ *   Thread 2:  x = 100;  [memory_barrier();]  flag = true
+ *   Thread 1:  while (!flag)  [memory_barrier();]  print x
+ *
+ * The mechanism is visibility, not instruction order. Under a strongly
+ * ordered model (slide 4) a store by one processor is immediately visible to
+ * all others, so nothing can go wrong. Under a weakly ordered model a store
+ * sits in the issuing processor's buffer and reaches the others later, in an
+ * order the program does not control — `drainOrder` is that freedom made
+ * explicit rather than hidden. A memory barrier forces everything already
+ * issued to become visible before execution continues, which is what makes
+ * the deck's fix work.
+ *
+ * L12 (units 44–46) already owns the broken case as a narrative. This does
+ * not repeat it: here the same outcome falls out of the buffer, and the fix
+ * is reachable in the same model.
+ */
+export function simulateMemoryBarrier(
+  model: MemoryModel = 'weak',
+  barriers = false,
+  drainOrder: ('x' | 'flag')[] = ['flag', 'x']
+): BarrierRun {
+  const visible = { x: 0, flag: 0 };
+  let buffer: PendingStore[] = [];
+  let printed: number | null = null;
+  const events: BarrierEvent[] = [];
+
+  const push = (actor: 'T1' | 'T2', action: string, kind: BarrierEventKind, caption: string) => {
+    events.push({
+      step: events.length + 1,
+      actor,
+      action,
+      kind,
+      visible: { ...visible },
+      pending: buffer.map((s) => ({ ...s })),
+      printed,
+      caption
+    });
+  };
+
+  /** Make one buffered store visible. Strongly ordered systems never buffer. */
+  const drainOne = (name?: 'x' | 'flag'): boolean => {
+    if (buffer.length === 0) return false;
+    const idx = name ? buffer.findIndex((s) => s.name === name) : 0;
+    if (idx < 0) return false;
+    const [store] = buffer.splice(idx, 1);
+    visible[store.name] = store.value;
+    push('T2', `${store.name} becomes visible`, 'drain', `${store.name} = ${store.value} finally reaches the other processor.`);
+    return true;
+  };
+
+  const issue = (name: 'x' | 'flag', value: number, text: string): void => {
+    if (model === 'strong') {
+      visible[name] = value;
+      push('T2', text, 'issue', `T2 stores ${name} = ${value}; strongly ordered, so it is visible at once.`);
+      return;
+    }
+    buffer.push({ name, value });
+    push('T2', text, 'buffer', `T2 issues ${name} = ${value}, but it sits in the buffer — nobody else can see it yet.`);
+  };
+
+  const barrier = (actor: 'T1' | 'T2'): void => {
+    push(actor, 'memory_barrier()', 'barrier', `${actor} hits the barrier — nothing goes further until what is already issued is visible.`);
+    while (drainOne()) {
+      /* drain in issue order until the buffer is empty */
+    }
+  };
+
+  // ── Both threads run at once ──
+  // T1 is already spinning before T2 does anything, and keeps checking the
+  // flag between every one of T2's micro-events. That is what `while (!flag)`
+  // actually is: a repeated read, not a single test.
+  const t2Program: (() => void)[] = [
+    () => issue('x', 100, 'x = 100'),
+    ...(barriers ? [() => barrier('T2')] : []),
+    () => issue('flag', 1, 'flag = true')
+  ];
+
+  const order = [...drainOrder];
+  let t2pc = 0;
+  let passed = false;
+  let t1Barriered = false;
+  let guard = 0;
+
+  while (!passed && guard++ < 32) {
+    // T1's tick: read the flag
+    if (visible.flag !== 0) {
+      push('T1', 'while (!flag) — passes', 'pass', 'T1 sees the flag raised and leaves the spin loop.');
+      passed = true;
+      break;
+    }
+    push('T1', 'while (!flag)', 'spin', 'T1 reads the flag — still down, so it goes round the loop again.');
+
+    // T2's tick: one instruction, or one buffered store reaching the others
+    if (t2pc < t2Program.length) {
+      t2Program[t2pc++]();
+    } else if (buffer.length > 0) {
+      const next = order.shift();
+      if (!drainOne(next)) drainOne();
+    } else {
+      break;
+    }
+  }
+
+  if (passed) {
+    if (barriers && !t1Barriered) {
+      t1Barriered = true;
+      barrier('T1');
+    }
+    printed = visible.x;
+    push('T1', 'print x', 'print', `T1 prints x — what it can actually see is ${printed}.`);
+  }
+
+  // anything still in flight lands after the fact, which is the whole failure
+  while (drainOne()) {
+    /* too late to change what was printed */
+  }
+  buffer = [];
+
+  return { model, barriers, drainOrder: [...drainOrder], events, printed, correct: printed === 100 };
+}
+
+/**
+ * Unit 47, slide 3: disabling interrupts stops preemption on the processor
+ * that does it and nowhere else. Computed so the lesson can show why the
+ * approach "is not broadly scalable" instead of asserting it.
+ */
+export interface InterruptMaskResult {
+  cores: number;
+  /** cores still free to run and touch the shared variable */
+  unprotectedCores: number;
+  safe: boolean;
+}
+
+export function evaluateInterruptMasking(cores: number): InterruptMaskResult {
+  const n = Math.max(1, Math.floor(cores));
+  const unprotectedCores = n - 1;
+  return { cores: n, unprotectedCores, safe: unprotectedCores === 0 };
+}

@@ -44,7 +44,11 @@ A deployable static site teaching **89 Operating Systems concepts** (CSC 2209, L
 through interactive 2D animations. Each unit: an SVG animation of the real mechanism, a caption
 rail advancing in lockstep, a travel/food/friends analogy, and transport controls.
 
-Source material: 10 `.pptx` lecture decks in the parent folder `~/Downloads/New folder/`.
+Source material: 10 `.pptx` lecture decks in `~/New folder/` (filenames are irregular —
+`Lecture 6 (Theory).pptx` but `Lecture 7(Theory) (1).pptx`; `ls` before globbing). Several
+decks carry their worked examples as **images, not text** — Lecture 7 slide 24's process
+table is `image16.png` and slide 25's three Gantt charts are `image17/18/19.png`. Unzip the
+pptx and read the images; the XML text alone silently omits the numbers.
 
 **Stack:** Vite + TypeScript (strict) + GSAP + inline SVG + Vitest. Hash routing, no framework.
 **No audio, no narration** — the user explicitly wants on-screen explanatory text instead.

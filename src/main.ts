@@ -52,6 +52,7 @@ const LESSONS_META: LessonMeta[] = [
   { id: 21, slug: 'lesson-21', chapterSlug: 'lecture-10', title: 'Spotting a deadlock', blurb: 'The guard rubs out the spots and keeps who blocks whom — then one more crate tips it.' },
   { id: 22, slug: 'lesson-22', chapterSlug: 'lecture-10', title: 'Getting out', blurb: 'Move the cheapest car — then watch the same one get moved five nights running.' },
   { id: 23, slug: 'lesson-23', chapterSlug: 'lecture-07', title: 'Guessing before you build', blurb: "Three serving rules on one Friday's tickets — then the same five tables on a different Friday, and the winner changes." },
+  { id: 24, slug: 'lesson-24', chapterSlug: 'lecture-09', title: 'The barrier', blurb: 'The kitchen calls "ready!" before the dish reaches the counter — put the barrier in and she never serves an empty plate again.' },
 ];
 
 let activePlayer: UnitPlayer | null = null;
